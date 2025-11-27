@@ -4,9 +4,9 @@ import { ArrowRight } from "lucide-react";
 
 export default function VehicleCTA() {
   return (
-    <section className="snap-start h-screen flex items-center justify-center relative overflow-hidden">
+    <section className="snap-section h-screen flex items-center justify-center relative overflow-hidden">
       {/* 배경 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--navy-700)] to-[var(--navy-900)]" />
+      <div className="absolute inset-0 bg-[var(--navy-900)]" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h2 className="text-[24px] md:text-[32px] font-bold text-white mb-4">

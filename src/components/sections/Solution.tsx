@@ -22,9 +22,8 @@ export default function Solution() {
   return (
     <>
       {/* 타이틀 섹션 */}
-      <section className="snap-start h-screen flex items-center justify-center relative overflow-hidden bg-[var(--navy-900)]">
-        <div className="absolute inset-0 solution-gradient" />
-        <div className="relative z-10 text-left px-6">
+      <section className="snap-section h-screen flex items-center justify-center relative overflow-hidden bg-[var(--navy-900)]">
+        <div className="text-left px-6">
           <h2 className="text-[33px] md:text-[40px] leading-tight">
             <span className="font-light">중고 캠핑카 구매</span>
             <br />
@@ -39,12 +38,9 @@ export default function Solution() {
       {solutionCards.map((card, index) => (
         <section
           key={index}
-          className="snap-start h-screen flex items-center relative overflow-hidden bg-[var(--navy-900)]"
+          className="snap-section h-screen flex items-center relative overflow-hidden bg-[var(--navy-900)]"
         >
-          <div className="absolute inset-0 solution-gradient" />
-          <div
-            className="relative z-10 w-full max-w-4xl mx-auto px-6 text-left"
-          >
+          <div className="w-full max-w-4xl mx-auto px-6 text-left">
             <h3 className="text-[36px] md:text-[36px] font-bold text-white mb-6 whitespace-pre-line leading-snug">
               {card.title}
             </h3>

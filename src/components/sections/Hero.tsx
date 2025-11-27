@@ -48,7 +48,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="snap-start relative h-screen flex items-center justify-center overflow-hidden bg-[var(--navy-900)]"
+      className="snap-section relative h-screen flex items-center justify-center overflow-hidden bg-[var(--navy-900)]"
     >
       {/* 배경 이미지 + 오버레이 */}
       <div className="absolute inset-0">
@@ -62,7 +62,7 @@ export default function Hero() {
       </div>
 
       {/* 콘텐츠 */}
-      <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+      <div className="relative z-10 text-left px-6 max-w-4xl mx-auto -mt-20">
         {/* 뱃지 */}
         <div ref={badgeRef} className="opacity-0 mb-6">
           <span className="inline-block px-4 py-2 rounded-full text-sm font-medium bg-white/10 backdrop-blur-sm border border-white/20 text-white/90">
@@ -74,20 +74,20 @@ export default function Hero() {
         <h1 className="mb-8">
           <div
             ref={titleLine1Ref}
-            className="opacity-0 text-[28px] md:text-[40px] font-light text-white leading-tight"
+            className="opacity-0 text-[42px] md:text-[40px] font-light text-white leading-tight"
           >
             캠핑의 시작과 끝,
           </div>
           <div
             ref={titleLine2Ref}
-            className="opacity-0 text-[28px] md:text-[40px] font-bold text-white leading-tight mt-2"
+            className="opacity-0 text-[20px] md:text-[40px] font-bold text-white leading-tight mt-4"
           >
             쏠마린 캠핑카가 함께합니다.
           </div>
         </h1>
 
         {/* 해시태그 */}
-        <div ref={hashtagsRef} className="opacity-0 flex flex-wrap justify-center gap-3">
+        <div ref={hashtagsRef} className="opacity-0 flex flex-wrap justify-start gap-3">
           {hashtags.map((tag) => (
             <span key={tag} className="text-base md:text-lg text-white/80">
               <span className="text-[var(--trust-500)]">#</span>
@@ -98,7 +98,7 @@ export default function Hero() {
       </div>
 
       {/* 스크롤 유도 */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-slow">
+      <div className="absolute bottom-55 left-1/2 -translate-x-1/2 animate-bounce-slow">
         <ChevronDown className="w-8 h-8 text-white/50" />
       </div>
     </section>

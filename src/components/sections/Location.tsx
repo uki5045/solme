@@ -15,7 +15,7 @@ export default function Location() {
   return (
     <section
       id="location"
-      className="snap-start min-h-screen flex items-center bg-[var(--navy-900)] py-16"
+      className="snap-section min-h-screen flex items-center bg-[var(--navy-900)] py-16"
     >
       <div className="max-w-4xl mx-auto px-6 w-full">
         {/* 타이틀 */}

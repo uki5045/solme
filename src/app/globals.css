@@ -56,7 +56,21 @@
 
 html, body {
   overflow-x: hidden;
+}
+
+/* 스크롤 스냅 컨테이너 */
+.snap-container {
   scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scroll-snap-stop: always; /* 섹션 건너뛰기 방지 */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 스크롤 스냅 아이템 */
+.snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 
 body {

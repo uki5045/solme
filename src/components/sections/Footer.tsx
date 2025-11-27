@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="snap-start bg-[var(--navy-900)] border-t border-white/10 py-12">
+    <footer className="snap-section bg-[var(--navy-900)] border-t border-white/10 py-12">
       <div className="max-w-4xl mx-auto px-6">
         {/* 로고 */}
         <div className="text-center mb-8">

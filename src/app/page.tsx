@@ -11,7 +11,10 @@ import FloatingCTA from "@/components/ui/FloatingCTA";
 export default function Home() {
   return (
     <GSAPProvider>
-      <main className="h-screen overflow-y-auto snap-y snap-mandatory">
+      {/* 모바일 상태표시줄 영역 그라디언트 오버레이 */}
+      <div className="fixed top-0 left-0 right-0 h-12 bg-gradient-to-b from-[var(--navy-900)] to-transparent z-50 pointer-events-none md:hidden" />
+
+      <main className="h-screen overflow-y-auto snap-container">
         <Hero />
         <Problem />
         <Solution />
