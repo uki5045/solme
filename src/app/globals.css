@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+:root {
+  /* Primary - Navy */
+  --navy-900: #0a1628;
+  --navy-800: #1a2744;
+  --navy-700: #243a5e;
+  --navy-600: #2e4a78;
+  --navy-500: #3d5a80;
+
+  /* Accent - Warm Gold */
+  --gold-500: #d4a853;
+  --gold-400: #e5be6a;
+
+  /* Danger - Problem 섹션용 */
+  --danger-600: #dc2626;
+  --danger-500: #ef4444;
+  --danger-400: #f87171;
+
+  /* Success - Solution 섹션용 */
+  --trust-600: #0d9488;
+  --trust-500: #14b8a6;
+  --trust-400: #2dd4bf;
+
+  /* Neutral */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+}
+
+@theme inline {
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-navy-600: var(--navy-600);
+  --color-navy-500: var(--navy-500);
+  --color-gold-500: var(--gold-500);
+  --color-gold-400: var(--gold-400);
+  --color-danger-600: var(--danger-600);
+  --color-danger-500: var(--danger-500);
+  --color-danger-400: var(--danger-400);
+  --color-trust-600: var(--trust-600);
+  --color-trust-500: var(--trust-500);
+  --color-trust-400: var(--trust-400);
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Montserrat', sans-serif;
+}
+
+html, body {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--navy-900);
+  color: var(--text-primary);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Problem 섹션 그라데이션 */
+.problem-gradient {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(220, 38, 38, 0.15) 0%,
+      rgba(239, 68, 68, 0.08) 50%,
+      rgba(248, 113, 113, 0.05) 100%
+    );
+  background-size: 200% 200%;
+  animation: gradientMove 8s ease-in-out infinite;
+}
+
+/* Solution 섹션 그라데이션 */
+.solution-gradient {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(13, 148, 136, 0.15) 0%,
+      rgba(20, 184, 166, 0.08) 50%,
+      rgba(45, 212, 191, 0.05) 100%
+    );
+  background-size: 200% 200%;
+  animation: gradientMove 8s ease-in-out infinite;
+}
+
+@keyframes gradientMove {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 글로우 텍스트 효과 */
+.glow-text {
+  color: var(--trust-400);
+  text-shadow:
+    0 0 10px rgba(45, 212, 191, 0.5),
+    0 0 20px rgba(45, 212, 191, 0.3),
+    0 0 30px rgba(45, 212, 191, 0.2);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(45, 212, 191, 0.5),
+      0 0 20px rgba(45, 212, 191, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(45, 212, 191, 0.7),
+      0 0 40px rgba(45, 212, 191, 0.5);
+  }
+}
+
+/* 스크롤 유도 애니메이션 */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(26, 39, 68, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
