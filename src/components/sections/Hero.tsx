@@ -181,7 +181,7 @@ export default function Hero({ startAnimation = false }: HeroProps) {
           </div>
           <div
             ref={titleLine2Ref}
-            className="invisible text-[clamp(28px,7vw,64px)] font-bold text-white leading-tight tracking-tight mt-2"
+            className="invisible text-[clamp(27px,7vw,64px)] font-bold text-white leading-tight tracking-tight mt-2"
           >
             <span className="glow-text">쏠마린 캠핑카</span>가 함께합니다.
           </div>

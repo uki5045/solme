@@ -7,7 +7,25 @@ export const metadata: Metadata = {
     "매매업・정비업 정식 허가 업체. 중고 캠핑카, 카라반 매입, 판매, 위탁, 수리, 업그레이드까지. 2개월 무상 AS, 초저금리 할부 제공.",
   keywords:
     "중고캠핑카, 캠핑카매매, 카라반, 캠핑카수리, 캠핑카업그레이드, 옥천캠핑카, 쏠마린",
+  metadataBase: new URL("https://solmarine.kr"),
   openGraph: {
+    title: "쏠마린캠핑카 | 중고 캠핑카・카라반 전문",
+    description: "캠핑의 시작과 끝, 쏠마린 캠핑카가 함께합니다.",
+    url: "https://solmarine.kr",
+    siteName: "쏠마린캠핑카",
+    locale: "ko_KR",
+    type: "website",
+    images: [
+      {
+        url: "/images/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "쏠마린캠핑카 - 중고 캠핑카 전문 매매",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "쏠마린캠핑카 | 중고 캠핑카・카라반 전문",
     description: "캠핑의 시작과 끝, 쏠마린 캠핑카가 함께합니다.",
     images: ["/images/og-image.jpg"],

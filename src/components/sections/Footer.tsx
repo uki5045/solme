@@ -46,7 +46,7 @@ export default function Footer() {
 
         {/* Company Info */}
         <div className="glass-card p-4 rounded-2xl mb-8">
-          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs text-white/50 max-w-sm mx-auto">
+          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3.5 text-xs text-white/50 max-w-sm mx-auto">
             <span className="text-white/70">대표</span>
             <span>정은희</span>
             <span className="text-white/70">상호명</span>
