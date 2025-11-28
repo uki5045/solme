@@ -86,8 +86,8 @@ export default function VehicleCTA() {
         </h2>
 
         <p className="text-lg md:text-xl text-white/60 mb-10 max-w-xl mx-auto">
-          쏠마린 캠핑카의 엄선된 매물을 확인해 보세요.
-          <br className="hidden md:block" />
+          쏠마린 카페에서 매물을 확인해보세요.
+          <br />
           투명한 가격과 상세한 정보를 제공합니다.
         </p>
 
