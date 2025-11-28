@@ -92,6 +92,7 @@ export default function ContactInfo() {
 
   return (
     <section
+      id="contact-info"
       ref={sectionRef}
       className="snap-section flex items-center justify-center bg-black py-16"
     >
