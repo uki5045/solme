@@ -20,14 +20,14 @@ const problemCards = [
     titleLight: "할부 금리와 조건,",
     titleBold: "꼼꼼히 확인해보셨나요?",
     description:
-      "정식 제휴된 업체만 '초 저금리 할부'\n혜택을 제공할 수 있습니다.",
+      "정식 제휴된 업체만 '저금리 할부'\n혜택을 제공할 수 있습니다.",
   },
   {
     number: "03",
     titleLight: "캠핑카 구매 후 AS,",
     titleBold: "확실하게 보장되나요?",
     description:
-      "캠핑카 구매 후 AS를 항상 미루는 업체,\n그 피해자가 나일 수 있습니다.",
+      "구매 후 AS를 항상 미루는 업체,\n그 피해자가 나일 수 있습니다.",
   },
 ];
 

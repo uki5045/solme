@@ -80,12 +80,14 @@ export default function VehicleCTA() {
         </span>
 
         <h2 className="text-[clamp(28px,5vw,48px)] font-bold text-white mb-6 leading-tight">
-          쏠마린 카페에서
+          지금 판매 중인 차량이
           <br />
-          <span className="glow-text">매물을 확인해보세요</span>
+          <span className="glow-text">궁금하신가요?</span>
         </h2>
 
         <p className="text-lg md:text-xl text-white/60 mb-10 max-w-xl mx-auto">
+          쏠마린 캠핑카의 엄선된 매물을 확인해 보세요.
+          <br className="hidden md:block" />
           투명한 가격과 상세한 정보를 제공합니다.
         </p>
 
