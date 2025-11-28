@@ -45,9 +45,17 @@ export default function Footer() {
         </div>
 
         {/* Company Info */}
-        <div className="text-center text-sm text-white/40 mb-8 space-y-1">
-          <p>주식회사 쏠마린캠핑카 · 대표 정은희</p>
-          <p>충북 옥천군 옥천읍 남곡길 8 · 사업자등록번호 208-87-02831</p>
+        <div className="glass-card p-6 rounded-2xl mb-8">
+          <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm text-white/50 max-w-md mx-auto">
+            <span className="text-white/70">대표</span>
+            <span>정은희</span>
+            <span className="text-white/70">상호명</span>
+            <span>주식회사 쏠마린캠핑카</span>
+            <span className="text-white/70">주소</span>
+            <span>충청북도 옥천군 옥천읍 남곡길 8</span>
+            <span className="text-white/70">사업자등록번호</span>
+            <span>208‑87‑02831</span>
+          </div>
         </div>
 
         {/* Copyright */}
