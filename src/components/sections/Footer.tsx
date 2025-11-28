@@ -61,7 +61,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="text-center">
           <p className="text-sm text-white/30">
-            © 2024 쏠마린캠핑카. All rights reserved.
+            © 2022 쏠마린캠핑카. All rights reserved.
           </p>
         </div>
       </div>
