@@ -4,9 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function VehicleCTA() {
   return (
-    <section className="snap-section h-screen flex items-center justify-center relative overflow-hidden">
-      {/* 배경 */}
-      <div className="absolute inset-0 bg-[var(--navy-900)]" />
+    <section className="snap-section h-screen flex items-center justify-center relative overflow-hidden bg-[var(--navy-900)]">
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
         <h2 className="text-[24px] md:text-[32px] font-bold text-white mb-4">
@@ -17,7 +15,7 @@ export default function VehicleCTA() {
         </p>
 
         <a
-          href="https://cafe.naver.com/f-e/cafes/30842004/menus/94?page=1&viewType=I&size=20"
+          href="https://m.cafe.naver.com/ca-fe/web/cafes/30842004/menus/94"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--trust-500)] hover:bg-[var(--trust-600)] text-white font-semibold text-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[var(--trust-500)]/30"

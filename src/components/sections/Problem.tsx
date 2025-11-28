@@ -23,14 +23,14 @@ const problemCards = [
 
 export default function Problem() {
   return (
-    <>
+    <div className="relative">
       {/* 타이틀 섹션 */}
-      <section className="snap-section h-screen flex items-center justify-center relative overflow-hidden bg-[var(--navy-900)]">
-        <div className="text-left px-6">
+      <section className="snap-section h-screen flex items-center justify-center relative bg-[var(--navy-900)]">
+        <div className="relative z-10 text-left px-6">
           <h2 className="text-[33px] md:text-[40px] leading-tight">
             <span className="font-light">중고 캠핑카</span>
             <br />
-            <span className="font-bold text-[var(--danger-400)]">
+            <span className="font-bold danger-glow-text">
               정말 믿고 사도 될까요?
             </span>{" "}
             <span className="text-3xl md:text-5xl">🤔</span>
@@ -42,7 +42,7 @@ export default function Problem() {
       {problemCards.map((card, index) => (
         <section
           key={index}
-          className="snap-section h-screen flex items-center relative overflow-hidden bg-[var(--navy-900)]"
+          className="snap-section h-screen flex items-center relative bg-[var(--navy-900)]"
         >
           <div className="w-full max-w-4xl mx-auto px-6 text-left">
             <h3 className="text-[30px] md:text-[36px] text-white mb-6 leading-snug">
@@ -56,6 +56,6 @@ export default function Problem() {
           </div>
         </section>
       ))}
-    </>
+    </div>
   );
 }
