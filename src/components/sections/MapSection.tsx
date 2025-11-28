@@ -105,23 +105,24 @@ export default function MapSection() {
 
       <div ref={contentRef} className="relative z-10 max-w-5xl mx-auto px-6 w-full gpu-accelerated">
         {/* Map Container with Glass Effect */}
-        <div className="relative p-4 rounded-3xl">
-          {/* Background Gradient (behind map) */}
+        <div className="relative">
+          {/* Background Gradient (behind everything) */}
           <div
-            className="absolute inset-0 rounded-3xl"
+            className="absolute -inset-3 rounded-3xl blur-xl opacity-60"
             style={{
-              background: 'linear-gradient(135deg, rgba(0, 113, 227, 0.3) 0%, rgba(59, 160, 255, 0.2) 50%, rgba(0, 200, 255, 0.15) 100%)',
+              background: 'linear-gradient(135deg, rgba(0, 113, 227, 0.5) 0%, rgba(59, 160, 255, 0.4) 50%, rgba(0, 200, 255, 0.3) 100%)',
             }}
           />
-          {/* Glass border effect */}
-          <div className="absolute inset-0 rounded-3xl border border-white/20" />
 
-          {/* Map */}
-          <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden">
-            <div
-              ref={mapRef}
-              className="w-full h-full"
-            />
+          {/* Glass Frame */}
+          <div className="relative p-[2px] rounded-2xl bg-gradient-to-b from-white/30 to-white/10">
+            {/* Map */}
+            <div className="w-full h-[300px] md:h-[400px] rounded-[14px] overflow-hidden">
+              <div
+                ref={mapRef}
+                className="w-full h-full"
+              />
+            </div>
           </div>
         </div>
 
