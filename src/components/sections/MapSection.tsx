@@ -105,27 +105,22 @@ export default function MapSection() {
 
       <div ref={contentRef} className="relative z-10 max-w-5xl mx-auto px-6 w-full gpu-accelerated">
         {/* Map Container with Glass Effect */}
-        <div className="relative p-1 rounded-3xl bg-gradient-to-b from-white/20 to-white/5">
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/10 to-transparent opacity-50" />
-          <div className="relative w-full h-[300px] md:h-[400px] rounded-[20px] overflow-hidden">
-            {/* Map */}
+        <div className="relative p-4 rounded-3xl">
+          {/* Background Gradient (behind map) */}
+          <div
+            className="absolute inset-0 rounded-3xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(0, 113, 227, 0.3) 0%, rgba(59, 160, 255, 0.2) 50%, rgba(0, 200, 255, 0.15) 100%)',
+            }}
+          />
+          {/* Glass border effect */}
+          <div className="absolute inset-0 rounded-3xl border border-white/20" />
+
+          {/* Map */}
+          <div className="relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden">
             <div
               ref={mapRef}
               className="w-full h-full"
-            />
-            {/* Glass Highlight Overlay */}
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, transparent 80%, rgba(255,255,255,0.05) 100%)',
-              }}
-            />
-            {/* Top shine */}
-            <div
-              className="absolute top-0 left-0 right-0 h-24 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, transparent 100%)',
-              }}
             />
           </div>
         </div>
