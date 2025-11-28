@@ -107,10 +107,25 @@ export default function MapSection() {
         {/* Map Container with Glass Effect */}
         <div className="relative p-1 rounded-3xl bg-gradient-to-b from-white/20 to-white/5">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/10 to-transparent opacity-50" />
-          <div className="relative w-full h-[300px] md:h-[400px] rounded-[20px] overflow-hidden backdrop-blur-sm">
+          <div className="relative w-full h-[300px] md:h-[400px] rounded-[20px] overflow-hidden">
+            {/* Map */}
             <div
               ref={mapRef}
               className="w-full h-full"
+            />
+            {/* Glass Highlight Overlay */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, transparent 80%, rgba(255,255,255,0.05) 100%)',
+              }}
+            />
+            {/* Top shine */}
+            <div
+              className="absolute top-0 left-0 right-0 h-24 pointer-events-none"
+              style={{
+                background: 'linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, transparent 100%)',
+              }}
             />
           </div>
         </div>
