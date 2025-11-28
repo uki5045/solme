@@ -11,23 +11,23 @@ const problemCards = [
   {
     number: "01",
     titleLight: "지금 보시는 그 업체,",
-    titleBold: "매매업 허가를 받은 곳인가요?",
+    titleBold: "매매업 허가 업체인가요?",
     description:
-      "무등록 업체에서 캠핑카를 구매하면 법적 보호를 받을 수 없습니다.",
+      "무등록 업체에서 캠핑카 구매 시\n법적 보호를 받을 수 없습니다.",
   },
   {
     number: "02",
     titleLight: "할부 금리와 조건,",
     titleBold: "꼼꼼히 확인해보셨나요?",
     description:
-      "정식 제휴된 업체만 '저금리 할부' 혜택을 제공할 수 있습니다.",
+      "정식 제휴된 업체만 '초 저금리 할부'\n혜택을 제공할 수 있습니다.",
   },
   {
     number: "03",
     titleLight: "캠핑카 구매 후 AS,",
     titleBold: "확실하게 보장되나요?",
     description:
-      "보증 기간과 범위가 계약서에 명시되어 있지 않다면 아무런 책임을 물을 수 없습니다.",
+      "캠핑카 구매 후 AS를 항상 미루는 업체,\n그 피해자가 나일 수 있습니다.",
   },
 ];
 
@@ -220,12 +220,12 @@ function ProblemCard({ card, index }: { card: typeof problemCards[0]; index: num
           <span className="text-[var(--danger-400)] text-sm font-medium tracking-wider mb-4 block">
             POINT {card.number}
           </span>
-          <h3 className="text-[clamp(24px,4vw,36px)] text-white mb-6 leading-snug">
+          <h3 className="text-[clamp(22px,4vw,36px)] text-white mb-6 leading-snug">
             <span className="font-light">{card.titleLight}</span>
             <br />
             <span className="font-bold">{card.titleBold}</span>
           </h3>
-          <p className="text-lg md:text-xl text-white/60 leading-relaxed">
+          <p className="text-lg md:text-xl text-white/60 leading-relaxed whitespace-pre-line">
             {card.description}
           </p>
         </div>

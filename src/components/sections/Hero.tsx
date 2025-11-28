@@ -175,13 +175,13 @@ export default function Hero({ startAnimation = false }: HeroProps) {
         <h1 className="mb-10">
           <div
             ref={titleLine1Ref}
-            className="invisible text-[clamp(28px,6vw,56px)] font-light text-white/90 leading-tight tracking-tight"
+            className="invisible text-[clamp(26px,6vw,56px)] font-light text-white/90 leading-tight tracking-tight"
           >
             캠핑의 시작과 끝,
           </div>
           <div
             ref={titleLine2Ref}
-            className="invisible text-[clamp(32px,7vw,64px)] font-bold text-white leading-tight tracking-tight mt-2"
+            className="invisible text-[clamp(28px,7vw,64px)] font-bold text-white leading-tight tracking-tight mt-2"
           >
             <span className="glow-text">쏠마린 캠핑카</span>가 함께합니다.
           </div>

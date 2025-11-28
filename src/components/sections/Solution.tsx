@@ -19,14 +19,14 @@ const solutionCards = [
     icon: Banknote,
     title: "대형 캐피탈 제휴",
     description:
-      "국내 메이저 금융사와의 공식 제휴로 고객님께 맞는 최저 금리를 투명하게 적용해 드립니다.",
+      "금융사와의 공식 제휴로 고객님께 맞는\n최저 금리를 투명하게 적용해 드립니다.",
     gradient: "from-emerald-500/20 to-green-500/20",
   },
   {
     icon: Wrench,
     title: "전문 정비 시스템",
     description:
-      "캠핑카 구매 후 2개월 무상 AS 제공하며,\n출고 전 점검부터 AS, 업그레이드까지 직접 꼼꼼하게 작업합니다.",
+      "2개월 무상 AS 제공, 출고 전 점검부터\nAS 업그레이드까지 꼼꼼하게 작업합니다.",
     gradient: "from-violet-500/20 to-purple-500/20",
   },
 ];

@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   MessageCircle,
   Car,
-  FileText,
   Settings,
   PartyPopper,
 } from "lucide-react";
@@ -17,31 +16,25 @@ const steps = [
   {
     step: 1,
     title: "상담",
-    description: "전화 또는 방문 상담으로\n원하시는 차량 조건을 말씀해 주세요.",
+    description: "연중무휴 전화 상담\n방문 상담이 가능합니다.",
     Icon: MessageCircle,
   },
   {
     step: 2,
     title: "차량 선택",
-    description: "재고 차량 중 조건에 맞는\n차량을 직접 확인하고 선택하세요.",
+    description: "입고된 차량 중 조건에 맞는\n차량을 직접 확인하세요.",
     Icon: Car,
   },
   {
     step: 3,
-    title: "계약",
-    description: "투명한 가격과 조건으로\n정식 계약서를 작성합니다.",
-    Icon: FileText,
-  },
-  {
-    step: 4,
     title: "출고 전 점검",
-    description: "자체 정비소에서\n꼼꼼한 점검과 정비를 진행합니다.",
+    description: "쏠마린 자체 정비소에서\n점검과 정비를 진행합니다.",
     Icon: Settings,
   },
   {
-    step: 5,
+    step: 4,
     title: "출고",
-    description: "2개월 무상 AS와 함께\n새로운 캠핑 라이프를 시작하세요!",
+    description: "2개월 무상 AS와 함께\n캠핑 라이프를 즐겨보세요!",
     Icon: PartyPopper,
   },
 ];
