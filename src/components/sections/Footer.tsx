@@ -1,27 +1,26 @@
 "use client";
 
-import Link from "next/link";
-
 export default function Footer() {
   return (
-    <footer className="snap-section bg-[var(--navy-900)] border-t border-white/10 py-12">
-      <div className="max-w-4xl mx-auto px-6">
-        {/* 로고 */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white">쏠마린캠핑카</h2>
+    <footer className="snap-section bg-black border-t border-white/5 py-16 flex flex-col justify-center">
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Logo & Brand */}
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-2">쏠마린캠핑카</h2>
+          <p className="text-white/40 text-sm">Camping Life Partner</p>
         </div>
 
-        {/* SNS 링크 */}
-        <div className="flex justify-center gap-6 mb-8">
+        {/* Social Links */}
+        <div className="flex justify-center gap-4 mb-10">
           <a
             href="https://cafe.naver.com/solmarinecamping"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all group"
             aria-label="네이버 카페"
           >
             <svg
-              className="w-5 h-5 text-white"
+              className="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
@@ -32,11 +31,11 @@ export default function Footer() {
             href="https://www.instagram.com/solmarinecamping/"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center hover:bg-white/10 transition-all group"
             aria-label="인스타그램"
           >
             <svg
-              className="w-5 h-5 text-white"
+              className="w-5 h-5 text-white/60 group-hover:text-white transition-colors"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
@@ -45,17 +44,25 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* 회사 정보 */}
-        <div className="text-center text-sm text-white/50 space-y-1 mb-6">
-          <p>상호명: 주식회사 쏠마린캠핑카</p>
-          <p>대표: 정은희</p>
-          <p>주소: 충청북도 옥천군 옥천읍 남곡길 8</p>
-          <p>사업자등록번호: 208-87-02831</p>
+        {/* Company Info */}
+        <div className="glass-card p-6 rounded-2xl mb-8">
+          <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm text-white/50 max-w-md mx-auto">
+            <span className="text-white/70">대표</span>
+            <span>정은희</span>
+            <span className="text-white/70">상호명</span>
+            <span>주식회사 쏠마린캠핑카</span>
+            <span className="text-white/70">주소</span>
+            <span>충청북도 옥천군 옥천읍 남곡길 8</span>
+            <span className="text-white/70">사업자등록번호</span>
+            <span>208‑87‑02831</span>
+          </div>
         </div>
 
         {/* Copyright */}
-        <div className="text-center text-sm text-white/30">
-          © 2024 쏠마린캠핑카. All rights reserved.
+        <div className="text-center">
+          <p className="text-sm text-white/30">
+            © 2024 쏠마린캠핑카. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

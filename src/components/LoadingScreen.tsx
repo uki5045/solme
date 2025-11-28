@@ -10,33 +10,51 @@ export default function LoadingScreen({
   onLoadingComplete,
 }: LoadingScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const fadeTimer = setTimeout(() => {
+      setFadeOut(true);
+    }, 1200);
+
+    const completeTimer = setTimeout(() => {
       setIsVisible(false);
       onLoadingComplete();
-    }, 1500);
+    }, 1600);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(completeTimer);
+    };
   }, [onLoadingComplete]);
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--navy-900)]">
-      <div className="flex gap-2">
-        <span
-          className="w-2 h-2 bg-[var(--trust-500)] rounded-full animate-bounce"
-          style={{ animationDelay: "0ms" }}
-        />
-        <span
-          className="w-2 h-2 bg-[var(--trust-500)] rounded-full animate-bounce"
-          style={{ animationDelay: "150ms" }}
-        />
-        <span
-          className="w-2 h-2 bg-[var(--trust-500)] rounded-full animate-bounce"
-          style={{ animationDelay: "300ms" }}
-        />
+    <div
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black transition-opacity duration-500 ${
+        fadeOut ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      {/* Logo */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-white tracking-tight">
+          쏠마린캠핑카
+        </h1>
+      </div>
+
+      {/* Loading indicator */}
+      <div className="flex gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-2 h-2 bg-[var(--accent-500)] rounded-full animate-pulse"
+            style={{
+              animationDelay: `${i * 200}ms`,
+              animationDuration: "1s",
+            }}
+          />
+        ))}
       </div>
     </div>
   );
