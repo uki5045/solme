@@ -86,7 +86,7 @@ export default function MapSection() {
       className="snap-section flex items-center justify-center bg-black py-16"
     >
       <Script
-        src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=nfjs63g5g7"
+        src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=nfjs63g5g7"
         strategy="lazyOnload"
         onLoad={() => setMapLoaded(true)}
       />
