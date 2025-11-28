@@ -1,16 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Script from "next/script";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Navigation, Phone } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    naver: any;
+  }
+}
+
 export default function MapSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
     const checkReducedMotion = () => {
@@ -50,23 +60,43 @@ export default function MapSection() {
     return () => ctx.revert();
   }, [prefersReducedMotion]);
 
+  // 네이버 지도 초기화
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || !window.naver) return;
+
+    const map = new window.naver.maps.Map(mapRef.current, {
+      center: new window.naver.maps.LatLng(36.301824, 127.598027),
+      zoom: 17,
+      minZoom: 8,
+      zoomControl: true,
+      zoomControlOptions: {
+        position: window.naver.maps.Position.TOP_RIGHT,
+      },
+    });
+
+    new window.naver.maps.Marker({
+      position: new window.naver.maps.LatLng(36.301824, 127.598027),
+      map: map,
+    });
+  }, [mapLoaded]);
+
   return (
     <section
       ref={sectionRef}
       className="snap-section flex items-center justify-center bg-black py-16"
     >
+      <Script
+        src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=nfjs63g5g7"
+        strategy="lazyOnload"
+        onLoad={() => setMapLoaded(true)}
+      />
+
       <div ref={contentRef} className="max-w-5xl mx-auto px-6 w-full gpu-accelerated">
         {/* Map */}
         <div className="w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden glass-card">
-          <iframe
-            src="https://map.naver.com/p/entry/place/1000695224?c=15.00,0,0,0,dh"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="쏠마린캠핑카 네이버 지도"
+          <div
+            ref={mapRef}
+            className="w-full h-full"
           />
         </div>
 
