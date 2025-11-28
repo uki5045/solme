@@ -45,8 +45,8 @@ export default function Footer() {
         </div>
 
         {/* Company Info */}
-        <div className="glass-card p-6 rounded-2xl mb-8">
-          <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm text-white/50 max-w-md mx-auto">
+        <div className="glass-card p-4 rounded-2xl mb-8">
+          <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs text-white/50 max-w-sm mx-auto">
             <span className="text-white/70">대표</span>
             <span>정은희</span>
             <span className="text-white/70">상호명</span>
@@ -60,7 +60,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="text-center">
-          <p className="text-sm text-white/30">
+          <p className="text-xs text-white/30">
             © 2022 쏠마린캠핑카. All rights reserved.
           </p>
         </div>
