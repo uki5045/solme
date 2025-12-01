@@ -14,6 +14,7 @@ const problemCards = [
     titleBold: "매매업 허가 업체인가요?",
     description:
       "무등록 업체에서 캠핑카 구매 시\n법적 보호를 받을 수 없습니다.",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 59, 48, 0.12) 0%, transparent 70%)",
   },
   {
     number: "02",
@@ -21,6 +22,7 @@ const problemCards = [
     titleBold: "꼼꼼히 확인해보셨나요?",
     description:
       "정식 제휴된 업체만 '저금리 할부'\n혜택을 제공할 수 있습니다.",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 99, 71, 0.12) 0%, transparent 70%)",
   },
   {
     number: "03",
@@ -28,6 +30,7 @@ const problemCards = [
     titleBold: "확실하게 보장되나요?",
     description:
       "구매 후 AS를 항상 미루는 업체,\n그 피해자가 나일 수 있습니다.",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(220, 53, 69, 0.12) 0%, transparent 70%)",
   },
 ];
 
@@ -102,9 +105,9 @@ function ProblemTitle() {
 
       {/* Danger Ambient Glow */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] opacity-20 pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] opacity-25 pointer-events-none"
         style={{
-          background: "radial-gradient(circle at center, rgba(255, 59, 48, 0.3) 0%, transparent 50%)",
+          background: "radial-gradient(ellipse at center, rgba(255, 59, 48, 0.25) 0%, transparent 60%)",
         }}
       />
 
@@ -128,7 +131,6 @@ function ProblemTitle() {
 function ProblemCard({ card, index }: { card: typeof problemCards[0]; index: number }) {
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const numberRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -147,27 +149,6 @@ function ProblemCard({ card, index }: { card: typeof problemCards[0]; index: num
     if (!mainElement) return;
 
     const ctx = gsap.context(() => {
-      // Number scale animation
-      gsap.fromTo(
-        numberRef.current,
-        {
-          scale: 3,
-          opacity: 0,
-        },
-        {
-          scale: 1,
-          opacity: 0.1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            scroller: mainElement,
-            start: "top center",
-            end: "center center",
-            scrub: 1.2,
-          },
-        }
-      );
-
       // Content reveal
       gsap.fromTo(
         contentRef.current,
@@ -200,14 +181,11 @@ function ProblemCard({ card, index }: { card: typeof problemCards[0]; index: num
       ref={sectionRef}
       className="snap-section flex items-center relative bg-black overflow-hidden"
     >
-      {/* Large Background Number */}
+      {/* Card Background Gradient */}
       <div
-        ref={numberRef}
-        className="absolute right-[10%] top-1/2 -translate-y-1/2 text-[clamp(200px,40vw,400px)] font-bold text-white/5 select-none pointer-events-none gpu-accelerated"
-        style={{ fontFamily: "var(--font-display, 'Montserrat')" }}
-      >
-        {card.number}
-      </div>
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: card.bgGradient }}
+      />
 
       {/* Subtle danger line */}
       <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[var(--danger-500)] to-transparent opacity-50" />

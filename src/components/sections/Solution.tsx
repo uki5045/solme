@@ -14,6 +14,7 @@ const solutionCards = [
     description:
       "매매업과 정비업 모두 정식 등록된 업체로\n안전하게 거래하실 수 있습니다.",
     gradient: "from-blue-500/20 to-cyan-500/20",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0, 113, 227, 0.12) 0%, transparent 70%)",
   },
   {
     icon: Banknote,
@@ -21,6 +22,7 @@ const solutionCards = [
     description:
       "금융사와의 공식 제휴로 고객님께 맞는\n최저 금리를 투명하게 적용해 드립니다.",
     gradient: "from-emerald-500/20 to-green-500/20",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(16, 185, 129, 0.12) 0%, transparent 70%)",
   },
   {
     icon: Wrench,
@@ -28,6 +30,7 @@ const solutionCards = [
     description:
       "2개월 무상 AS 제공, 출고 전 점검부터\nAS 업그레이드까지 꼼꼼하게 작업합니다.",
     gradient: "from-violet-500/20 to-purple-500/20",
+    bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 70%)",
   },
 ];
 
@@ -92,11 +95,11 @@ function SolutionTitle() {
       ref={sectionRef}
       className="snap-section flex items-center justify-center relative bg-black overflow-hidden"
     >
-      {/* Success Ambient Glow */}
+      {/* Success Ambient Glow - 영역 축소 */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] opacity-20 pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[80%] opacity-25 pointer-events-none"
         style={{
-          background: "radial-gradient(circle at center, rgba(0, 113, 227, 0.3) 0%, transparent 50%)",
+          background: "radial-gradient(ellipse at center, rgba(0, 113, 227, 0.25) 0%, transparent 60%)",
         }}
       />
 
@@ -196,6 +199,12 @@ function SolutionCard({ card, index }: { card: typeof solutionCards[0]; index: n
       ref={sectionRef}
       className="snap-section flex items-center relative bg-black overflow-hidden"
     >
+      {/* Card Background Gradient */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: card.bgGradient }}
+      />
+
       {/* Gradient accent line */}
       <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-transparent via-[var(--accent-500)] to-transparent opacity-50" />
 

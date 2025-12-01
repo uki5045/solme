@@ -36,8 +36,8 @@ src/
 ├── components/
 │   ├── animations/         # GSAP Provider
 │   ├── sections/           # 페이지 섹션 (Hero, Problem, Solution 등)
-│   ├── ui/                 # 재사용 UI 컴포넌트
-│   ├── PageWrapper.tsx     # 스크롤 관리 컨테이너
+│   ├── ui/                 # 재사용 UI 컴포넌트 (FloatingCTA, TopNavButtons 등)
+│   ├── PageWrapper.tsx     # Lenis 스크롤 관리 컨테이너
 │   └── LoadingScreen.tsx   # 로딩 애니메이션
 ├── hooks/                  # 커스텀 훅
 └── lib/
@@ -80,17 +80,23 @@ NEXT_PUBLIC_KAKAO_MAP_APP_KEY=
 ## Design System
 
 **Colors** (CSS 변수):
-- Primary: `--apple-blue` (#0071e3)
-- Success: `--trust-teal` (#32d74b)
-- Danger: `--danger-red` (#ff453a)
-- Dark: `--apple-black` (#000000)
+- Primary Blue: `--accent-500` (#0071e3), `--accent-400` (#2997ff)
+- Success/Trust: `--trust-500` (#32d74b), `--trust-400` (#4ade80)
+- Danger: `--danger-500` (#ff453a), `--danger-400` (#ff6961)
+- Dark Base: `--black-900` (#000000), `--black-800` (#0a0a0a)
+- Text: `--text-primary` (#f5f5f7), `--text-muted` (#86868b)
 
-**Glass Effect**: `.glass-card` 클래스
-**Gradient Text**: `.glow-text` 클래스
+**Utility Classes**:
+- `.glass-card`: 반투명 blur 카드 (glassmorphism)
+- `.glow-text`: 블루-그린 그라데이션 텍스트 + drop-shadow
+- `.danger-glow-text`: 빨간색 글로우 텍스트
+- `.gradient-border`: 그라데이션 테두리 효과
+- `.btn-premium`: Apple 스타일 CTA 버튼
 
 ## Mobile Considerations
 
 - iOS Safari: `ignoreMobileResize: true` (주소창 리사이즈)
-- Safe Area: `env(safe-area-inset-*)` 적용
-- Touch: over-scroll 방지 처리됨
+- Safe Area: `env(safe-area-inset-*)` → `--sat`, `--sar`, `--sab`, `--sal` 변수
+- Touch: `overscroll-behavior: none` 적용
 - 최소 터치 영역: 44px
+- Scroll Snap: `.snap-container`, `.snap-section` 클래스
