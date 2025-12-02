@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: "/images/og-image2.jpg",
         width: 1200,
         height: 630,
         alt: "쏠마린캠핑카 - 중고 캠핑카 전문 매매",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "쏠마린캠핑카 | 중고 캠핑카・카라반 전문",
     description: "캠핑의 시작과 끝, 쏠마린 캠핑카가 함께합니다.",
-    images: ["/images/og-image.jpg"],
+    images: ["/images/og-image2.jpg"],
   },
 };
 
