@@ -9,6 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const problemCards = [
   {
+    id: "license-check",
     number: "01",
     titleLight: "지금 보시는 그 업체,",
     titleBold: "매매업 허가 업체인가요?",
@@ -17,6 +18,7 @@ const problemCards = [
     bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 59, 48, 0.12) 0%, transparent 70%)",
   },
   {
+    id: "finance-check",
     number: "02",
     titleLight: "할부 금리와 조건,",
     titleBold: "꼼꼼히 확인해보셨나요?",
@@ -25,6 +27,7 @@ const problemCards = [
     bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(255, 99, 71, 0.12) 0%, transparent 70%)",
   },
   {
+    id: "as-check",
     number: "03",
     titleLight: "캠핑카 구매 후 AS,",
     titleBold: "확실하게 보장되나요?",
@@ -217,7 +220,7 @@ export default function Problem() {
     <div className="relative">
       <ProblemTitle />
       {problemCards.map((card, index) => (
-        <ProblemCard key={index} card={card} index={index} />
+        <ProblemCard key={card.id} card={card} index={index} />
       ))}
     </div>
   );

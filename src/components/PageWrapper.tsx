@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import LoadingScreen from "@/components/LoadingScreen";
 import Hero from "@/components/sections/Hero";
 import Problem from "@/components/sections/Problem";
@@ -8,9 +9,17 @@ import Solution from "@/components/sections/Solution";
 import Process from "@/components/sections/Process";
 import VehicleCTA from "@/components/sections/VehicleCTA";
 import ContactInfo from "@/components/sections/ContactInfo";
-import MapSection from "@/components/sections/MapSection";
-import Footer from "@/components/sections/Footer";
 import TopNavButtons from "@/components/ui/TopNavButtons";
+
+// Below-fold 컴포넌트 지연 로딩
+const MapSection = dynamic(() => import("@/components/sections/MapSection"), {
+  ssr: false,
+  loading: () => <div className="h-screen bg-black" />,
+});
+
+const Footer = dynamic(() => import("@/components/sections/Footer"), {
+  ssr: false,
+});
 
 export default function PageWrapper() {
   const [isLoadingComplete, setIsLoadingComplete] = useState(false);

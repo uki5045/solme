@@ -24,10 +24,10 @@
   --navy-600: #2d2d2d;
   --navy-500: #424245;
 
-  /* Accent - Apple Blue */
-  --accent-600: #0055b3;
-  --accent-500: #0071e3;
-  --accent-400: #2997ff;
+  /* Accent - Blue */
+  --accent-600: oklch(35% 0.199 265.638);
+  --accent-500: oklch(42.4% 0.199 265.638);
+  --accent-400: oklch(50% 0.199 265.638);
 
   /* Premium Gold */
   --gold-500: #f5d742;
@@ -104,6 +104,9 @@
   --color-trust-600: var(--trust-600);
   --color-trust-500: var(--trust-500);
   --color-trust-400: var(--trust-400);
+  --color-accent-600: var(--accent-600);
+  --color-accent-500: var(--accent-500);
+  --color-accent-400: var(--accent-400);
   --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Montserrat', sans-serif;
 
@@ -194,48 +197,6 @@
   --radius-lg: var(--radius);
 
   --radius-xl: calc(var(--radius) + 4px);
-
-  @keyframes moveHorizontal {
-    0% {
-      transform: translateX(-50%) translateY(-10%);
-    }
-
-    50% {
-      transform: translateX(50%) translateY(10%);
-    }
-
-    100% {
-      transform: translateX(-50%) translateY(-10%);
-    }
-  }
-
-  @keyframes moveInCircle {
-    0% {
-      transform: rotate(0deg);
-    }
-
-    50% {
-      transform: rotate(180deg);
-    }
-
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes moveVertical {
-    0% {
-      transform: translateY(-50%);
-    }
-
-    50% {
-      transform: translateY(50%);
-    }
-
-    100% {
-      transform: translateY(-50%);
-    }
-  }
 }
 
 /* iOS Safari Address Bar & Status Bar Bug Prevention */
@@ -578,4 +539,55 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+/* Spec Page Form Styles */
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-size: 16px;
+  font-family: inherit;
+  outline: 1px solid #e5e7eb;
+  outline-offset: -1px;
+  transition: outline 0.2s, background 0.2s;
+}
+
+.form-input:focus {
+  outline: 2px solid var(--accent-500);
+  outline-offset: -2px;
+  background: #fff;
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+.form-input-error {
+  outline: 1px solid #f87171;
+  outline-offset: -1px;
+}
+
+.form-input-error:focus {
+  outline: 2px solid #f87171;
+  outline-offset: -2px;
+}
+
+/* Toast Animation */
+@keyframes spec-fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-spec-fade-in {
+  animation: spec-fade-in 0.3s ease-out;
 }

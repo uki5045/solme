@@ -21,6 +21,10 @@ export default function MapSection() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState(false);
+
+  // 네이버 지도 API 키 확인
+  const naverMapClientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID;
 
   useEffect(() => {
     const checkReducedMotion = () => {
@@ -85,11 +89,14 @@ export default function MapSection() {
       ref={sectionRef}
       className="snap-section flex items-center justify-center relative overflow-hidden bg-black py-16"
     >
-      <Script
-        src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=nfjs63g5g7"
-        strategy="lazyOnload"
-        onLoad={() => setMapLoaded(true)}
-      />
+      {naverMapClientId && (
+        <Script
+          src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${naverMapClientId}`}
+          strategy="lazyOnload"
+          onLoad={() => setMapLoaded(true)}
+          onError={() => setMapError(true)}
+        />
+      )}
 
       {/* Gradient Background */}
       <div
@@ -118,10 +125,26 @@ export default function MapSection() {
           <div className="relative p-[2px] rounded-2xl bg-gradient-to-b from-white/30 to-white/10">
             {/* Map */}
             <div className="w-full h-[300px] md:h-[400px] rounded-[14px] overflow-hidden">
-              <div
-                ref={mapRef}
-                className="w-full h-full"
-              />
+              {!naverMapClientId || mapError ? (
+                <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white/60">
+                  <div className="text-center">
+                    <p className="text-sm">지도를 불러올 수 없습니다</p>
+                    <a
+                      href="https://map.naver.com/p/entry/place/1000695224"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent-400)] text-sm hover:underline"
+                    >
+                      네이버 지도에서 보기 →
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  ref={mapRef}
+                  className="w-full h-full"
+                />
+              )}
             </div>
           </div>
         </div>

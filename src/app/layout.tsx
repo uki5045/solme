@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SessionProvider from "@/components/providers/SessionProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         alt: "쏠마린캠핑카 - 중고 캠핑카 전문 매매",
+        type: "image/jpeg",
       },
     ],
   },
@@ -61,7 +63,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+          <SessionProvider>{children}</SessionProvider>
+        </body>
     </html>
   );
 }

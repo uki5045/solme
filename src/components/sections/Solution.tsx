@@ -9,6 +9,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const solutionCards = [
   {
+    id: "license",
     icon: Shield,
     title: "국토부 정식 허가 업체",
     description:
@@ -17,6 +18,7 @@ const solutionCards = [
     bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(0, 113, 227, 0.12) 0%, transparent 70%)",
   },
   {
+    id: "finance",
     icon: Banknote,
     title: "대형 캐피탈 제휴",
     description:
@@ -25,6 +27,7 @@ const solutionCards = [
     bgGradient: "radial-gradient(ellipse 70% 50% at 50% 50%, rgba(16, 185, 129, 0.12) 0%, transparent 70%)",
   },
   {
+    id: "maintenance",
     icon: Wrench,
     title: "전문 정비 시스템",
     description:
@@ -238,7 +241,7 @@ export default function Solution() {
     <div className="relative">
       <SolutionTitle />
       {solutionCards.map((card, index) => (
-        <SolutionCard key={index} card={card} index={index} />
+        <SolutionCard key={card.id} card={card} index={index} />
       ))}
     </div>
   );
