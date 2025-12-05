@@ -227,6 +227,8 @@ function TabsContent({
       transition={{
         duration: 0.15,
       }}
+      // @ts-expect-error inert is valid HTML attribute
+      inert={isActive ? undefined : ''}
       {...props}
     >
       {children}
