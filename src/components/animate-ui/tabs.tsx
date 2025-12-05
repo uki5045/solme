@@ -219,7 +219,7 @@ function TabsContent({
       role="tabpanel"
       data-slot="tabs-content"
       data-value={value}
-      className={cn('w-full', className)}
+      className={cn('w-full', isActive ? 'visible' : 'invisible', className)}
       initial={{ opacity: 1 }}
       animate={{
         opacity: isActive ? 1 : 0,
@@ -227,8 +227,8 @@ function TabsContent({
       transition={{
         duration: 0.15,
       }}
-      // @ts-expect-error inert is valid HTML attribute
-      inert={isActive ? undefined : ''}
+      aria-hidden={!isActive}
+      tabIndex={isActive ? undefined : -1}
       {...props}
     >
       {children}
