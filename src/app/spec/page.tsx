@@ -1501,7 +1501,7 @@ function CamperForm({
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" inputMode="numeric" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: onlyNumbers(e.target.value) })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
+          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
       <FormRow label="태양광 (W)">
