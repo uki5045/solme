@@ -182,6 +182,8 @@ export default function SpecPage() {
   const [vehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  // 미리보기 전용 데이터 (카드 클릭 시 사용)
+  const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
 
@@ -275,7 +277,7 @@ export default function SpecPage() {
     fetchVehicleList();
   }, []);
 
-  // 카드 클릭 시 데이터 로드 후 옵션표 모달 표시
+  // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
     setFormLoading(true);
     try {
@@ -290,17 +292,13 @@ export default function SpecPage() {
       const { data } = result;
       const savedData = data.data as Record<string, string>;
 
+      // 미리보기 데이터만 설정 (폼에는 넣지 않음)
       if (vehicleType === 'camper') {
-        setCamperData({ ...initialCamperData, ...savedData });
-        setMainTab('camper');
+        setPreviewData({ type: 'camper', data: { ...initialCamperData, ...savedData } });
       } else {
-        setCaravanData({ ...initialCaravanData, ...savedData });
-        setMainTab('caravan');
+        setPreviewData({ type: 'caravan', data: { ...initialCaravanData, ...savedData } });
       }
-
-      setStep(1);
-      setFieldErrors({});
-      // 옵션표 모달 바로 표시
+      // 옵션표 모달 표시
       setShowResult(true);
     } catch (e) {
       console.error('데이터 로드 오류:', e);
@@ -308,6 +306,25 @@ export default function SpecPage() {
     } finally {
       setFormLoading(false);
     }
+  };
+
+  // 미리보기에서 수정 버튼 클릭 시 폼에 데이터 적용
+  const applyPreviewToForm = () => {
+    if (!previewData) return;
+
+    if (previewData.type === 'camper') {
+      setCamperData(previewData.data as CamperData);
+      setMainTab('camper');
+    } else {
+      setCaravanData(previewData.data as CaravanData);
+      setMainTab('caravan');
+    }
+
+    setStep(1);
+    setFieldErrors({});
+    setShowResult(false);
+    setPreviewData(null);
+    showToast('데이터를 불러왔습니다. 수정 후 완료를 눌러주세요.', 'success');
   };
 
   const formatNumber = (value: string): string => {
@@ -1142,13 +1159,26 @@ export default function SpecPage() {
 
       {/* 결과 모달 */}
       <AnimatePresence>
-        {showResult && (
+        {showResult && (() => {
+          // 미리보기 데이터가 있으면 사용, 없으면 현재 폼 데이터 사용
+          const isPreviewMode = !!previewData;
+          const displayType = previewData?.type || mainTab;
+          const displayCamperData = (previewData?.type === 'camper' ? previewData.data : camperData) as CamperData;
+          const displayCaravanData = (previewData?.type === 'caravan' ? previewData.data : caravanData) as CaravanData;
+          const displayYearData = displayType === 'camper' ? parseYear(displayCamperData.year) : parseYear(displayCaravanData.year);
+
+          return (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5"
-            onClick={(e) => e.target === e.currentTarget && setShowResult(false)}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowResult(false);
+                setPreviewData(null);
+              }
+            }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -1158,119 +1188,139 @@ export default function SpecPage() {
             >
               <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4">
                 <button
-                  onClick={() => setShowResult(false)}
+                  onClick={() => {
+                    if (isPreviewMode) {
+                      applyPreviewToForm();
+                    } else {
+                      setShowResult(false);
+                    }
+                  }}
                   className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50"
                 >
                   ← 수정
                 </button>
                 <button
-                  onClick={() => downloadPNG(mainTab)}
+                  onClick={() => downloadPNG(displayType)}
                   className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
                 >
                   PNG 다운로드
                 </button>
-                <button
-                  onClick={handleComplete}
-                  className="rounded-xl bg-accent-500 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-accent-600"
-                >
-                  완료
-                </button>
+                {!isPreviewMode && (
+                  <button
+                    onClick={handleComplete}
+                    className="rounded-xl bg-accent-500 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-accent-600"
+                  >
+                    완료
+                  </button>
+                )}
+                {isPreviewMode && (
+                  <button
+                    onClick={() => {
+                      setShowResult(false);
+                      setPreviewData(null);
+                    }}
+                    className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50"
+                  >
+                    닫기
+                  </button>
+                )}
               </div>
               <div className="overflow-auto p-5">
-                {mainTab === 'camper' ? (
+                {displayType === 'camper' ? (
                   <div ref={camperResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
                     <div className="grid grid-cols-2 gap-5 mb-5">
                       <ResultCard title="차량 정보" icon={InformationCircleIcon}>
-                        <ResultRow label="베이스 차량" value={camperData.baseVehicle || '-'} />
-                        <ResultRow label="제조사" value={camperData.manufacturer || '-'} />
-                        <ResultRow label="모델명" value={camperData.modelName || '-'} />
-                        <ResultRow label="차종" value={camperData.vehicleType || '-'} />
+                        <ResultRow label="베이스 차량" value={displayCamperData.baseVehicle || '-'} />
+                        <ResultRow label="제조사" value={displayCamperData.manufacturer || '-'} />
+                        <ResultRow label="모델명" value={displayCamperData.modelName || '-'} />
+                        <ResultRow label="차종" value={displayCamperData.vehicleType || '-'} />
                         <ResultRow
-                          label={yearData.label}
-                          value={camperData.hasStructureMod && camperData.structureModDate
-                            ? `${yearData.value}(${parseFirstReg(camperData.structureModDate)})`
-                            : yearData.value}
+                          label={displayYearData.label}
+                          value={displayCamperData.hasStructureMod && displayCamperData.structureModDate
+                            ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})`
+                            : displayYearData.value}
                         />
-                        <ResultRow label="최초등록일" value={parseFirstReg(camperData.firstReg)} />
+                        <ResultRow label="최초등록일" value={parseFirstReg(displayCamperData.firstReg)} />
                         <ResultRow
                           label="주행거리"
-                          value={camperData.mileage ? `${formatNumber(camperData.mileage)} km` : '-'}
+                          value={displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}
                         />
-                        <ResultRow label="차고지 증명" value={camperData.garageProof || '-'} />
-                        <ResultRow label="필요 면허" value={camperData.license || '-'} />
+                        <ResultRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
+                        <ResultRow label="필요 면허" value={displayCamperData.license || '-'} />
                       </ResultCard>
                       <ResultCard title="제원" icon={ChatBubbleBottomCenterTextIcon}>
-                        <ResultRow label="길이" value={camperData.length ? `${formatNumber(camperData.length)} mm` : '-'} />
-                        <ResultRow label="너비" value={camperData.width ? `${formatNumber(camperData.width)} mm` : '-'} />
-                        <ResultRow label="높이" value={camperData.height ? `${formatNumber(camperData.height)} mm` : '-'} />
-                        <ResultRow label="배기량" value={camperData.displacement ? `${formatNumber(camperData.displacement)} cc` : '-'} />
-                        <ResultRow label="연료" value={camperData.fuel || '-'} />
-                        <ResultRow label="변속기" value={camperData.transmission || '-'} />
-                        <ResultRow label="연비" value={camperData.fuelEconomy ? `등록증상 ${camperData.fuelEconomy} km/L` : '-'} />
-                        <ResultRow label="승차정원" value={camperData.seatCapacity ? `${camperData.seatCapacity} 인` : '-'} />
-                        <ResultRow label="현금 영수증" value={camperData.cashReceipt || '-'} />
+                        <ResultRow label="길이" value={displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'} />
+                        <ResultRow label="너비" value={displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'} />
+                        <ResultRow label="높이" value={displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'} />
+                        <ResultRow label="배기량" value={displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'} />
+                        <ResultRow label="연료" value={displayCamperData.fuel || '-'} />
+                        <ResultRow label="변속기" value={displayCamperData.transmission || '-'} />
+                        <ResultRow label="연비" value={displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'} />
+                        <ResultRow label="승차정원" value={displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'} />
+                        <ResultRow label="현금 영수증" value={displayCamperData.cashReceipt || '-'} />
                       </ResultCard>
                     </div>
                     <OptionCard>
                       <OptionRow label="전 기">
                         {formatElectric([
-                          { label: camperData.batteryType || '배터리', value: camperData.batteryCapacity, unit: 'Ah' },
-                          { label: '태양광', value: camperData.solar, unit: 'W' },
-                          { label: '인버터', value: camperData.inverter, unit: 'Kw' },
+                          { label: displayCamperData.batteryType || '배터리', value: displayCamperData.batteryCapacity, unit: 'Ah' },
+                          { label: '태양광', value: displayCamperData.solar, unit: 'W' },
+                          { label: '인버터', value: displayCamperData.inverter, unit: 'Kw' },
                         ])}
                       </OptionRow>
-                      <OptionRow label="외 관">{formatOptions(camperData.exterior)}</OptionRow>
-                      <OptionRow label="내 장">{formatOptions(camperData.interior)}</OptionRow>
-                      <OptionRow label="편 의">{formatOptions(camperData.convenience)}</OptionRow>
+                      <OptionRow label="외 관">{formatOptions(displayCamperData.exterior)}</OptionRow>
+                      <OptionRow label="내 장">{formatOptions(displayCamperData.interior)}</OptionRow>
+                      <OptionRow label="편 의">{formatOptions(displayCamperData.convenience)}</OptionRow>
                     </OptionCard>
                   </div>
                 ) : (
                   <div ref={caravanResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
                     <div className="grid grid-cols-2 gap-5 mb-5">
                       <ResultCard title="차량 정보" icon={InformationCircleIcon}>
-                        <ResultRow label="제조사" value={caravanData.manufacturer || '-'} />
-                        <ResultRow label="모델명" value={caravanData.modelName || '-'} />
-                        <ResultRow label="차종" value={caravanData.vehicleType || '-'} />
+                        <ResultRow label="제조사" value={displayCaravanData.manufacturer || '-'} />
+                        <ResultRow label="모델명" value={displayCaravanData.modelName || '-'} />
+                        <ResultRow label="차종" value={displayCaravanData.vehicleType || '-'} />
                         <ResultRow
-                          label={yearData.label}
-                          value={caravanData.hasStructureMod && caravanData.structureModDate
-                            ? `${yearData.value}(${parseFirstReg(caravanData.structureModDate)})`
-                            : yearData.value}
+                          label={displayYearData.label}
+                          value={displayCaravanData.hasStructureMod && displayCaravanData.structureModDate
+                            ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})`
+                            : displayYearData.value}
                         />
-                        <ResultRow label="최초등록일" value={parseFirstReg(caravanData.firstReg)} />
-                        <ResultRow label="차고지 증명" value={caravanData.garageProof || '-'} />
-                        <ResultRow label="취침인원" value={caravanData.sleepCapacity ? `${caravanData.sleepCapacity} 인` : '-'} />
-                        <ResultRow label="현금 영수증" value={caravanData.cashReceipt || '-'} />
+                        <ResultRow label="최초등록일" value={parseFirstReg(displayCaravanData.firstReg)} />
+                        <ResultRow label="차고지 증명" value={displayCaravanData.garageProof || '-'} />
+                        <ResultRow label="취침인원" value={displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'} />
+                        <ResultRow label="현금 영수증" value={displayCaravanData.cashReceipt || '-'} />
                       </ResultCard>
                       <ResultCard title="제원" icon={ChatBubbleBottomCenterTextIcon}>
-                        <ResultRow label="외부 길이" value={caravanData.extLength ? `${formatNumber(caravanData.extLength)} mm` : '-'} />
-                        <ResultRow label="내부 길이" value={caravanData.intLength ? `${formatNumber(caravanData.intLength)} mm` : '-'} />
-                        <ResultRow label="외부 너비" value={caravanData.extWidth ? `${formatNumber(caravanData.extWidth)} mm` : '-'} />
-                        <ResultRow label="내부 너비" value={caravanData.intWidth ? `${formatNumber(caravanData.intWidth)} mm` : '-'} />
-                        <ResultRow label="외부 높이" value={caravanData.extHeight ? `${formatNumber(caravanData.extHeight)} mm` : '-'} />
-                        <ResultRow label="내부 높이" value={caravanData.intHeight ? `${formatNumber(caravanData.intHeight)} mm` : '-'} />
-                        <ResultRow label="공차 중량" value={caravanData.curbWeight ? `${formatNumber(caravanData.curbWeight)} kg` : '-'} />
-                        <ResultRow label="최대 허용 중량" value={caravanData.maxWeight ? `${formatNumber(caravanData.maxWeight)} kg` : '-'} />
+                        <ResultRow label="외부 길이" value={displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'} />
+                        <ResultRow label="내부 길이" value={displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'} />
+                        <ResultRow label="외부 너비" value={displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'} />
+                        <ResultRow label="내부 너비" value={displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'} />
+                        <ResultRow label="외부 높이" value={displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'} />
+                        <ResultRow label="내부 높이" value={displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'} />
+                        <ResultRow label="공차 중량" value={displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'} />
+                        <ResultRow label="최대 허용 중량" value={displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'} />
                       </ResultCard>
                     </div>
                     <OptionCard>
                       <OptionRow label="전 기">
                         {formatElectric([
-                          { label: caravanData.batteryType || '배터리', value: caravanData.batteryCapacity, unit: 'Ah' },
-                          { label: '태양광', value: caravanData.solar, unit: 'W' },
-                          { label: '인버터', value: caravanData.inverter, unit: 'Kw' },
+                          { label: displayCaravanData.batteryType || '배터리', value: displayCaravanData.batteryCapacity, unit: 'Ah' },
+                          { label: '태양광', value: displayCaravanData.solar, unit: 'W' },
+                          { label: '인버터', value: displayCaravanData.inverter, unit: 'Kw' },
                         ])}
                       </OptionRow>
-                      <OptionRow label="외 관">{formatOptions(caravanData.exterior)}</OptionRow>
-                      <OptionRow label="내 장">{formatOptions(caravanData.interior)}</OptionRow>
-                      <OptionRow label="편 의">{formatOptions(caravanData.convenience)}</OptionRow>
+                      <OptionRow label="외 관">{formatOptions(displayCaravanData.exterior)}</OptionRow>
+                      <OptionRow label="내 장">{formatOptions(displayCaravanData.interior)}</OptionRow>
+                      <OptionRow label="편 의">{formatOptions(displayCaravanData.convenience)}</OptionRow>
                     </OptionCard>
                   </div>
                 )}
               </div>
             </motion.div>
           </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
