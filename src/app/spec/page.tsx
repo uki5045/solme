@@ -184,6 +184,8 @@ export default function SpecPage() {
   // 미리보기 전용 상태 (카드 클릭 시 사용)
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
+  const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
+  const leftSectionRef = useRef<HTMLDivElement>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
 
@@ -215,6 +217,18 @@ export default function SpecPage() {
       localStorage.removeItem('spec-camper');
       localStorage.removeItem('spec-caravan');
     }
+  }, []);
+
+  // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
+  useEffect(() => {
+    if (!leftSectionRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setLeftSectionHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(leftSectionRef.current);
+    return () => observer.disconnect();
   }, []);
 
   // localStorage 저장 debounce (500ms)
@@ -736,9 +750,9 @@ export default function SpecPage() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-5">
+      <div className="mx-auto flex max-w-7xl items-start gap-6 px-4 py-5">
         {/* 좌측: 폼 영역 */}
-        <div className="relative w-full max-w-[520px] shrink-0">
+        <div ref={leftSectionRef} className="relative w-full max-w-[520px] shrink-0">
 
         {/* 삭제 확인 모달 */}
         <AnimatePresence>
@@ -1056,7 +1070,7 @@ export default function SpecPage() {
         {/* 좌측 폼 영역 끝 */}
 
         {/* 우측: 차량 카드 리스트 */}
-        <div className="relative hidden flex-1 self-start lg:block">
+        <div className="relative hidden flex-1 lg:block">
           {/* 미리보기 로딩 오버레이 */}
           {previewLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm">
@@ -1067,7 +1081,10 @@ export default function SpecPage() {
             </div>
           )}
           <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-            <div className="max-h-[calc(100vh-140px)] overflow-y-auto p-4">
+            <div
+              className="overflow-y-auto p-4"
+              style={{ maxHeight: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
+            >
             {listLoading ? (
               <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
             ) : vehicleList.length === 0 ? (
