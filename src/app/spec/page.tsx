@@ -921,9 +921,28 @@ export default function SpecPage() {
               <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
             ) : vehicleList.length === 0 ? (
               <div className="py-8 text-center text-sm text-gray-400">저장된 차량이 없습니다</div>
-            ) : (
+            ) : (() => {
+              const filteredList = vehicleList.filter((item) => {
+                if (!searchQuery.trim()) return true;
+                const query = searchQuery.trim().toLowerCase();
+                return (
+                  item.vehicleNumber.toLowerCase().includes(query) ||
+                  (item.modelName && item.modelName.toLowerCase().includes(query)) ||
+                  (item.manufacturer && item.manufacturer.toLowerCase().includes(query))
+                );
+              });
+
+              if (filteredList.length === 0) {
+                return (
+                  <div className="py-8 text-center text-sm text-gray-400">
+                    &apos;{searchQuery}&apos; 검색 결과가 없습니다
+                  </div>
+                );
+              }
+
+              return (
               <div className="grid grid-cols-3 gap-3">
-                {vehicleList.map((item) => (
+                {filteredList.map((item) => (
                   <div
                     key={item.id}
                     role="button"
@@ -964,7 +983,8 @@ export default function SpecPage() {
                   </div>
                 ))}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
