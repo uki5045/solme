@@ -1473,8 +1473,8 @@ function CamperForm({
         <div className="mt-4 grid grid-cols-2 gap-3">
           <FormRow label="연료">
             <FormSelect value={data.fuel} onChange={(e) => setData({ ...data, fuel: e.target.value })}>
-              <option value="휘발유">휘발유</option>
               <option value="경유">경유</option>
+              <option value="휘발유">휘발유</option>
               <option value="LPG">LPG</option>
             </FormSelect>
           </FormRow>
