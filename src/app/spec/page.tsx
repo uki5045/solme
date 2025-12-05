@@ -668,16 +668,10 @@ export default function SpecPage() {
     }
   };
 
-  // PNG 다운로드 (중복 확인 후)
+  // PNG 다운로드 (저장 없이 다운로드만)
   const downloadPNG = async (type: MainTab) => {
-    const data = type === 'camper' ? camperData : caravanData;
-    if (data.vehicleNumber.trim()) {
-      await saveWithDuplicateCheck(type, () => {
-        performDownloadPNG(type);
-      });
-    } else {
-      await performDownloadPNG(type);
-    }
+    setShowResult(false);
+    await performDownloadPNG(type);
   };
 
   const yearData = mainTab === 'camper' ? parseYear(camperData.year) : parseYear(caravanData.year);
