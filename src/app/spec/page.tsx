@@ -361,14 +361,19 @@ export default function SpecPage() {
     if (validItems.length === 0) return '-';
     return (
       <div className="flex flex-wrap gap-1.5">
-        {validItems.map((item, index) => (
-          <span
-            key={index}
-            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm"
-          >
-            <span className="text-gray-700">{item.label} {formatNumber(item.value)} {item.unit}</span>
-          </span>
-        ))}
+        {validItems.map((item, index) => {
+          // 숫자와 소수점만 포함된 경우에만 포맷 적용
+          const isNumberOnly = /^[\d.]+$/.test(item.value.trim());
+          const displayValue = isNumberOnly ? formatNumber(item.value) : item.value;
+          return (
+            <span
+              key={index}
+              className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm"
+            >
+              <span className="text-gray-700">{item.label} {displayValue} {item.unit}</span>
+            </span>
+          );
+        })}
       </div>
     );
   };
