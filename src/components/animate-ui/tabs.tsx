@@ -219,16 +219,21 @@ function TabsContent({
       role="tabpanel"
       data-slot="tabs-content"
       data-value={value}
-      className={cn('w-full', isActive ? 'visible' : 'invisible', className)}
-      initial={{ opacity: 1 }}
+      className={cn('w-full', className)}
+      initial={{ filter: 'blur(0px)', opacity: 1 }}
       animate={{
-        opacity: isActive ? 1 : 0,
+        filter: isActive ? 'blur(0px)' : 'blur(4px)',
+        opacity: isActive ? 1 : 0.5,
+        scale: isActive ? 1 : 0.98,
       }}
       transition={{
-        duration: 0.15,
+        type: 'spring',
+        stiffness: 150,
+        damping: 20,
       }}
       aria-hidden={!isActive}
-      tabIndex={isActive ? undefined : -1}
+      // inert: 비활성 탭 내부 요소 Tab 키 접근 차단
+      inert={!isActive || undefined}
       {...props}
     >
       {children}

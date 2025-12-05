@@ -1070,7 +1070,10 @@ export default function SpecPage() {
         {/* 좌측 폼 영역 끝 */}
 
         {/* 우측: 차량 카드 리스트 */}
-        <div className="relative hidden flex-1 lg:block">
+        <div
+          className="relative hidden flex-1 lg:block"
+          style={{ height: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
+        >
           {/* 미리보기 로딩 오버레이 */}
           {previewLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm">
@@ -1080,10 +1083,9 @@ export default function SpecPage() {
               </div>
             </div>
           )}
-          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+          <div className="h-full overflow-hidden rounded-xl bg-white shadow-sm">
             <div
-              className="overflow-y-auto p-4"
-              style={{ maxHeight: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
+              className="h-full overflow-y-auto p-4"
             >
             {listLoading ? (
               <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
