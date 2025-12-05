@@ -44,15 +44,21 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    // 카드에 표시할 정보만 추출
-    const list = (data || []).map((item) => ({
-      id: item.id,
-      vehicleNumber: item.vehicle_number,
-      vehicleType: item.vehicle_type,
-      modelName: item.data?.modelName || '',
-      manufacturer: item.data?.manufacturer || '',
-      updatedAt: item.updated_at,
-    }));
+    // 카드에 표시할 정보만 추출 (옵션 미입력 여부 포함)
+    const list = (data || []).map((item) => {
+      const d = item.data || {};
+      // 옵션 3개(외관, 내장, 편의)가 모두 비어있으면 불완전
+      const isIncomplete = !d.exterior?.trim() && !d.interior?.trim() && !d.convenience?.trim();
+      return {
+        id: item.id,
+        vehicleNumber: item.vehicle_number,
+        vehicleType: item.vehicle_type,
+        modelName: d.modelName || '',
+        manufacturer: d.manufacturer || '',
+        updatedAt: item.updated_at,
+        isIncomplete,
+      };
+    });
 
     return NextResponse.json({ data: list });
   } catch {

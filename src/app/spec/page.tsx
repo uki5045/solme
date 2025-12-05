@@ -163,6 +163,7 @@ interface VehicleListItem {
   modelName: string;
   manufacturer: string;
   updatedAt: string;
+  isIncomplete: boolean;
 }
 
 export default function SpecPage() {
@@ -582,6 +583,8 @@ export default function SpecPage() {
   // 완료 버튼 - 중복 확인 후 저장
   const handleComplete = async () => {
     const data = mainTab === 'camper' ? camperData : caravanData;
+    // 먼저 결과 모달 닫기
+    setShowResult(false);
     if (data.vehicleNumber.trim()) {
       await saveWithDuplicateCheck(mainTab, resetAfterSave);
     } else {
@@ -1073,6 +1076,14 @@ export default function SpecPage() {
                   >
                     <div className="mb-1 flex items-center gap-2">
                       <span className="text-sm font-bold text-gray-900">{item.vehicleNumber}</span>
+                      {item.isIncomplete && (
+                        <span
+                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-white"
+                          title="옵션 미입력"
+                        >
+                          !
+                        </span>
+                      )}
                       <span className={`ml-auto rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
                         {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
                       </span>
