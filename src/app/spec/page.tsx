@@ -275,7 +275,7 @@ export default function SpecPage() {
     fetchVehicleList();
   }, []);
 
-  // 카드 클릭 시 데이터 로드
+  // 카드 클릭 시 데이터 로드 후 옵션표 모달 표시
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
     setFormLoading(true);
     try {
@@ -300,7 +300,8 @@ export default function SpecPage() {
 
       setStep(1);
       setFieldErrors({});
-      showToast(`${vehicleType === 'camper' ? '캠핑카' : '카라반'} 데이터를 불러왔습니다.`, 'success');
+      // 옵션표 모달 바로 표시
+      setShowResult(true);
     } catch (e) {
       console.error('데이터 로드 오류:', e);
       showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
