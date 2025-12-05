@@ -220,16 +220,12 @@ function TabsContent({
       data-slot="tabs-content"
       data-value={value}
       className={cn('w-full', className)}
-      initial={{ filter: 'blur(0px)', opacity: 1 }}
+      initial={{ opacity: 1 }}
       animate={{
-        filter: isActive ? 'blur(0px)' : 'blur(4px)',
-        opacity: isActive ? 1 : 0.5,
-        scale: isActive ? 1 : 0.98,
+        opacity: isActive ? 1 : 0,
       }}
       transition={{
-        type: 'spring',
-        stiffness: 150,
-        damping: 20,
+        duration: 0.15,
       }}
       {...props}
     >
