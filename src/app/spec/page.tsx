@@ -182,7 +182,8 @@ export default function SpecPage() {
   const [vehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  // 미리보기 전용 데이터 (카드 클릭 시 사용)
+  // 미리보기 전용 상태 (카드 클릭 시 사용)
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
@@ -279,7 +280,7 @@ export default function SpecPage() {
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
-    setFormLoading(true);
+    setPreviewLoading(true);
     try {
       const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
       const result = await response.json();
@@ -304,7 +305,7 @@ export default function SpecPage() {
       console.error('데이터 로드 오류:', e);
       showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
     } finally {
-      setFormLoading(false);
+      setPreviewLoading(false);
     }
   };
 
@@ -1075,7 +1076,16 @@ export default function SpecPage() {
         {/* 좌측 폼 영역 끝 */}
 
         {/* 우측: 차량 카드 리스트 */}
-        <div className="hidden flex-1 lg:block">
+        <div className="relative hidden flex-1 lg:block">
+          {/* 미리보기 로딩 오버레이 */}
+          {previewLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
+                <span className="text-sm text-gray-500">불러오는 중...</span>
+              </div>
+            </div>
+          )}
           <div className="max-h-[calc(100vh-120px)] overflow-y-auto rounded-xl bg-white p-4 shadow-sm">
             {listLoading ? (
               <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
