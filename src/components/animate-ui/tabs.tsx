@@ -181,7 +181,7 @@ function TabsContents({
   return (
     <div
       data-slot="tabs-contents"
-      className={cn('overflow-hidden', className)}
+      className={cn('overflow-clip', className)}
       {...props}
     >
       <motion.div
