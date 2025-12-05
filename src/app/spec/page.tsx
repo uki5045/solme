@@ -97,7 +97,7 @@ const initialCamperData: CamperData = {
   width: '',
   height: '',
   displacement: '',
-  fuel: '휘발유',
+  fuel: '경유',
   transmission: '자동',
   fuelEconomy: '',
   seatCapacity: '',
