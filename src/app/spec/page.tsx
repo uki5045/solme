@@ -92,7 +92,7 @@ const initialCamperData: CamperData = {
   structureModDate: '',
   mileage: '',
   garageProof: '불필요',
-  license: '1종 보통면허',
+  license: '2종 보통면허',
   length: '',
   width: '',
   height: '',
@@ -151,6 +151,11 @@ const onlyDecimal = (value: string): string => {
   return cleaned;
 };
 
+// 숫자, 소수점, + 허용 (인버터용)
+const onlyDecimalPlus = (value: string): string => {
+  return value.replace(/[^\d.+]/g, '');
+};
+
 interface VehicleListItem {
   id: number;
   vehicleNumber: string;
@@ -170,6 +175,7 @@ export default function SpecPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; vehicleNumber: string }>({ show: false, vehicleNumber: '' });
   const [resetModal, setResetModal] = useState(false);
+  const [overwriteModal, setOverwriteModal] = useState<{ show: boolean; callback: (() => void) | null }>({ show: false, callback: null });
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'warning' }>({ show: false, message: '', type: 'success' });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [vehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
@@ -394,6 +400,17 @@ export default function SpecPage() {
     showToast('초기화되었습니다.', 'success');
   };
 
+  // 중복 확인 함수
+  const checkDuplicate = useCallback(async (vehicleNumber: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
+      return response.ok; // 200이면 존재함
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // 실제 저장 함수 (중복 확인 없이)
   const saveToDatabase = useCallback(async (type: MainTab): Promise<boolean> => {
     const data = type === 'camper' ? camperData : caravanData;
     const vehicleNumber = data.vehicleNumber.trim();
@@ -424,6 +441,30 @@ export default function SpecPage() {
       return false;
     }
   }, [camperData, caravanData]);
+
+  // 중복 확인 후 저장 (모달 표시)
+  const saveWithDuplicateCheck = useCallback(async (type: MainTab, onSuccess: () => void) => {
+    const data = type === 'camper' ? camperData : caravanData;
+    const vehicleNumber = data.vehicleNumber.trim();
+    if (!vehicleNumber) return;
+
+    const isDuplicate = await checkDuplicate(vehicleNumber);
+
+    if (isDuplicate) {
+      // 중복이면 모달 표시
+      setOverwriteModal({
+        show: true,
+        callback: async () => {
+          await saveToDatabase(type);
+          onSuccess();
+        },
+      });
+    } else {
+      // 중복 아니면 바로 저장
+      await saveToDatabase(type);
+      onSuccess();
+    }
+  }, [camperData, caravanData, checkDuplicate, saveToDatabase]);
 
   const searchByVehicleNumber = async () => {
     const query = searchQuery.trim();
@@ -523,14 +564,29 @@ export default function SpecPage() {
     }
   };
 
-  // 완료 버튼 - DB 저장 후 모달 닫기
+  // 완료 후 초기화 로직
+  const resetAfterSave = useCallback(() => {
+    showToast('저장되었습니다.', 'success');
+    if (mainTab === 'camper') {
+      setCamperData(initialCamperData);
+      localStorage.removeItem('spec-camper');
+    } else {
+      setCaravanData(initialCaravanData);
+      localStorage.removeItem('spec-caravan');
+    }
+    setStep(1);
+    setFieldErrors({});
+    setShowResult(false);
+  }, [mainTab]);
+
+  // 완료 버튼 - 중복 확인 후 저장
   const handleComplete = async () => {
     const data = mainTab === 'camper' ? camperData : caravanData;
     if (data.vehicleNumber.trim()) {
-      await saveToDatabase(mainTab);
-      showToast('저장되었습니다.', 'success');
+      await saveWithDuplicateCheck(mainTab, resetAfterSave);
+    } else {
+      resetAfterSave();
     }
-    setShowResult(false);
   };
 
   const goPrev = () => {
@@ -545,17 +601,12 @@ export default function SpecPage() {
     setFieldErrors({});
   };
 
-  const downloadPNG = async (type: MainTab) => {
+  // 실제 PNG 다운로드 로직
+  const performDownloadPNG = async (type: MainTab) => {
     const container = type === 'camper' ? camperResultRef.current : caravanResultRef.current;
     if (!container) {
       showToast('컨테이너를 찾을 수 없습니다.', 'error');
       return;
-    }
-
-    // PNG 다운로드 시에도 DB 저장
-    const data = type === 'camper' ? camperData : caravanData;
-    if (data.vehicleNumber.trim()) {
-      await saveToDatabase(type);
     }
 
     try {
@@ -604,25 +655,35 @@ export default function SpecPage() {
     }
   };
 
+  // PNG 다운로드 (중복 확인 후)
+  const downloadPNG = async (type: MainTab) => {
+    const data = type === 'camper' ? camperData : caravanData;
+    if (data.vehicleNumber.trim()) {
+      await saveWithDuplicateCheck(type, () => performDownloadPNG(type));
+    } else {
+      await performDownloadPNG(type);
+    }
+  };
+
   const yearData = mainTab === 'camper' ? parseYear(camperData.year) : parseYear(caravanData.year);
 
   return (
     <div className="min-h-dvh bg-gray-100 font-sans">
       {/* 헤더 */}
       <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-600">
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden text-sm font-medium text-gray-600 sm:block">
               {session?.user?.email}
             </span>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 transition-all hover:bg-gray-200"
+              className="shrink-0 whitespace-nowrap rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 transition-all hover:bg-gray-200"
             >
               로그아웃
             </button>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
             <label htmlFor="vehicle-search" className="sr-only">차량번호 검색</label>
             <input
               id="vehicle-search"
@@ -630,9 +691,9 @@ export default function SpecPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchByVehicleNumber()}
-              placeholder="차량번호 검색"
-              aria-label="차량번호 검색"
-              className="w-48 rounded-lg border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500"
+              placeholder="차량번호, 모델명, 제조사"
+              aria-label="차량번호, 모델명, 제조사 검색"
+              className="w-full max-w-48 rounded-lg border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500"
             />
             <button
               onClick={searchByVehicleNumber}
@@ -741,6 +802,59 @@ export default function SpecPage() {
                     className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
                   >
                     초기화
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 덮어쓰기 확인 모달 */}
+        <AnimatePresence>
+          {overwriteModal.show && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+              onClick={() => setOverwriteModal({ show: false, callback: null })}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mb-4 text-center">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+                    <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">중복 차량번호</h3>
+                  <p className="mt-2 text-base text-gray-500">
+                    이미 저장된 차량번호입니다.
+                    <br />기존 데이터를 <span className="font-semibold text-amber-600">덮어쓰시겠습니까?</span>
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setOverwriteModal({ show: false, callback: null })}
+                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (overwriteModal.callback) {
+                        overwriteModal.callback();
+                      }
+                      setOverwriteModal({ show: false, callback: null });
+                    }}
+                    className="flex-1 rounded-xl bg-amber-500 py-3 text-base font-semibold text-white transition-all hover:bg-amber-600"
+                  >
+                    덮어쓰기
                   </button>
                 </div>
               </motion.div>
@@ -1350,14 +1464,14 @@ function CamperForm({
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" inputMode="numeric" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: onlyNumbers(e.target.value) })} placeholder="용량 (Ah)" className="form-input min-w-0 flex-1" />
+          <input type="text" inputMode="numeric" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: onlyNumbers(e.target.value) })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
       <FormRow label="태양광 (W)">
-        <input type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="예: 180" className="form-input" />
+        <input type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="(용량) W" className="form-input" />
       </FormRow>
       <FormRow label="인버터 (Kw)">
-        <input type="text" inputMode="decimal" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimal(e.target.value) })} placeholder="예: 3" className="form-input" />
+        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="(용량) Kw" className="form-input" />
       </FormRow>
       <SectionTitle>옵션</SectionTitle>
       <FormRow label="외관" hint="스페이스 2번 → 자동으로 • 변환">
@@ -1538,17 +1652,17 @@ function CaravanForm({
         <FormRow label="내부 길이 (mm)">
           <input type="text" inputMode="numeric" value={data.intLength} onChange={(e) => setData({ ...data, intLength: onlyNumbers(e.target.value) })} placeholder="예: 5660" className="form-input" />
         </FormRow>
-        <FormRow label="외부 너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="예: 2320" className="form-input" />
-        </FormRow>
-        <FormRow label="내부 너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" className="form-input" />
-        </FormRow>
         <FormRow label="외부 높이 (mm)">
           <input type="text" inputMode="numeric" value={data.extHeight} onChange={(e) => setData({ ...data, extHeight: onlyNumbers(e.target.value) })} placeholder="예: 2650" className="form-input" />
         </FormRow>
         <FormRow label="내부 높이 (mm)">
           <input type="text" inputMode="numeric" value={data.intHeight} onChange={(e) => setData({ ...data, intHeight: onlyNumbers(e.target.value) })} placeholder="예: 1955" className="form-input" />
+        </FormRow>
+        <FormRow label="외부 너비 (mm)">
+          <input type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="예: 2320" className="form-input" />
+        </FormRow>
+        <FormRow label="내부 너비 (mm)">
+          <input type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" className="form-input" />
         </FormRow>
         <FormRow label="공차 중량 (kg)">
           <input type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="예: 1450" className="form-input" />
@@ -1569,14 +1683,14 @@ function CaravanForm({
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="용량 (Ah)" className="form-input min-w-0 flex-1" />
+          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
       <FormRow label="태양광 (W)">
-        <input type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="예: 180" className="form-input" />
+        <input type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="(용량) W" className="form-input" />
       </FormRow>
       <FormRow label="인버터 (Kw)">
-        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: e.target.value })} placeholder="예: 2" className="form-input" />
+        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="(용량) Kw" className="form-input" />
       </FormRow>
       <SectionTitle>옵션</SectionTitle>
       <FormRow label="외관" hint="스페이스 2번 → 자동으로 • 변환">
