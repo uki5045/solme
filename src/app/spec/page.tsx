@@ -570,9 +570,9 @@ export default function SpecPage() {
   };
 
   // 완료 후 초기화 로직
-  const resetAfterSave = useCallback(() => {
+  const resetAfterSave = useCallback((type: MainTab) => {
     showToast('저장되었습니다.', 'success');
-    if (mainTab === 'camper') {
+    if (type === 'camper') {
       setCamperData(initialCamperData);
       localStorage.removeItem('spec-camper');
     } else {
@@ -582,17 +582,18 @@ export default function SpecPage() {
     setStep(1);
     setFieldErrors({});
     setShowResult(false);
-  }, [mainTab]);
+  }, []);
 
   // 완료 버튼 - 중복 확인 후 저장
   const handleComplete = async () => {
     const data = mainTab === 'camper' ? camperData : caravanData;
+    const currentTab = mainTab; // 클로저 문제 방지
     // 먼저 결과 모달 닫기
     setShowResult(false);
     if (data.vehicleNumber.trim()) {
-      await saveWithDuplicateCheck(mainTab, resetAfterSave);
+      await saveWithDuplicateCheck(currentTab, () => resetAfterSave(currentTab));
     } else {
-      resetAfterSave();
+      resetAfterSave(currentTab);
     }
   };
 
@@ -666,7 +667,9 @@ export default function SpecPage() {
   const downloadPNG = async (type: MainTab) => {
     const data = type === 'camper' ? camperData : caravanData;
     if (data.vehicleNumber.trim()) {
-      await saveWithDuplicateCheck(type, () => performDownloadPNG(type));
+      await saveWithDuplicateCheck(type, () => {
+        performDownloadPNG(type);
+      });
     } else {
       await performDownloadPNG(type);
     }
