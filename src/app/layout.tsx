@@ -57,10 +57,13 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
+      data-color-scheme="light"
       className="bg-[#f3f4f6]"
-      style={{ backgroundColor: '#f3f4f6', colorScheme: 'light' }}
+      style={{ backgroundColor: '#f3f4f6', colorScheme: 'light only' }}
     >
       <head>
+        <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
         <meta name="format-detection" content="telephone=no" />
         <link
           rel="stylesheet"
