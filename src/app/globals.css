@@ -5,9 +5,7 @@
 
 /* iOS Safari Safe Area Variables */
 :root {
-  /* PWA 배경색 - CSS 로드 최우선 */
-  background-color: #f3f4f6 !important;
-  color-scheme: light !important;
+  color-scheme: light dark;
 
   --sat: env(safe-area-inset-top);
   --sar: env(safe-area-inset-right);
@@ -203,11 +201,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* iOS Safari Address Bar & Status Bar Bug Prevention */
-/* PWA 앱 배경색 - 다크모드에서도 라이트 강제 */
+/* iOS Safari Address Bar & Status Bar */
 html {
-  background-color: #f3f4f6 !important;
-  color-scheme: light !important;
+  background-color: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    background-color: #111111;
+  }
 }
 
 html,
@@ -221,16 +223,6 @@ body {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   position: relative;
-  background-color: #f3f4f6 !important;
-}
-
-/* 다크모드에서도 강제 적용 (PWA) */
-@media (prefers-color-scheme: dark) {
-  html,
-  body {
-    background-color: #f3f4f6 !important;
-    color-scheme: light !important;
-  }
 }
 
 

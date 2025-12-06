@@ -2,13 +2,16 @@ import type { Metadata, Viewport } from "next";
 import SessionProvider from "@/components/providers/SessionProvider";
 import "./globals.css";
 
-// 1. Viewport - themeColor 단일 고정 (media query 없음)
+// Viewport - 시스템 테마에 따라 themeColor 자동 변경
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f3f4f6", // 다크모드 무시, 단일 색상 강제
-  colorScheme: "light", // 라이트 모드만 사용
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f4f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#111111" },
+  ],
+  colorScheme: "light dark", // 시스템 테마 따라감
 };
 
 export const metadata: Metadata = {
@@ -18,10 +21,10 @@ export const metadata: Metadata = {
   keywords:
     "중고캠핑카, 캠핑카매매, 카라반, 캠핑카수리, 캠핑카업그레이드, 옥천캠핑카, 쏠마린",
   metadataBase: new URL("https://solmarine.kr"),
-  // 3. iOS Safari - black-translucent로 설정 (페이지 배경색 투과)
+  // iOS Safari - 투명 상태바 (페이지 배경색 투과)
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "쏠마린캠핑카",
   },
   openGraph: {
@@ -55,15 +58,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ko"
-      data-color-scheme="light"
-      className="bg-[#f3f4f6]"
-      style={{ backgroundColor: '#f3f4f6', colorScheme: 'light only' }}
-    >
+    <html lang="ko" className="bg-gray-100 dark:bg-[#111111]">
       <head>
-        <meta name="color-scheme" content="light only" />
-        <meta name="supported-color-schemes" content="light only" />
+        <meta name="color-scheme" content="light dark" />
         <meta name="format-detection" content="telephone=no" />
         <link
           rel="stylesheet"
@@ -76,10 +73,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body
-        className="bg-[#f3f4f6] antialiased"
-        style={{ backgroundColor: '#f3f4f6' }}
-      >
+      <body className="bg-gray-100 antialiased dark:bg-[#111111]">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

@@ -1,48 +1,21 @@
-/* iOS PWA 상태바 배경색 강제 - #f3f4f6 */
+/* Spec 페이지 - 시스템 테마 자동 적응 */
 
-/* :root 레벨 배경색 */
+/* 라이트 모드 (기본) */
 :root {
-  background-color: #f3f4f6 !important;
-  color-scheme: light !important;
+  --spec-bg: #f3f4f6;
+  --spec-card-bg: #ffffff;
+  --spec-text: #111827;
+  --spec-text-muted: #6b7280;
+  --spec-border: #e5e7eb;
 }
 
-/* html, body 배경색 강제 (다크모드 무시) */
-html,
-body {
-  background-color: #f3f4f6 !important;
-  color-scheme: light only !important;
-}
-
-/* 다크모드에서도 강제 적용 */
+/* 다크 모드 */
 @media (prefers-color-scheme: dark) {
-  :root,
-  html,
-  body {
-    background-color: #f3f4f6 !important;
-    color-scheme: light only !important;
-  }
-}
-
-/* PWA standalone 모드 */
-@media (display-mode: standalone) {
-  :root,
-  html,
-  body {
-    background-color: #f3f4f6 !important;
-    color-scheme: light only !important;
-  }
-}
-
-/* iOS safe area 배경 */
-@supports (padding-top: env(safe-area-inset-top)) {
-  html::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top);
-    background-color: #f3f4f6;
-    z-index: 9999;
+  :root {
+    --spec-bg: #111111;
+    --spec-card-bg: #1a1a1a;
+    --spec-text: #f3f4f6;
+    --spec-text-muted: #9ca3af;
+    --spec-border: #2a2a2a;
   }
 }

@@ -804,24 +804,23 @@ export default function SpecPage() {
 
   return (
     <>
-      {/* iOS PWA Safe Area 배경 - 상태바 영역 커버 */}
+      {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 */}
       <div
-        className="fixed inset-0 -z-10 bg-[#f3f4f6]"
-        style={{ backgroundColor: '#f3f4f6' }}
+        className="fixed inset-0 -z-10 bg-gray-100 dark:bg-[#111111]"
         aria-hidden="true"
       />
 
-      <div className="min-h-dvh bg-[#f3f4f6] font-sans">
+      <div className="min-h-dvh bg-gray-100 font-sans text-gray-900 dark:bg-[#111111] dark:text-gray-100">
       {/* 헤더 - PC만 */}
-      <div className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:block">
+      <div className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-md dark:border-gray-700 dark:bg-[#1a1a1a]/80 lg:block">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden text-sm font-medium text-gray-600 sm:block">
+            <span className="hidden text-sm font-medium text-gray-600 dark:text-gray-400 sm:block">
               {session?.user?.email}
             </span>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
-              className="shrink-0 whitespace-nowrap rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 transition-all hover:bg-gray-200"
+              className="shrink-0 whitespace-nowrap rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
             >
               로그아웃
             </button>
@@ -1534,11 +1533,11 @@ export default function SpecPage() {
       </AnimatePresence>
 
       {/* 하단 탭바 - 모바일 PWA */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-700 dark:bg-[#1a1a1a] lg:hidden">
         <div className="grid h-14 grid-cols-3">
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100"
+            className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
@@ -1547,8 +1546,8 @@ export default function SpecPage() {
           </button>
           <button
             onClick={() => setMobileView('form')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 ${
-              mobileView === 'form' ? 'text-accent-500' : 'text-gray-500'
+            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 dark:active:bg-gray-800 ${
+              mobileView === 'form' ? 'text-accent-500' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1558,8 +1557,8 @@ export default function SpecPage() {
           </button>
           <button
             onClick={() => setMobileView('list')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 ${
-              mobileView === 'list' ? 'text-accent-500' : 'text-gray-500'
+            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 dark:active:bg-gray-800 ${
+              mobileView === 'list' ? 'text-accent-500' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
