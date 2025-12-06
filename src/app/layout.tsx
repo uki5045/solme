@@ -18,10 +18,10 @@ export const metadata: Metadata = {
   keywords:
     "중고캠핑카, 캠핑카매매, 카라반, 캠핑카수리, 캠핑카업그레이드, 옥천캠핑카, 쏠마린",
   metadataBase: new URL("https://solmarine.kr"),
-  // 3. iOS Safari - default로 설정 (밝은 배경 + 검은 텍스트)
+  // 3. iOS Safari - black-translucent로 설정 (페이지 배경색 투과)
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default", // 밝은 배경, 검은색 텍스트
+    statusBarStyle: "black-translucent", // 투명 - 페이지 배경색(#f3f4f6) 표시
     title: "쏠마린캠핑카",
   },
   openGraph: {

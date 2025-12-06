@@ -803,7 +803,15 @@ export default function SpecPage() {
   const yearData = mainTab === 'camper' ? parseYear(camperData.year) : parseYear(caravanData.year);
 
   return (
-    <div className="min-h-dvh bg-gray-100 font-sans">
+    <>
+      {/* iOS PWA Safe Area 배경 - 상태바 영역 커버 */}
+      <div
+        className="fixed inset-0 -z-10 bg-[#f3f4f6]"
+        style={{ backgroundColor: '#f3f4f6' }}
+        aria-hidden="true"
+      />
+
+      <div className="min-h-dvh bg-[#f3f4f6] font-sans">
       {/* 헤더 - PC만 */}
       <div className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:block">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
@@ -1562,6 +1570,7 @@ export default function SpecPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 

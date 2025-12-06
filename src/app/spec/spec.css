@@ -1,4 +1,12 @@
-/* 4. html, body 배경색 강제 (다크모드 무시) */
+/* iOS PWA 상태바 배경색 강제 - #f3f4f6 */
+
+/* :root 레벨 배경색 */
+:root {
+  background-color: #f3f4f6 !important;
+  color-scheme: light !important;
+}
+
+/* html, body 배경색 강제 (다크모드 무시) */
 html,
 body {
   background-color: #f3f4f6 !important;
@@ -7,6 +15,7 @@ body {
 
 /* 다크모드에서도 강제 적용 */
 @media (prefers-color-scheme: dark) {
+  :root,
   html,
   body {
     background-color: #f3f4f6 !important;
@@ -16,8 +25,24 @@ body {
 
 /* PWA standalone 모드 */
 @media (display-mode: standalone) {
+  :root,
   html,
   body {
     background-color: #f3f4f6 !important;
+    color-scheme: light only !important;
+  }
+}
+
+/* iOS safe area 배경 */
+@supports (padding-top: env(safe-area-inset-top)) {
+  html::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background-color: #f3f4f6;
+    z-index: 9999;
   }
 }

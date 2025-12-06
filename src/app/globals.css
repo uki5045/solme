@@ -5,6 +5,10 @@
 
 /* iOS Safari Safe Area Variables */
 :root {
+  /* PWA 배경색 - CSS 로드 최우선 */
+  background-color: #f3f4f6 !important;
+  color-scheme: light !important;
+
   --sat: env(safe-area-inset-top);
   --sar: env(safe-area-inset-right);
   --sab: env(safe-area-inset-bottom);
