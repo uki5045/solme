@@ -19,10 +19,11 @@ npm run lint     # ESLint 검사
 
 ## Tech Stack
 
-- **Framework**: Next.js 16.0.5 (App Router), React 19, TypeScript
+- **Framework**: Next.js 16 (App Router), React 19, TypeScript
 - **Styling**: Tailwind CSS v4, CVA, clsx, tailwind-merge
 - **Animation**: GSAP + ScrollTrigger, Motion (Framer), Lenis (smooth scroll)
 - **Auth**: NextAuth.js v5 (Google OAuth)
+- **Database**: Supabase (PostgreSQL)
 - **Icons**: Lucide React, Tabler Icons
 - **Fonts**: Pretendard (한글), Montserrat (영문/숫자)
 
@@ -56,7 +57,7 @@ src/
 
 ### Authentication
 - `/spec` 경로: Google 로그인 필수
-- `src/auth.ts`의 `ALLOWED_EMAILS` 배열로 접근 제한 가능
+- 환경변수 `ALLOWED_EMAILS`로 접근 제한 (쉼표 구분, 비어있으면 모든 Google 계정 허용)
 - 미들웨어가 미인증 사용자를 `/auth/signin`으로 리다이렉트
 
 ### Animation
@@ -86,9 +87,12 @@ useEffect(() => {
 
 ```bash
 # .env.local
-AUTH_SECRET=                      # NextAuth secret (npx auth secret)
-GOOGLE_CLIENT_ID=                 # Google OAuth Client ID
-GOOGLE_CLIENT_SECRET=             # Google OAuth Client Secret
+AUTH_SECRET=                       # NextAuth secret (npx auth secret)
+GOOGLE_CLIENT_ID=                  # Google OAuth Client ID
+GOOGLE_CLIENT_SECRET=              # Google OAuth Client Secret
+ALLOWED_EMAILS=                    # 허용 이메일 (쉼표 구분, 비우면 전체 허용)
+NEXT_PUBLIC_SUPABASE_URL=          # Supabase 프로젝트 URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=     # Supabase anon key
 NEXT_PUBLIC_NAVER_MAP_CLIENT_ID=
 NEXT_PUBLIC_KAKAO_MAP_APP_KEY=
 ```
@@ -141,11 +145,11 @@ NEXT_PUBLIC_KAKAO_MAP_APP_KEY=
 - `data`: JSON (폼 데이터)
 - `created_at`, `updated_at`: timestamp
 
-## Security Notes
-
-- `.env.local` 파일은 `.gitignore`에 포함 → git 추적 안 함
-- `/spec` 접근 제한: `src/auth.ts`의 `ALLOWED_EMAILS` 배열로 관리
-- 네이버맵 API 키: 환경변수 `NEXT_PUBLIC_NAVER_MAP_CLIENT_ID`로 관리 권장
+### Animated Tabs Component
+- `src/components/animate-ui/tabs.tsx`: 슬라이드 + 블러 애니메이션 탭
+- `TabsContents`: `overflow-clip` (blur 효과 표시용)
+- `TabsContent`: 비활성 탭에 `inert` 속성 (Tab 키 접근 차단)
+- `/spec` 페이지에서 `camper-1`, `camper-2`, `camper-3`, `caravan-1`... 형태로 사용
 
 ## Animation Patterns
 

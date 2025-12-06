@@ -156,6 +156,8 @@ const onlyDecimalPlus = (value: string): string => {
   return value.replace(/[^\d.+]/g, '');
 };
 
+type VehicleStatus = 'intake' | 'productization' | 'advertising';
+
 interface VehicleListItem {
   id: number;
   vehicleNumber: string;
@@ -163,6 +165,7 @@ interface VehicleListItem {
   modelName: string;
   manufacturer: string;
   updatedAt: string;
+  status: VehicleStatus;
   isIncomplete: boolean;
 }
 
@@ -173,7 +176,6 @@ export default function SpecPage() {
   const [showResult, setShowResult] = useState(false);
   const [camperData, setCamperData] = useState<CamperData>(initialCamperData);
   const [caravanData, setCaravanData] = useState<CaravanData>(initialCaravanData);
-  const [searchQuery, setSearchQuery] = useState('');
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; vehicleNumber: string }>({ show: false, vehicleNumber: '' });
   const [resetModal, setResetModal] = useState(false);
   const [overwriteModal, setOverwriteModal] = useState<{ show: boolean; callback: (() => void) | null }>({ show: false, callback: null });
@@ -185,7 +187,13 @@ export default function SpecPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
+  const [statusTab, setStatusTab] = useState<VehicleStatus>('intake');
+  const [statusIndicator, setStatusIndicator] = useState({ left: 4, width: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
+  const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const leftSectionRef = useRef<HTMLDivElement>(null);
+  const statusTabListRef = useRef<HTMLDivElement>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
 
@@ -230,6 +238,18 @@ export default function SpecPage() {
     observer.observe(leftSectionRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // 상태 탭 인디케이터 위치 계산
+  useEffect(() => {
+    if (!statusTabListRef.current) return;
+    const activeButton = statusTabListRef.current.querySelector(`[data-status="${statusTab}"]`) as HTMLElement;
+    if (activeButton) {
+      setStatusIndicator({
+        left: activeButton.offsetLeft,
+        width: activeButton.offsetWidth,
+      });
+    }
+  }, [statusTab]);
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -290,6 +310,41 @@ export default function SpecPage() {
   useEffect(() => {
     fetchVehicleList();
   }, []);
+
+  // 상태 변경 함수
+  const updateVehicleStatus = async (vehicleNumber: string, newStatus: VehicleStatus) => {
+    try {
+      const response = await fetch('/api/specs/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicleNumber, status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        showToast(result.error || '상태 변경에 실패했습니다.', 'error');
+        return false;
+      }
+
+      // 목록 새로고침
+      fetchVehicleList();
+      const statusLabels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
+      showToast(`${statusLabels[newStatus]}(으)로 변경되었습니다.`, 'success');
+      return true;
+    } catch {
+      showToast('상태 변경 중 오류가 발생했습니다.', 'error');
+      return false;
+    }
+  };
+
+  // 컨텍스트 메뉴 닫기 (외부 클릭 시)
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu({ show: false, x: 0, y: 0, item: null });
+    if (contextMenu.show) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu.show]);
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
@@ -508,42 +563,6 @@ export default function SpecPage() {
     }
   }, [camperData, caravanData, checkDuplicate, saveToDatabase]);
 
-  const searchByVehicleNumber = async () => {
-    const query = searchQuery.trim();
-    if (!query) {
-      showToast('차량번호를 입력해주세요.', 'warning');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(query)}`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        showToast(result.error || '해당 차량번호로 저장된 데이터가 없습니다.', 'error');
-        return;
-      }
-
-      const { data } = result;
-      const savedData = data.data as Record<string, string>;
-
-      if (data.vehicle_type === 'camper') {
-        setCamperData({ ...initialCamperData, ...savedData });
-        setMainTab('camper');
-      } else {
-        setCaravanData({ ...initialCaravanData, ...savedData });
-        setMainTab('caravan');
-      }
-
-      setSearchQuery('');
-      setStep(1);
-      showToast(`${data.vehicle_type === 'camper' ? '캠핑카' : '카라반'} 데이터를 불러왔습니다.`, 'success');
-    } catch (e) {
-      console.error('검색 오류:', e);
-      showToast('검색 중 오류가 발생했습니다.', 'error');
-    }
-  };
-
   const openDeleteModal = (vehicleNumber: string) => {
     if (!vehicleNumber.trim()) return;
     setDeleteModal({ show: true, vehicleNumber });
@@ -562,7 +581,6 @@ export default function SpecPage() {
         return;
       }
 
-      setSearchQuery('');
       setDeleteModal({ show: false, vehicleNumber: '' });
       showToast('삭제되었습니다.', 'success');
       // 삭제 성공 시 목록 새로고침
@@ -724,35 +742,32 @@ export default function SpecPage() {
               로그아웃
             </button>
           </div>
-          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
-            <label htmlFor="vehicle-search" className="sr-only">차량번호 검색</label>
-            <input
-              id="vehicle-search"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && searchByVehicleNumber()}
-              placeholder="차량번호, 모델명, 제조사"
-              aria-label="차량번호, 모델명, 제조사 검색"
-              className="w-full max-w-48 rounded-lg border border-gray-300 bg-gray-50 px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500"
-            />
-            <button
-              onClick={searchByVehicleNumber}
-              className="rounded-lg bg-accent-500 p-1.5 text-white transition-all hover:bg-accent-600"
-              title="검색"
-              aria-label="차량번호 검색 실행"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl items-start gap-6 px-4 py-5">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 lg:flex-row lg:items-start lg:gap-6">
+        {/* 모바일: 섹션 전환 탭 */}
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-white p-1 shadow-sm lg:hidden">
+          <button
+            onClick={() => setMobileView('form')}
+            className={`rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+              mobileView === 'form' ? 'bg-accent-500 text-white' : 'text-gray-400'
+            }`}
+          >
+            입력 폼
+          </button>
+          <button
+            onClick={() => setMobileView('list')}
+            className={`rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+              mobileView === 'list' ? 'bg-accent-500 text-white' : 'text-gray-400'
+            }`}
+          >
+            차량 목록 ({vehicleList.length})
+          </button>
+        </div>
+
         {/* 좌측: 폼 영역 */}
-        <div ref={leftSectionRef} className="relative w-full max-w-[520px] shrink-0">
+        <div ref={leftSectionRef} className={`relative w-full max-w-[520px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
 
         {/* 삭제 확인 모달 */}
         <AnimatePresence>
@@ -1069,102 +1084,235 @@ export default function SpecPage() {
         </div>
         {/* 좌측 폼 영역 끝 */}
 
-        {/* 우측: 차량 카드 리스트 */}
+        {/* 우측: 차량 카드 리스트 (상태별 탭) */}
         <div
-          className="relative hidden flex-1 lg:block"
+          className={`relative flex-1 flex-col ${mobileView === 'form' ? 'hidden lg:flex' : 'flex'}`}
           style={{ height: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
         >
           {/* 미리보기 로딩 오버레이 */}
           {previewLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/80 backdrop-blur-sm">
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
                 <span className="text-sm text-gray-500">불러오는 중...</span>
               </div>
             </div>
           )}
-          <div className="h-full overflow-hidden rounded-xl bg-white shadow-sm">
-            <div
-              className="h-full overflow-y-auto p-4"
-            >
-            {listLoading ? (
-              <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
-            ) : vehicleList.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">저장된 차량이 없습니다</div>
-            ) : (() => {
-              const filteredList = vehicleList.filter((item) => {
-                if (!searchQuery.trim()) return true;
-                const query = searchQuery.trim().toLowerCase();
-                return (
-                  item.vehicleNumber.toLowerCase().includes(query) ||
-                  (item.modelName && item.modelName.toLowerCase().includes(query)) ||
-                  (item.manufacturer && item.manufacturer.toLowerCase().includes(query))
-                );
-              });
-
-              if (filteredList.length === 0) {
-                return (
-                  <div className="py-8 text-center text-sm text-gray-400">
-                    &apos;{searchQuery}&apos; 검색 결과가 없습니다
-                  </div>
-                );
-              }
-
+          {/* 상태 탭 헤더 (캠핑카/카라반 탭과 동일 스타일 + 애니메이션) */}
+          <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-3 rounded-xl bg-white p-1 shadow-sm">
+            {/* 슬라이딩 인디케이터 */}
+            <motion.div
+              className="absolute top-1 bottom-1 rounded-lg"
+              style={{
+                backgroundColor: statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
+              }}
+              animate={{
+                left: statusIndicator.left,
+                width: statusIndicator.width,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 150,
+                damping: 20,
+                mass: 1,
+              }}
+            />
+            {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
+              const count = vehicleList.filter(v => v.status === status).length;
+              const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
+              const isActive = statusTab === status;
               return (
-              <div className="grid grid-cols-3 gap-3">
-                {filteredList.map((item) => (
-                  <div
-                    key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${item.vehicleNumber} ${item.vehicleType === 'camper' ? '캠핑카' : '카라반'} 불러오기`}
-                    onClick={() => loadVehicleFromCard(item.vehicleNumber, item.vehicleType)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
-                      }
-                    }}
-                    className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-accent-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent-500"
-                  >
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-sm font-bold text-gray-900">{item.vehicleNumber}</span>
-                      {item.isIncomplete && (
-                        <span
-                          className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-white"
-                          title="옵션 미입력"
-                        >
-                          !
-                        </span>
-                      )}
-                      <span className={`ml-auto rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                        {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteModal(item.vehicleNumber);
-                        }}
-                        className="rounded p-0.5 text-gray-300 opacity-0 transition-all hover:bg-gray-100 hover:text-gray-500 group-hover:opacity-100 focus:opacity-100"
-                        title="삭제"
-                        aria-label={`${item.vehicleNumber} 삭제`}
-                      >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="text-sm text-gray-600">{item.modelName || '모델명 없음'}</div>
-                    {item.manufacturer && (
-                      <div className="text-xs text-gray-400">{item.manufacturer}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                <button
+                  key={status}
+                  data-status={status}
+                  onClick={() => setStatusTab(status)}
+                  className={`relative z-10 rounded-lg py-3 text-base font-semibold transition-colors ${
+                    isActive ? 'text-white' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <span className={`mr-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {count}
+                  </span>
+                  {labels[status]}
+                </button>
               );
-            })()}
+            })}
+          </div>
+
+          {/* 카드 리스트 영역 */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm">
+            {/* 검색바 */}
+            <div className="border-b border-gray-100 p-3">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="차량번호, 모델명 검색..."
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-accent-400 focus:ring-1 focus:ring-accent-400"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {listLoading ? (
+                <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
+              ) : (() => {
+                const filteredList = vehicleList
+                  .filter((item) => item.status === statusTab)
+                  .filter((item) => {
+                    if (!searchQuery.trim()) return true;
+                    const query = searchQuery.toLowerCase();
+                    return (
+                      item.vehicleNumber.toLowerCase().includes(query) ||
+                      item.modelName?.toLowerCase().includes(query) ||
+                      item.manufacturer?.toLowerCase().includes(query)
+                    );
+                  });
+
+                if (filteredList.length === 0) {
+                  const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
+                  return (
+                    <div className="py-8 text-center text-sm text-gray-400">
+                      {labels[statusTab]} 상태의 차량이 없습니다
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                    {filteredList.map((item) => (
+                      <div
+                        key={item.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${item.vehicleNumber} ${item.vehicleType === 'camper' ? '캠핑카' : '카라반'} 불러오기`}
+                        onClick={() => loadVehicleFromCard(item.vehicleNumber, item.vehicleType)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
+                          }
+                        }}
+                        className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-accent-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+                      >
+                        <div className="mb-1 flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-900">{item.vehicleNumber}</span>
+                          {item.isIncomplete && (
+                            <span
+                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-white"
+                              title="옵션 미입력"
+                            >
+                              !
+                            </span>
+                          )}
+                          <span className={`ml-auto rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                            {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600">{item.modelName || '모델명 없음'}</div>
+                        {item.manufacturer && (
+                          <div className="text-xs text-gray-400">{item.manufacturer}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
+
+          {/* 컨텍스트 메뉴 (우클릭) */}
+          {contextMenu.show && contextMenu.item && (
+            <div
+              className="fixed z-50 min-w-[160px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              style={{ left: contextMenu.x, top: contextMenu.y }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 상태 변경 */}
+              {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
+                const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
+                const isCurrentStatus = contextMenu.item?.status === status;
+                return (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      if (contextMenu.item && !isCurrentStatus) {
+                        updateVehicleStatus(contextMenu.item.vehicleNumber, status);
+                      }
+                      setContextMenu({ show: false, x: 0, y: 0, item: null });
+                    }}
+                    disabled={isCurrentStatus}
+                    className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
+                      isCurrentStatus
+                        ? 'bg-gray-50 text-gray-400'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {isCurrentStatus && (
+                      <svg className="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    <span className={isCurrentStatus ? '' : 'ml-6'}>{labels[status]}</span>
+                  </button>
+                );
+              })}
+
+              {/* 구분선 */}
+              <div className="my-1 border-t border-gray-100" />
+
+              {/* 수정 */}
+              <button
+                onClick={() => {
+                  if (contextMenu.item) {
+                    loadVehicleFromCard(contextMenu.item.vehicleNumber, contextMenu.item.vehicleType);
+                  }
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                수정
+              </button>
+
+              {/* 삭제 */}
+              <button
+                onClick={() => {
+                  if (contextMenu.item) {
+                    openDeleteModal(contextMenu.item.vehicleNumber);
+                  }
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                삭제
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

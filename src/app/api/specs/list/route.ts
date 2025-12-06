@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin();
     let query = supabase
       .from('vehicle_specs')
-      .select('id, vehicle_number, vehicle_type, data, updated_at')
+      .select('id, vehicle_number, vehicle_type, data, updated_at, status')
       .order('updated_at', { ascending: false });
 
     if (type === 'camper' || type === 'caravan') {
@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
         modelName: d.modelName || '',
         manufacturer: d.manufacturer || '',
         updatedAt: item.updated_at,
+        status: item.status || 'intake', // DB constraint: intake, productization, advertising
         isIncomplete,
       };
     });
