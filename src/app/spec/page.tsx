@@ -1096,13 +1096,14 @@ export default function SpecPage() {
           <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-3 rounded-xl bg-white p-1 shadow-sm">
             {/* 슬라이딩 인디케이터 */}
             <motion.div
-              className="absolute top-1 bottom-1 left-1 right-1 rounded-lg"
+              className="absolute top-1 bottom-1 rounded-lg"
               style={{
                 width: 'calc(33.333% - 2.67px)',
+                left: 4,
                 backgroundColor: statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
               }}
               animate={{
-                x: `calc(${statusIndex * 100}% + ${statusIndex * 4}px)`,
+                x: `${statusIndex * 100}%`,
               }}
               transition={{
                 type: 'spring',
