@@ -189,9 +189,12 @@ export default function SpecPage() {
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
   const [statusTab, setStatusTab] = useState<VehicleStatus>('intake');
   const [statusIndex, setStatusIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
+  const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTouchRef = useRef<{ x: number; y: number; item: VehicleListItem } | null>(null);
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const statusTabListRef = useRef<HTMLDivElement>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
@@ -203,6 +206,20 @@ export default function SpecPage() {
       setToast({ show: false, message: '', type: 'success' });
     }, 4500);
   };
+
+  // Safari 배경색 수정 (검은색 → 밝은 회색)
+  useEffect(() => {
+    const originalHtmlBg = document.documentElement.style.backgroundColor;
+    const originalBodyBg = document.body.style.backgroundColor;
+
+    document.documentElement.style.backgroundColor = '#f3f4f6';
+    document.body.style.backgroundColor = '#f3f4f6';
+
+    return () => {
+      document.documentElement.style.backgroundColor = originalHtmlBg;
+      document.body.style.backgroundColor = originalBodyBg;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -339,6 +356,71 @@ export default function SpecPage() {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [contextMenu.show]);
+
+  // 롱프레스 핸들러 (모바일)
+  const handleTouchStart = useCallback((e: React.TouchEvent, item: VehicleListItem) => {
+    const touch = e.touches[0];
+    longPressTouchRef.current = { x: touch.clientX, y: touch.clientY, item };
+    longPressTimerRef.current = setTimeout(() => {
+      if (longPressTouchRef.current) {
+        setContextMenu({
+          show: true,
+          x: longPressTouchRef.current.x,
+          y: longPressTouchRef.current.y,
+          item: longPressTouchRef.current.item,
+        });
+      }
+    }, 500);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (longPressTimerRef.current && longPressTouchRef.current) {
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - longPressTouchRef.current.x);
+      const deltaY = Math.abs(touch.clientY - longPressTouchRef.current.y);
+      if (deltaX > 10 || deltaY > 10) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+        longPressTouchRef.current = null;
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressTouchRef.current = null;
+  }, []);
+
+  // 차량번호 입력 시 기존 차량 검색 및 자동 탭 이동 (완전 일치만)
+  const searchVehicleByNumber = useCallback((vehicleNumber: string) => {
+    if (!vehicleNumber.trim()) {
+      setHighlightedVehicle(null);
+      return;
+    }
+
+    const query = vehicleNumber.trim().toLowerCase();
+    const matchedVehicle = vehicleList.find(
+      (v) => v.vehicleNumber.toLowerCase() === query
+    );
+
+    if (matchedVehicle) {
+      // 해당 상태 탭으로 자동 이동
+      if (matchedVehicle.status !== statusTab) {
+        setStatusTab(matchedVehicle.status);
+      }
+      // 해당 차량 하이라이트
+      setHighlightedVehicle(matchedVehicle.vehicleNumber);
+      // 모바일에서는 차량 목록으로 전환
+      if (window.innerWidth < 1024) {
+        setMobileView('list');
+      }
+    } else {
+      setHighlightedVehicle(null);
+    }
+  }, [vehicleList, statusTab]);
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
@@ -722,8 +804,8 @@ export default function SpecPage() {
 
   return (
     <div className="min-h-dvh bg-gray-100 font-sans">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
+      {/* 헤더 - PC만 */}
+      <div className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-md lg:block">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
           <div className="flex shrink-0 items-center gap-2">
             <span className="hidden text-sm font-medium text-gray-600 sm:block">
@@ -739,26 +821,7 @@ export default function SpecPage() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 lg:flex-row lg:items-start lg:gap-6">
-        {/* 모바일: 섹션 전환 탭 */}
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-white p-1 shadow-sm lg:hidden">
-          <button
-            onClick={() => setMobileView('form')}
-            className={`rounded-lg py-2.5 text-sm font-semibold transition-colors ${
-              mobileView === 'form' ? 'bg-accent-500 text-white' : 'text-gray-400'
-            }`}
-          >
-            입력 폼
-          </button>
-          <button
-            onClick={() => setMobileView('list')}
-            className={`rounded-lg py-2.5 text-sm font-semibold transition-colors ${
-              mobileView === 'list' ? 'bg-accent-500 text-white' : 'text-gray-400'
-            }`}
-          >
-            차량 목록 ({vehicleList.length})
-          </button>
-        </div>
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-32 pt-[calc(env(safe-area-inset-top)+1rem)] lg:flex-row lg:items-start lg:gap-6 lg:pb-5 lg:pt-5">
 
         {/* 좌측: 폼 영역 */}
         <div ref={leftSectionRef} className={`relative w-full max-w-[520px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
@@ -995,32 +1058,15 @@ export default function SpecPage() {
           </TabsList>
         </Tabs>
 
-        {/* 차량번호 입력 (항상 표시) */}
-        <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm">
-          <label className="mb-1.5 block text-sm font-medium text-gray-500">
-            차량번호 <span className="text-gray-400">(저장/검색용 · 결과표에 표시 안됨)</span>
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={mainTab === 'camper' ? camperData.vehicleNumber : caravanData.vehicleNumber}
-              onChange={(e) => {
-                if (mainTab === 'camper') {
-                  setCamperData({ ...camperData, vehicleNumber: e.target.value });
-                } else {
-                  setCaravanData({ ...caravanData, vehicleNumber: e.target.value });
-                }
-                setFieldErrors(prev => { const next = {...prev}; delete next.vehicleNumber; return next; });
-              }}
-              placeholder="예: 12가1234"
-              className={`form-input ${fieldErrors.vehicleNumber ? 'form-input-error pr-10' : ''}`}
-            />
-            {fieldErrors.vehicleNumber && (
-              <div className="pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-red-400">
-                <span className="text-xs font-bold text-white">!</span>
-              </div>
-            )}
-          </div>
+        {/* 차량 검색 (데스크탑에서만 표시) */}
+        <div className="mb-3 hidden rounded-2xl bg-white p-4 shadow-sm lg:block">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="차량번호, 모델명, 제조사로 검색"
+            className="form-input"
+          />
         </div>
 
         {/* 폼 콘텐츠 (슬라이드 + 블러 애니메이션) */}
@@ -1121,7 +1167,7 @@ export default function SpecPage() {
                   key={status}
                   data-status={status}
                   onClick={() => setStatusTab(status)}
-                  className={`relative z-10 flex flex-col items-center justify-center gap-0.5 rounded-lg py-2 text-sm font-semibold transition-colors lg:flex-row lg:gap-1 lg:py-3 lg:text-base ${
+                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-base font-semibold transition-colors ${
                     isActive ? 'text-white' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -1130,39 +1176,25 @@ export default function SpecPage() {
                   }`}>
                     {count}
                   </span>
-                  <span>{labels[status]}</span>
+                  <span className="whitespace-nowrap">{labels[status]}</span>
                 </button>
               );
             })}
           </div>
 
+          {/* 차량 검색 (모바일에서만 표시) */}
+          <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm lg:hidden">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="차량번호, 모델명, 제조사로 검색"
+              className="form-input"
+            />
+          </div>
+
           {/* 카드 리스트 영역 */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm">
-            {/* 검색바 */}
-            <div className="border-b border-gray-100 p-3">
-              <div className="relative">
-                <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="차량번호, 모델명 검색..."
-                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-accent-400 focus:ring-1 focus:ring-accent-400"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            </div>
             <div className="flex-1 overflow-y-auto p-4">
               {listLoading ? (
                 <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
@@ -1172,10 +1204,11 @@ export default function SpecPage() {
                   .filter((item) => {
                     if (!searchQuery.trim()) return true;
                     const query = searchQuery.toLowerCase();
+                    // 차량번호, 모델명, 제조사로 검색
                     return (
                       item.vehicleNumber.toLowerCase().includes(query) ||
-                      item.modelName?.toLowerCase().includes(query) ||
-                      item.manufacturer?.toLowerCase().includes(query)
+                      (item.modelName && item.modelName.toLowerCase().includes(query)) ||
+                      (item.manufacturer && item.manufacturer.toLowerCase().includes(query))
                     );
                   });
 
@@ -1183,7 +1216,10 @@ export default function SpecPage() {
                   const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
                   return (
                     <div className="py-8 text-center text-sm text-gray-400">
-                      {labels[statusTab]} 상태의 차량이 없습니다
+                      {searchQuery.trim()
+                        ? `"${searchQuery}" 검색 결과가 없습니다`
+                        : `${labels[statusTab]} 상태의 차량이 없습니다`
+                      }
                     </div>
                   );
                 }
@@ -1196,18 +1232,30 @@ export default function SpecPage() {
                         role="button"
                         tabIndex={0}
                         aria-label={`${item.vehicleNumber} ${item.vehicleType === 'camper' ? '캠핑카' : '카라반'} 불러오기`}
-                        onClick={() => loadVehicleFromCard(item.vehicleNumber, item.vehicleType)}
+                        onClick={() => {
+                          // 롱프레스로 메뉴가 열린 경우 클릭 무시
+                          if (!contextMenu.show) {
+                            loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
+                          }
+                        }}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
                         }}
+                        onTouchStart={(e) => handleTouchStart(e, item)}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
                             loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
                           }
                         }}
-                        className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-accent-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent-500"
+                        className={`group relative cursor-pointer select-none rounded-lg border p-3 transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent-500 ${
+                          highlightedVehicle === item.vehicleNumber
+                            ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-400'
+                            : 'border-gray-200 bg-white hover:border-accent-300'
+                        }`}
                       >
                         <div className="mb-1 flex items-center gap-2">
                           <span className="text-sm font-bold text-gray-900">{item.vehicleNumber}</span>
@@ -1476,6 +1524,43 @@ export default function SpecPage() {
           );
         })()}
       </AnimatePresence>
+
+      {/* 하단 탭바 - 모바일 PWA */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="grid h-14 grid-cols-3">
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+            <span className="text-xs font-semibold">로그아웃</span>
+          </button>
+          <button
+            onClick={() => setMobileView('form')}
+            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 ${
+              mobileView === 'form' ? 'text-accent-500' : 'text-gray-500'
+            }`}
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span className="text-xs font-semibold">등록</span>
+          </button>
+          <button
+            onClick={() => setMobileView('list')}
+            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 ${
+              mobileView === 'list' ? 'text-accent-500' : 'text-gray-500'
+            }`}
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            <span className="text-xs font-semibold">목록</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1499,25 +1584,33 @@ function CamperForm({
       <>
         <SectionTitle>차량 정보</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
+          <FormRow label="차량번호">
+            <div className="relative">
+              <input type="text" value={data.vehicleNumber} onChange={(e) => { setData({ ...data, vehicleNumber: e.target.value }); clearError?.('vehicleNumber'); }} placeholder="12가1234" className={`form-input ${errors.vehicleNumber ? 'form-input-error pr-10' : ''}`} />
+              {errors.vehicleNumber && <ErrorIcon />}
+            </div>
+          </FormRow>
           <FormRow label="베이스 차량">
             <div className="relative">
-              <input type="text" value={data.baseVehicle} onChange={(e) => { setData({ ...data, baseVehicle: e.target.value }); clearError?.('baseVehicle'); }} placeholder="예: 현대 포터2" className={`form-input ${errors.baseVehicle ? 'form-input-error pr-10' : ''}`} />
+              <input type="text" value={data.baseVehicle} onChange={(e) => { setData({ ...data, baseVehicle: e.target.value }); clearError?.('baseVehicle'); }} placeholder="현대 포터2" className={`form-input ${errors.baseVehicle ? 'form-input-error pr-10' : ''}`} />
               {errors.baseVehicle && <ErrorIcon />}
             </div>
           </FormRow>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           <FormRow label="제조사">
             <div className="relative">
-              <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="예: 제일모빌" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
+              <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="제일모빌" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
               {errors.manufacturer && <ErrorIcon />}
             </div>
           </FormRow>
+          <FormRow label="모델명">
+            <div className="relative">
+              <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="드림스페이스" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
+              {errors.modelName && <ErrorIcon />}
+            </div>
+          </FormRow>
         </div>
-        <FormRow label="모델명">
-          <div className="relative">
-            <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="예: 드림스페이스" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
-            {errors.modelName && <ErrorIcon />}
-          </div>
-        </FormRow>
         <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
           <div className="flex gap-2">
             <input
@@ -1615,7 +1708,7 @@ function CamperForm({
         </div>
         <FormRow label="주행거리">
           <div className="relative">
-            <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="예: 35000" className={`form-input ${errors.mileage ? 'form-input-error pr-10' : ''}`} />
+            <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35000" className={`form-input ${errors.mileage ? 'form-input-error pr-10' : ''}`} />
             {errors.mileage && <ErrorIcon />}
           </div>
         </FormRow>
@@ -1659,22 +1752,22 @@ function CamperForm({
       <>
         <SectionTitle>제원</SectionTitle>
         <FormRow label="길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.length} onChange={(e) => setData({ ...data, length: onlyNumbers(e.target.value) })} placeholder="예: 7315" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.length} onChange={(e) => setData({ ...data, length: onlyNumbers(e.target.value) })} placeholder="7315" className="form-input" />
         </FormRow>
         <FormRow label="너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.width} onChange={(e) => setData({ ...data, width: onlyNumbers(e.target.value) })} placeholder="예: 2060" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.width} onChange={(e) => setData({ ...data, width: onlyNumbers(e.target.value) })} placeholder="2060" className="form-input" />
         </FormRow>
         <FormRow label="높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.height} onChange={(e) => setData({ ...data, height: onlyNumbers(e.target.value) })} placeholder="예: 2850" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.height} onChange={(e) => setData({ ...data, height: onlyNumbers(e.target.value) })} placeholder="2850" className="form-input" />
         </FormRow>
         <FormRow label="배기량 (cc)">
-          <input type="text" inputMode="numeric" value={data.displacement} onChange={(e) => setData({ ...data, displacement: onlyNumbers(e.target.value) })} placeholder="예: 2497" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.displacement} onChange={(e) => setData({ ...data, displacement: onlyNumbers(e.target.value) })} placeholder="2497" className="form-input" />
         </FormRow>
         <FormRow label="연비 (km/L)">
-          <input type="text" inputMode="decimal" value={data.fuelEconomy} onChange={(e) => setData({ ...data, fuelEconomy: onlyDecimal(e.target.value) })} placeholder="예: 8.5" className="form-input" />
+          <input type="text" inputMode="decimal" value={data.fuelEconomy} onChange={(e) => setData({ ...data, fuelEconomy: onlyDecimal(e.target.value) })} placeholder="8.5" className="form-input" />
         </FormRow>
         <FormRow label="승차정원">
-          <input type="text" inputMode="numeric" value={data.seatCapacity} onChange={(e) => setData({ ...data, seatCapacity: onlyNumbers(e.target.value) })} placeholder="예: 9" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.seatCapacity} onChange={(e) => setData({ ...data, seatCapacity: onlyNumbers(e.target.value) })} placeholder="9" className="form-input" />
         </FormRow>
         {/* 드롭다운 1x2 그리드 */}
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -1699,30 +1792,30 @@ function CamperForm({
   return (
     <>
       <SectionTitle>전기</SectionTitle>
-      <FormRow label="배터리">
+      <FormRow label="배터리 (Ah)">
         <div className="flex gap-2">
           <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-24 shrink-0">
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
+          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
       <FormRow label="태양광 (W)">
-        <input type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="(용량) W" className="form-input" />
+        <input type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="200" className="form-input" />
       </FormRow>
       <FormRow label="인버터 (Kw)">
-        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="(용량) Kw" className="form-input" />
+        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" className="form-input" />
       </FormRow>
-      <SectionTitle>옵션</SectionTitle>
-      <FormRow label="외관" hint="스페이스 2번 → 자동으로 • 변환">
-        <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+      <SectionTitle hint="스페이스 2번으로 구분">옵션</SectionTitle>
+      <FormRow label="외관">
+        <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="내장">
-        <textarea value={data.interior} onChange={(e) => setData({ ...data, interior: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+        <textarea value={data.interior} onChange={(e) => setData({ ...data, interior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="편의">
-        <textarea value={data.convenience} onChange={(e) => setData({ ...data, convenience: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+        <textarea value={data.convenience} onChange={(e) => setData({ ...data, convenience: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
     </>
   );
@@ -1746,27 +1839,37 @@ function CaravanForm({
     return (
       <>
         <SectionTitle>차량 정보</SectionTitle>
-        <FormRow label="제조사">
-          <div className="relative">
-            <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="예: 코치맨(CM카라반)" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
-            {errors.manufacturer && <ErrorIcon />}
-          </div>
-        </FormRow>
-        <FormRow label="모델명">
-          <div className="relative">
-            <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="예: VIP 560" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
-            {errors.modelName && <ErrorIcon />}
-          </div>
-        </FormRow>
-        <FormRow label="차종">
-          <FormSelect value={data.vehicleType} onChange={(e) => setData({ ...data, vehicleType: e.target.value })}>
-            <option value="소형 특수">소형 특수</option>
-            <option value="중형 특수">중형 특수</option>
-            <option value="중형 승합">중형 승합</option>
-            <option value="대형 승합">대형 승합</option>
-            <option value="소형 화물">소형 화물</option>
-          </FormSelect>
-        </FormRow>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="차량번호">
+            <div className="relative">
+              <input type="text" value={data.vehicleNumber} onChange={(e) => { setData({ ...data, vehicleNumber: e.target.value }); clearError?.('vehicleNumber'); }} placeholder="12가1234" className={`form-input ${errors.vehicleNumber ? 'form-input-error pr-10' : ''}`} />
+              {errors.vehicleNumber && <ErrorIcon />}
+            </div>
+          </FormRow>
+          <FormRow label="제조사">
+            <div className="relative">
+              <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="코치맨(CM카라반)" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
+              {errors.manufacturer && <ErrorIcon />}
+            </div>
+          </FormRow>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="모델명">
+            <div className="relative">
+              <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="VIP 560" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
+              {errors.modelName && <ErrorIcon />}
+            </div>
+          </FormRow>
+          <FormRow label="차종">
+            <FormSelect value={data.vehicleType} onChange={(e) => setData({ ...data, vehicleType: e.target.value })}>
+              <option value="소형 특수">소형 특수</option>
+              <option value="중형 특수">중형 특수</option>
+              <option value="중형 승합">중형 승합</option>
+              <option value="대형 승합">대형 승합</option>
+              <option value="소형 화물">소형 화물</option>
+            </FormSelect>
+          </FormRow>
+        </div>
         <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
           <div className="flex gap-2">
             <input
@@ -1863,7 +1966,7 @@ function CaravanForm({
           )}
         </div>
         <FormRow label="취침인원">
-          <input type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="예: 4" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" className="form-input" />
         </FormRow>
         <div className="grid grid-cols-2 gap-3">
           <FormRow label="차고지 증명">
@@ -1888,28 +1991,28 @@ function CaravanForm({
       <>
         <SectionTitle>제원</SectionTitle>
         <FormRow label="외부 길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.extLength} onChange={(e) => setData({ ...data, extLength: onlyNumbers(e.target.value) })} placeholder="예: 7315" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.extLength} onChange={(e) => setData({ ...data, extLength: onlyNumbers(e.target.value) })} placeholder="7315" className="form-input" />
         </FormRow>
         <FormRow label="내부 길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.intLength} onChange={(e) => setData({ ...data, intLength: onlyNumbers(e.target.value) })} placeholder="예: 5660" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.intLength} onChange={(e) => setData({ ...data, intLength: onlyNumbers(e.target.value) })} placeholder="5660" className="form-input" />
         </FormRow>
         <FormRow label="외부 높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.extHeight} onChange={(e) => setData({ ...data, extHeight: onlyNumbers(e.target.value) })} placeholder="예: 2650" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.extHeight} onChange={(e) => setData({ ...data, extHeight: onlyNumbers(e.target.value) })} placeholder="2650" className="form-input" />
         </FormRow>
         <FormRow label="내부 높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.intHeight} onChange={(e) => setData({ ...data, intHeight: onlyNumbers(e.target.value) })} placeholder="예: 1955" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.intHeight} onChange={(e) => setData({ ...data, intHeight: onlyNumbers(e.target.value) })} placeholder="1955" className="form-input" />
         </FormRow>
         <FormRow label="외부 너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="예: 2320" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="2320" className="form-input" />
         </FormRow>
         <FormRow label="내부 너비 (mm)">
           <input type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" className="form-input" />
         </FormRow>
         <FormRow label="공차 중량 (kg)">
-          <input type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="예: 1450" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="1450" className="form-input" />
         </FormRow>
         <FormRow label="최대 허용 중량 (kg)">
-          <input type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="예: 1800" className="form-input" />
+          <input type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="1800" className="form-input" />
         </FormRow>
       </>
     );
@@ -1918,39 +2021,40 @@ function CaravanForm({
   return (
     <>
       <SectionTitle>전기</SectionTitle>
-      <FormRow label="배터리">
+      <FormRow label="배터리 (Ah)">
         <div className="flex gap-2">
           <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-24 shrink-0">
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="(용량) Ah" className="form-input min-w-0 flex-1" />
+          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
       <FormRow label="태양광 (W)">
-        <input type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="(용량) W" className="form-input" />
+        <input type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="200" className="form-input" />
       </FormRow>
       <FormRow label="인버터 (Kw)">
-        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="(용량) Kw" className="form-input" />
+        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" className="form-input" />
       </FormRow>
-      <SectionTitle>옵션</SectionTitle>
-      <FormRow label="외관" hint="스페이스 2번 → 자동으로 • 변환">
-        <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+      <SectionTitle hint="스페이스 2번으로 구분">옵션</SectionTitle>
+      <FormRow label="외관">
+        <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="내장">
-        <textarea value={data.interior} onChange={(e) => setData({ ...data, interior: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+        <textarea value={data.interior} onChange={(e) => setData({ ...data, interior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="편의">
-        <textarea value={data.convenience} onChange={(e) => setData({ ...data, convenience: e.target.value })} placeholder="스페이스 2번으로 구분" className="form-input min-h-[70px] resize-y" />
+        <textarea value={data.convenience} onChange={(e) => setData({ ...data, convenience: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
     </>
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
-    <h3 className="mb-3 mt-5 text-sm font-bold uppercase tracking-wide text-accent-500 first:mt-0">
+    <h3 className="mb-3 mt-5 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent-500 first:mt-0">
       {children}
+      {hint && <span className="text-xs font-normal normal-case text-gray-400">{hint}</span>}
     </h3>
   );
 }

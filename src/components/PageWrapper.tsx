@@ -81,7 +81,7 @@ export default function PageWrapper() {
         }}
       />
 
-      <main ref={mainRef} className="h-screen overflow-y-auto snap-container">
+      <main ref={mainRef} className="h-screen overflow-y-auto snap-container bg-black">
         <Hero startAnimation={isLoadingComplete} />
         <Problem />
         <Solution />

@@ -200,8 +200,10 @@
 }
 
 /* iOS Safari Address Bar & Status Bar Bug Prevention */
+/* PWA 앱 배경색 - 다크모드에서도 라이트 강제 */
 html {
-  background-color: #000000;
+  background-color: #f3f4f6 !important;
+  color-scheme: light !important;
 }
 
 html,
@@ -215,6 +217,16 @@ body {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   position: relative;
+  background-color: #f3f4f6 !important;
+}
+
+/* 다크모드에서도 강제 적용 (PWA) */
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background-color: #f3f4f6 !important;
+    color-scheme: light !important;
+  }
 }
 
 
@@ -288,7 +300,6 @@ body {
 }
 
 body {
-  background: #000000;
   color: var(--text-primary);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
 }

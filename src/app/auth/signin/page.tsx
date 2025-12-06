@@ -4,8 +4,8 @@ import { signIn } from 'next-auth/react';
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <div className="fixed inset-0 flex items-center justify-center bg-white px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="w-full max-w-xs rounded-2xl bg-gray-50 p-6 shadow-lg">
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-2xl font-bold text-gray-900">로그인</h1>
           <p className="text-gray-500">옵션표 생성기에 접근하려면 로그인이 필요합니다</p>

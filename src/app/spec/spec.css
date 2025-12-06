@@ -1,0 +1,23 @@
+/* 4. html, body 배경색 강제 (다크모드 무시) */
+html,
+body {
+  background-color: #f3f4f6 !important;
+  color-scheme: light only !important;
+}
+
+/* 다크모드에서도 강제 적용 */
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background-color: #f3f4f6 !important;
+    color-scheme: light only !important;
+  }
+}
+
+/* PWA standalone 모드 */
+@media (display-mode: standalone) {
+  html,
+  body {
+    background-color: #f3f4f6 !important;
+  }
+}

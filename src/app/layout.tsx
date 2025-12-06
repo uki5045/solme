@@ -1,6 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import SessionProvider from "@/components/providers/SessionProvider";
 import "./globals.css";
+
+// 1. Viewport - themeColor 단일 고정 (media query 없음)
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f3f4f6", // 다크모드 무시, 단일 색상 강제
+  colorScheme: "light", // 라이트 모드만 사용
+};
 
 export const metadata: Metadata = {
   title: "쏠마린캠핑카 | 중고 캠핑카・카라반 전문 매매",
@@ -9,6 +18,12 @@ export const metadata: Metadata = {
   keywords:
     "중고캠핑카, 캠핑카매매, 카라반, 캠핑카수리, 캠핑카업그레이드, 옥천캠핑카, 쏠마린",
   metadataBase: new URL("https://solmarine.kr"),
+  // 3. iOS Safari - default로 설정 (밝은 배경 + 검은 텍스트)
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default", // 밝은 배경, 검은색 텍스트
+    title: "쏠마린캠핑카",
+  },
   openGraph: {
     title: "쏠마린캠핑카 | 중고 캠핑카・카라반 전문",
     description: "캠핑의 시작과 끝, 쏠마린 캠핑카가 함께합니다.",
@@ -40,17 +55,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html
+      lang="ko"
+      className="bg-[#f3f4f6]"
+      style={{ backgroundColor: '#f3f4f6', colorScheme: 'light' }}
+    >
       <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
-        <meta name="theme-color" content="#f5f5f7" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="default"
-        />
         <meta name="format-detection" content="telephone=no" />
         <link
           rel="stylesheet"
@@ -63,9 +73,12 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased">
-          <SessionProvider>{children}</SessionProvider>
-        </body>
+      <body
+        className="bg-[#f3f4f6] antialiased"
+        style={{ backgroundColor: '#f3f4f6' }}
+      >
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }
