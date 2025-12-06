@@ -241,15 +241,21 @@ export default function SpecPage() {
 
   // 상태 탭 인디케이터 위치 계산
   useEffect(() => {
-    if (!statusTabListRef.current) return;
-    const activeButton = statusTabListRef.current.querySelector(`[data-status="${statusTab}"]`) as HTMLElement;
-    if (activeButton) {
-      setStatusIndicator({
-        left: activeButton.offsetLeft,
-        width: activeButton.offsetWidth,
-      });
-    }
-  }, [statusTab]);
+    const updateIndicator = () => {
+      if (!statusTabListRef.current) return;
+      const activeButton = statusTabListRef.current.querySelector(`[data-status="${statusTab}"]`) as HTMLElement;
+      if (activeButton) {
+        setStatusIndicator({
+          left: activeButton.offsetLeft,
+          width: activeButton.offsetWidth,
+        });
+      }
+    };
+    // 즉시 실행 + DOM 렌더링 후 재실행
+    updateIndicator();
+    const timeout = setTimeout(updateIndicator, 100);
+    return () => clearTimeout(timeout);
+  }, [statusTab, mobileView]);
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
