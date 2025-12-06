@@ -1,7 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* 시스템 테마 기반 다크모드 (prefers-color-scheme) */
+@custom-media --dark (prefers-color-scheme: dark);
+@custom-variant dark (&:where(@media (--dark) { & }));
 
 /* iOS Safari Safe Area Variables */
 :root {
