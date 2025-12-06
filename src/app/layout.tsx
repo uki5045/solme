@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   // 3. iOS Safari - black-translucent로 설정 (페이지 배경색 투과)
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent", // 투명 - 페이지 배경색(#f3f4f6) 표시
+    statusBarStyle: "default",
     title: "쏠마린캠핑카",
   },
   openGraph: {
