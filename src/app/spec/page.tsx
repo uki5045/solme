@@ -1126,16 +1126,16 @@ export default function SpecPage() {
                   key={status}
                   data-status={status}
                   onClick={() => setStatusTab(status)}
-                  className={`relative z-10 rounded-lg py-3 text-base font-semibold transition-colors ${
+                  className={`relative z-10 flex flex-col items-center justify-center gap-0.5 rounded-lg py-2 text-sm font-semibold transition-colors lg:flex-row lg:gap-1 lg:py-3 lg:text-base ${
                     isActive ? 'text-white' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  <span className={`mr-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
+                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
                     isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                   }`}>
                     {count}
                   </span>
-                  {labels[status]}
+                  <span>{labels[status]}</span>
                 </button>
               );
             })}
@@ -1194,7 +1194,7 @@ export default function SpecPage() {
                 }
 
                 return (
-                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                     {filteredList.map((item) => (
                       <div
                         key={item.id}
