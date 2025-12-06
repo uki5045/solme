@@ -188,7 +188,7 @@ export default function SpecPage() {
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
   const [statusTab, setStatusTab] = useState<VehicleStatus>('intake');
-  const [statusIndicator, setStatusIndicator] = useState({ left: 4, width: 0 });
+  const [statusIndex, setStatusIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
@@ -239,23 +239,11 @@ export default function SpecPage() {
     return () => observer.disconnect();
   }, []);
 
-  // 상태 탭 인디케이터 위치 계산
+  // 상태 탭 인덱스 계산
   useEffect(() => {
-    const updateIndicator = () => {
-      if (!statusTabListRef.current) return;
-      const activeButton = statusTabListRef.current.querySelector(`[data-status="${statusTab}"]`) as HTMLElement;
-      if (activeButton) {
-        setStatusIndicator({
-          left: activeButton.offsetLeft,
-          width: activeButton.offsetWidth,
-        });
-      }
-    };
-    // 즉시 실행 + DOM 렌더링 후 재실행
-    updateIndicator();
-    const timeout = setTimeout(updateIndicator, 100);
-    return () => clearTimeout(timeout);
-  }, [statusTab, mobileView]);
+    const statuses: VehicleStatus[] = ['intake', 'productization', 'advertising'];
+    setStatusIndex(statuses.indexOf(statusTab));
+  }, [statusTab]);
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1108,13 +1096,13 @@ export default function SpecPage() {
           <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-3 rounded-xl bg-white p-1 shadow-sm">
             {/* 슬라이딩 인디케이터 */}
             <motion.div
-              className="absolute top-1 bottom-1 rounded-lg"
+              className="absolute top-1 bottom-1 left-1 right-1 rounded-lg"
               style={{
+                width: 'calc(33.333% - 2.67px)',
                 backgroundColor: statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
               }}
               animate={{
-                left: statusIndicator.left,
-                width: statusIndicator.width,
+                x: `calc(${statusIndex * 100}% + ${statusIndex * 4}px)`,
               }}
               transition={{
                 type: 'spring',
