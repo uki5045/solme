@@ -560,7 +560,7 @@ body {
   font-family: inherit;
   outline: 1px solid #e5e7eb;
   outline-offset: -1px;
-  transition: outline 0.2s, background 0.2s, color 0.2s;
+  transition: outline 0.2s;
 }
 
 .form-input:focus {
