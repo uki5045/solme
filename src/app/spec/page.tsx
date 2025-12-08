@@ -1146,14 +1146,14 @@ export default function SpecPage() {
             {step === 1 ? (
               <button
                 onClick={openResetModal}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-accent-400 dark:bg-[#2a2a2a] dark:text-accent-400 dark:hover:bg-[#333333]"
+                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-300 dark:hover:bg-[#333333]"
               >
                 초기화
               </button>
             ) : (
               <button
                 onClick={goPrev}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-accent-400 dark:bg-[#2a2a2a] dark:text-accent-400 dark:hover:bg-[#333333]"
+                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-300 dark:hover:bg-[#333333]"
               >
                 이전
               </button>
@@ -1191,11 +1191,13 @@ export default function SpecPage() {
               style={{
                 width: 'calc(33.333% - 2.67px)',
                 left: 4,
-                backgroundColor: statusTab === 'intake'
-                  ? (isDarkMode ? '#9ca3af' : '#6b7280')  // gray-400 / gray-500
-                  : statusTab === 'productization'
-                    ? (isDarkMode ? '#fbbf24' : '#f59e0b')  // amber-400 / amber-500
-                    : (isDarkMode ? '#4ade80' : '#22c55e'),  // green-400 / green-500
+                // 다크모드: 테두리 스타일, 라이트모드: 배경 채우기
+                backgroundColor: isDarkMode
+                  ? 'transparent'
+                  : statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
+                border: isDarkMode
+                  ? `2px solid ${statusTab === 'intake' ? '#9ca3af' : statusTab === 'productization' ? '#fbbf24' : '#4ade80'}`
+                  : 'none',
               }}
               animate={{
                 x: `${statusIndex * 100}%`,
@@ -1211,17 +1213,23 @@ export default function SpecPage() {
               const count = vehicleList.filter(v => v.status === status).length;
               const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
               const isActive = statusTab === status;
+              // 다크모드 활성 탭 색상
+              const darkActiveColor = status === 'intake' ? 'text-gray-300' : status === 'productization' ? 'text-amber-400' : 'text-green-400';
               return (
                 <button
                   key={status}
                   data-status={status}
                   onClick={() => setStatusTab(status)}
                   className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-base font-semibold transition-colors ${
-                    isActive ? 'text-white' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                    isActive
+                      ? (isDarkMode ? darkActiveColor : 'text-white')
+                      : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
                   }`}
                 >
                   <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                    isActive
+                      ? (isDarkMode ? 'bg-transparent border border-current' : 'bg-white/20 text-white')
+                      : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                   }`}>
                     {count}
                   </span>
