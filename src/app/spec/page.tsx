@@ -189,6 +189,7 @@ export default function SpecPage() {
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
   const [statusTab, setStatusTab] = useState<VehicleStatus>('intake');
   const [statusIndex, setStatusIndex] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -261,6 +262,34 @@ export default function SpecPage() {
     const statuses: VehicleStatus[] = ['intake', 'productization', 'advertising'];
     setStatusIndex(statuses.indexOf(statusTab));
   }, [statusTab]);
+
+  // 다크모드 감지
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsDarkMode(mediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  // 검색어 변경 시 해당 차량이 있는 탭으로 자동 이동
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+
+    const query = searchQuery.trim().toLowerCase();
+    // 차량번호, 모델명, 제조사 중 하나라도 일치하는 차량 찾기
+    const matchedVehicle = vehicleList.find((v) => {
+      const vehicleNumber = v.vehicleNumber?.toLowerCase() || '';
+      const modelName = v.modelName?.toLowerCase() || '';
+      const manufacturer = v.manufacturer?.toLowerCase() || '';
+      return vehicleNumber.includes(query) || modelName.includes(query) || manufacturer.includes(query);
+    });
+
+    if (matchedVehicle && matchedVehicle.status !== statusTab) {
+      setStatusTab(matchedVehicle.status);
+    }
+  }, [searchQuery, vehicleList, statusTab]);
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1117,14 +1146,14 @@ export default function SpecPage() {
             {step === 1 ? (
               <button
                 onClick={openResetModal}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:bg-transparent dark:hover:bg-accent-900/20"
+                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-accent-400 dark:bg-[#2a2a2a] dark:text-accent-400 dark:hover:bg-[#333333]"
               >
                 초기화
               </button>
             ) : (
               <button
                 onClick={goPrev}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:bg-transparent dark:hover:bg-accent-900/20"
+                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-accent-400 dark:bg-[#2a2a2a] dark:text-accent-400 dark:hover:bg-[#333333]"
               >
                 이전
               </button>
@@ -1162,7 +1191,11 @@ export default function SpecPage() {
               style={{
                 width: 'calc(33.333% - 2.67px)',
                 left: 4,
-                backgroundColor: statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
+                backgroundColor: statusTab === 'intake'
+                  ? (isDarkMode ? '#9ca3af' : '#6b7280')  // gray-400 / gray-500
+                  : statusTab === 'productization'
+                    ? (isDarkMode ? '#fbbf24' : '#f59e0b')  // amber-400 / amber-500
+                    : (isDarkMode ? '#4ade80' : '#22c55e'),  // green-400 / green-500
               }}
               animate={{
                 x: `${statusIndex * 100}%`,
