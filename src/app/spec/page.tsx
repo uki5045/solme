@@ -1284,7 +1284,7 @@ export default function SpecPage() {
                 <button
                   key={status}
                   data-status={status}
-                  onClick={() => setStatusTab(status)}
+                  onClick={() => { setSearchQuery(''); setStatusTab(status); }}
                   className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-base font-semibold ${
                     isActive
                       ? (isDarkMode ? darkActiveColor : 'text-white')
