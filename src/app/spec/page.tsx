@@ -199,6 +199,8 @@ export default function SpecPage() {
   const statusTabListRef = useRef<HTMLDivElement>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+  const [formHeight, setFormHeight] = useState<number | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message, type });
@@ -800,6 +802,10 @@ export default function SpecPage() {
 
   const handleMainTabChange = (tab: MainTab) => {
     if (tab === mainTab) return;
+    // 현재 폼 높이 저장
+    if (formContainerRef.current) {
+      setFormHeight(formContainerRef.current.offsetHeight);
+    }
     setTabLoading(true);
     setFieldErrors({});
     // 짧은 지연 후 탭 전환
@@ -807,6 +813,7 @@ export default function SpecPage() {
       setMainTab(tab);
       setStep(1);
       setTabLoading(false);
+      setFormHeight(null);
     }, 150);
   };
 
@@ -1183,14 +1190,17 @@ export default function SpecPage() {
         {/* 폼 콘텐츠 */}
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1a1a1a]">
           {tabLoading ? (
-            <div className="flex min-h-[400px] items-center justify-center">
+            <div
+              className="flex items-center justify-center"
+              style={{ height: formHeight || 400 }}
+            >
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
               </div>
             </div>
           ) : (
-            <div className="min-h-[400px] p-5">
+            <div ref={formContainerRef} className="p-5">
               {mainTab === 'camper' ? (
                 <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
               ) : (
