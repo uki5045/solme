@@ -4,6 +4,12 @@
 /* Tailwind v4 다크모드: 클래스 기반 (.dark) */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* 테마 전환 시 트랜지션 비활성화 */
+.no-transitions,
+.no-transitions * {
+  transition: none !important;
+}
+
 /* iOS Safari Safe Area Variables */
 :root {
   color-scheme: light dark;

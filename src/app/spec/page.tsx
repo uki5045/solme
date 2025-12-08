@@ -300,6 +300,9 @@ export default function SpecPage() {
 
   // 다크모드 토글 함수
   const toggleDarkMode = () => {
+    // 트랜지션 비활성화
+    document.documentElement.classList.add('no-transitions');
+
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
     localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
@@ -308,6 +311,11 @@ export default function SpecPage() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+
+    // 다음 프레임에서 트랜지션 다시 활성화
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('no-transitions');
+    });
   };
 
   // 검색어 변경 시 해당 차량이 있는 탭으로 자동 이동
