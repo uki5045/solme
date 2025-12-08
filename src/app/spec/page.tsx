@@ -263,15 +263,52 @@ export default function SpecPage() {
     setStatusIndex(statuses.indexOf(statusTab));
   }, [statusTab]);
 
-  // 다크모드 감지
+  // 다크모드 감지 및 토글
   useEffect(() => {
+    // localStorage에서 저장된 테마 확인
+    const savedTheme = localStorage.getItem('theme');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    setIsDarkMode(mediaQuery.matches);
 
-    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    if (savedTheme === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else if (savedTheme === 'light') {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    } else {
+      // 저장된 테마 없으면 시스템 설정 따름
+      setIsDarkMode(mediaQuery.matches);
+      if (mediaQuery.matches) {
+        document.documentElement.classList.add('dark');
+      }
+    }
+
+    const handler = (e: MediaQueryListEvent) => {
+      // 저장된 테마가 없을 때만 시스템 설정 따름
+      if (!localStorage.getItem('theme')) {
+        setIsDarkMode(e.matches);
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    };
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
+
+  // 다크모드 토글 함수
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   // 검색어 변경 시 해당 차량이 있는 탭으로 자동 이동
   useEffect(() => {
@@ -856,6 +893,22 @@ export default function SpecPage() {
             <span className="hidden text-sm font-medium text-gray-600 dark:text-gray-400 sm:block">
               {session?.user?.email}
             </span>
+            {/* 다크모드 토글 */}
+            <button
+              onClick={toggleDarkMode}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+              title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+            >
+              {isDarkMode ? (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                </svg>
+              )}
+            </button>
             <button
               onClick={() => signOut({ callbackUrl: '/' })}
               className="shrink-0 whitespace-nowrap rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
@@ -1584,7 +1637,7 @@ export default function SpecPage() {
 
       {/* 하단 탭바 - 모바일 PWA */}
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-700 dark:bg-[#1a1a1a] lg:hidden">
-        <div className="grid h-14 grid-cols-3">
+        <div className="grid h-14 grid-cols-4">
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
             className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
@@ -1593,6 +1646,22 @@ export default function SpecPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
             <span className="text-xs font-semibold">로그아웃</span>
+          </button>
+          {/* 다크모드 토글 */}
+          <button
+            onClick={toggleDarkMode}
+            className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+          >
+            {isDarkMode ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              </svg>
+            )}
+            <span className="text-xs font-semibold">{isDarkMode ? '라이트' : '다크'}</span>
           </button>
           <button
             onClick={() => setMobileView('form')}
