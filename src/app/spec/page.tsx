@@ -1800,7 +1800,7 @@ function CamperForm({
               type="checkbox"
               checked={data.hasStructureMod}
               onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 rounded border-gray-300 bg-white text-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-700"
+              className="h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 bg-white checked:border-accent-500 checked:bg-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-[#2a2a2a] dark:checked:border-accent-400 dark:checked:bg-accent-400"
             />
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
           </label>
@@ -2059,7 +2059,7 @@ function CaravanForm({
               type="checkbox"
               checked={data.hasStructureMod}
               onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 rounded border-gray-300 bg-white text-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-700"
+              className="h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 bg-white checked:border-accent-500 checked:bg-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-[#2a2a2a] dark:checked:border-accent-400 dark:checked:bg-accent-400"
             />
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
           </label>
