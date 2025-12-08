@@ -1800,9 +1800,9 @@ function CamperForm({
               type="checkbox"
               checked={data.hasStructureMod}
               onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 rounded border-gray-300 text-accent-500 focus:ring-accent-500"
+              className="h-4 w-4 rounded border-gray-300 text-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-700"
             />
-            <span className="text-sm font-medium text-gray-500">구조변경</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
           </label>
           {data.hasStructureMod && (
             <div className="mt-2 flex gap-2">
@@ -2059,9 +2059,9 @@ function CaravanForm({
               type="checkbox"
               checked={data.hasStructureMod}
               onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 rounded border-gray-300 text-accent-500 focus:ring-accent-500"
+              className="h-4 w-4 rounded border-gray-300 text-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-700"
             />
-            <span className="text-sm font-medium text-gray-500">구조변경</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
           </label>
           {data.hasStructureMod && (
             <div className="mt-2 flex gap-2">
