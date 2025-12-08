@@ -740,53 +740,36 @@ export default function SpecPage() {
     }
 
     try {
-      // 부모 요소들의 overflow/max-h 제한 임시 해제 (캡처 시 잘림 방지)
-      const parentScroll = container.parentElement as HTMLElement | null;
-      const dialog = parentScroll?.parentElement as HTMLElement | null;
+      // 복제본 생성 (부모 제약에서 완전히 벗어남)
+      const clone = container.cloneNode(true) as HTMLElement;
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '800px';
+      clone.style.backgroundColor = '#ffffff';
+      clone.style.zIndex = '-1';
 
-      // 원본 클래스 저장
-      const originalParentClass = parentScroll?.className || '';
-      const originalDialogClass = dialog?.className || '';
-
-      // Tailwind 클래스 무력화 (!important로 강제)
-      if (parentScroll) {
-        parentScroll.style.setProperty('overflow', 'visible', 'important');
-        parentScroll.style.setProperty('max-height', 'none', 'important');
-      }
-      if (dialog) {
-        dialog.style.setProperty('max-height', 'none', 'important');
-        dialog.style.setProperty('overflow', 'visible', 'important');
-      }
-
-      const originalWidth = container.style.width;
+      document.body.appendChild(clone);
 
       // 너비-높이 반복 조절 (수렴)
       let width = 800;
       for (let i = 0; i < 3; i++) {
-        container.style.width = `${width}px`;
+        clone.style.width = `${width}px`;
         await new Promise(resolve => setTimeout(resolve, 50));
-        const height = container.scrollHeight;
+        const height = clone.scrollHeight;
         width = Math.max(Math.round(height * 0.95), 800);
       }
-      container.style.width = `${width}px`;
+      clone.style.width = `${width}px`;
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const dataUrl = await domToPng(container, {
+      const dataUrl = await domToPng(clone, {
         scale: 2,
         backgroundColor: '#ffffff',
         fetch: { bypassingCache: true },
       });
 
-      // 스타일 원복
-      container.style.width = originalWidth;
-      if (parentScroll) {
-        parentScroll.style.removeProperty('overflow');
-        parentScroll.style.removeProperty('max-height');
-      }
-      if (dialog) {
-        dialog.style.removeProperty('max-height');
-        dialog.style.removeProperty('overflow');
-      }
+      // 복제본 제거
+      document.body.removeChild(clone);
 
       const img = new Image();
       img.onload = () => {
