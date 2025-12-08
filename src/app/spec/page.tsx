@@ -740,6 +740,20 @@ export default function SpecPage() {
     }
 
     try {
+      // 부모 요소들의 overflow/max-h 제한 임시 해제 (캡처 시 잘림 방지)
+      const parentScroll = container.parentElement as HTMLElement | null;
+      const dialog = parentScroll?.parentElement as HTMLElement | null;
+
+      const originalParentOverflow = parentScroll?.style.overflow;
+      const originalDialogMaxH = dialog?.style.maxHeight;
+      const originalDialogOverflow = dialog?.style.overflow;
+
+      if (parentScroll) parentScroll.style.overflow = 'visible';
+      if (dialog) {
+        dialog.style.maxHeight = 'none';
+        dialog.style.overflow = 'visible';
+      }
+
       // 1. 현재 높이 측정
       const currentHeight = container.offsetHeight;
       const originalWidth = container.style.width;
@@ -757,8 +771,13 @@ export default function SpecPage() {
         fetch: { bypassingCache: true },
       });
 
-      // 4. 너비 원복
+      // 4. 스타일 원복
       container.style.width = originalWidth;
+      if (parentScroll) parentScroll.style.overflow = originalParentOverflow || '';
+      if (dialog) {
+        dialog.style.maxHeight = originalDialogMaxH || '';
+        dialog.style.overflow = originalDialogOverflow || '';
+      }
 
       const img = new Image();
       img.onload = () => {
