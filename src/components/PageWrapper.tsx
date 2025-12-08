@@ -29,6 +29,14 @@ export default function PageWrapper() {
     setIsLoadingComplete(true);
   }, []);
 
+  // 랜딩페이지는 항상 다크 모드 - html에 dark 클래스 추가
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+    return () => {
+      document.documentElement.classList.remove('dark');
+    };
+  }, []);
+
   // Hero 섹션에서 위로 스크롤 방지
   useEffect(() => {
     const main = mainRef.current;
