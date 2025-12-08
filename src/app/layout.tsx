@@ -58,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="bg-gray-100 dark:bg-[#111111]">
+    <html lang="ko" className="bg-[#111111]">
       <head>
         <meta name="color-scheme" content="light dark" />
         <meta name="format-detection" content="telephone=no" />
@@ -73,7 +73,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-gray-100 antialiased dark:bg-[#111111]">
+      <body className="bg-[#111111] antialiased">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

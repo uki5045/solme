@@ -210,44 +210,44 @@
 
 /* iOS Safari Address Bar & Status Bar */
 html {
-  background-color: #f3f4f6;
-}
-
-html.dark {
   background-color: #111111;
 }
 
-/* 스크롤바 스타일 - 라이트 모드 */
+html:not(.dark) {
+  background-color: #f3f4f6;
+}
+
+/* 스크롤바 스타일 - 기본 다크 모드 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1a1a1a;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #444444;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
-}
-
-/* 스크롤바 스타일 - 다크 모드 */
-.dark ::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #444444;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
   background: #555555;
+}
+
+/* 스크롤바 스타일 - 라이트 모드 (spec 페이지용) */
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
 html,
