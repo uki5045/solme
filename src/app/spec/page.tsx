@@ -543,33 +543,8 @@ export default function SpecPage() {
 
   // 결과 테이블 너비 계산 (정사각형에 가깝게)
   const getResultWidth = (): number => {
-    const data = mainTab === 'camper' ? camperData : caravanData;
-    const optionsLength = (data.exterior?.length || 0) + (data.interior?.length || 0) + (data.convenience?.length || 0);
-
-    // 기본 높이 (상단 카드 영역)
-    const baseHeight = 480;
-
-    // 옵션 카드 높이 추정
-    // 기본 너비 800px 기준 한 줄에 약 35자, 줄 높이 26px
-    const baseCharsPerLine = 35;
-    const lineHeight = 26;
-    const optionRowPadding = 65; // 각 옵션 행 헤더 + 패딩
-    const optionRows = 4; // 전기, 외관, 내장, 편의
-
-    // 현재 너비에서 예상 줄 수 계산 (반복 계산으로 수렴)
-    let width = 800;
-    for (let i = 0; i < 3; i++) {
-      const charsPerLine = Math.floor(baseCharsPerLine * (width / 800));
-      const estimatedLines = Math.ceil(optionsLength / Math.max(charsPerLine, 20));
-      const optionCardHeight = (estimatedLines * lineHeight) + (optionRows * optionRowPadding);
-      const totalHeight = baseHeight + optionCardHeight;
-
-      // 목표 비율: 약 4:5 (가로:세로) ~ 1:1
-      // 높이가 높을수록 너비도 비례하게 증가
-      width = Math.min(Math.max(totalHeight * 0.9, 800), 1400);
-    }
-
-    return Math.round(width);
+    // 고정 너비 800px (내부 grid-cols-2 레이아웃에 맞춤)
+    return 800;
   };
 
   const openResetModal = () => {
