@@ -744,25 +744,31 @@ export default function SpecPage() {
       const parentScroll = container.parentElement as HTMLElement | null;
       const dialog = parentScroll?.parentElement as HTMLElement | null;
 
-      const originalParentOverflow = parentScroll?.style.overflow;
-      const originalDialogMaxH = dialog?.style.maxHeight;
-      const originalDialogOverflow = dialog?.style.overflow;
+      // 원본 클래스 저장
+      const originalParentClass = parentScroll?.className || '';
+      const originalDialogClass = dialog?.className || '';
 
-      if (parentScroll) parentScroll.style.overflow = 'visible';
+      // Tailwind 클래스 무력화 (!important로 강제)
+      if (parentScroll) {
+        parentScroll.style.setProperty('overflow', 'visible', 'important');
+        parentScroll.style.setProperty('max-height', 'none', 'important');
+      }
       if (dialog) {
-        dialog.style.maxHeight = 'none';
-        dialog.style.overflow = 'visible';
+        dialog.style.setProperty('max-height', 'none', 'important');
+        dialog.style.setProperty('overflow', 'visible', 'important');
       }
 
-      // 1. 현재 높이 측정
-      const currentHeight = container.offsetHeight;
       const originalWidth = container.style.width;
 
-      // 2. 높이에 맞춰 너비 계산 (정사각형에 가깝게, 최소 800px)
-      const targetWidth = Math.max(Math.round(currentHeight * 0.95), 800);
-      container.style.width = `${targetWidth}px`;
-
-      // 3. 리플로우 대기
+      // 너비-높이 반복 조절 (수렴)
+      let width = 800;
+      for (let i = 0; i < 3; i++) {
+        container.style.width = `${width}px`;
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const height = container.scrollHeight;
+        width = Math.max(Math.round(height * 0.95), 800);
+      }
+      container.style.width = `${width}px`;
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const dataUrl = await domToPng(container, {
@@ -771,12 +777,15 @@ export default function SpecPage() {
         fetch: { bypassingCache: true },
       });
 
-      // 4. 스타일 원복
+      // 스타일 원복
       container.style.width = originalWidth;
-      if (parentScroll) parentScroll.style.overflow = originalParentOverflow || '';
+      if (parentScroll) {
+        parentScroll.style.removeProperty('overflow');
+        parentScroll.style.removeProperty('max-height');
+      }
       if (dialog) {
-        dialog.style.maxHeight = originalDialogMaxH || '';
-        dialog.style.overflow = originalDialogOverflow || '';
+        dialog.style.removeProperty('max-height');
+        dialog.style.removeProperty('overflow');
       }
 
       const img = new Image();
