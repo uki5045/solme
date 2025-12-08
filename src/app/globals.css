@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Tailwind v4 기본 다크모드: prefers-color-scheme 자동 적용 */
-/* @custom-variant dark 없으면 자동으로 시스템 테마 따라감 */
+/* Tailwind v4 다크모드: 클래스 기반 (.dark) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* iOS Safari Safe Area Variables */
 :root {
