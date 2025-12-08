@@ -740,11 +740,25 @@ export default function SpecPage() {
     }
 
     try {
+      // 1. 현재 높이 측정
+      const currentHeight = container.offsetHeight;
+      const originalWidth = container.style.width;
+
+      // 2. 높이에 맞춰 너비 계산 (정사각형에 가깝게, 최소 800px)
+      const targetWidth = Math.max(Math.round(currentHeight * 0.95), 800);
+      container.style.width = `${targetWidth}px`;
+
+      // 3. 리플로우 대기
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const dataUrl = await domToPng(container, {
         scale: 2,
         backgroundColor: '#ffffff',
         fetch: { bypassingCache: true },
       });
+
+      // 4. 너비 원복
+      container.style.width = originalWidth;
 
       const img = new Image();
       img.onload = () => {
