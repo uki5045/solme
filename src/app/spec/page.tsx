@@ -740,12 +740,29 @@ export default function SpecPage() {
     }
 
     try {
-      // 800px 고정 너비로 캡처
+      const originalWidth = container.style.width;
+
+      // 1. 높이 측정
+      const height = container.scrollHeight;
+
+      // 2. 정사각형에 가깝게 너비 계산 (높이의 95%, 최소 800px)
+      const targetWidth = Math.max(Math.round(height * 0.95), 800);
+      container.style.width = `${targetWidth}px`;
+
+      // 3. 리플로우 대기
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // 4. 전체 크기 명시적 지정하여 캡처
       const dataUrl = await domToPng(container, {
         scale: 2,
         backgroundColor: '#ffffff',
         fetch: { bypassingCache: true },
+        width: container.scrollWidth,
+        height: container.scrollHeight,
       });
+
+      // 5. 원복
+      container.style.width = originalWidth;
 
       const img = new Image();
       img.onload = () => {
