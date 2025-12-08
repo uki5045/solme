@@ -740,36 +740,12 @@ export default function SpecPage() {
     }
 
     try {
-      // 복제본 생성 (부모 제약에서 완전히 벗어남)
-      const clone = container.cloneNode(true) as HTMLElement;
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = '800px';
-      clone.style.backgroundColor = '#ffffff';
-      clone.style.zIndex = '-1';
-
-      document.body.appendChild(clone);
-
-      // 너비-높이 반복 조절 (수렴)
-      let width = 800;
-      for (let i = 0; i < 3; i++) {
-        clone.style.width = `${width}px`;
-        await new Promise(resolve => setTimeout(resolve, 50));
-        const height = clone.scrollHeight;
-        width = Math.max(Math.round(height * 0.95), 800);
-      }
-      clone.style.width = `${width}px`;
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const dataUrl = await domToPng(clone, {
+      // 800px 고정 너비로 캡처
+      const dataUrl = await domToPng(container, {
         scale: 2,
         backgroundColor: '#ffffff',
         fetch: { bypassingCache: true },
       });
-
-      // 복제본 제거
-      document.body.removeChild(clone);
 
       const img = new Image();
       img.onload = () => {
