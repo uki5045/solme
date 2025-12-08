@@ -13,8 +13,6 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-  TabsContents,
-  TabsContent,
 } from '@/components/animate-ui/tabs';
 
 type MainTab = 'camper' | 'caravan';
@@ -172,6 +170,7 @@ interface VehicleListItem {
 export default function SpecPage() {
   const { data: session } = useSession();
   const [mainTab, setMainTab] = useState<MainTab>('camper');
+  const [tabLoading, setTabLoading] = useState(false);
   const [step, setStep] = useState<FormStep>(1);
   const [showResult, setShowResult] = useState(false);
   const [camperData, setCamperData] = useState<CamperData>(initialCamperData);
@@ -800,9 +799,15 @@ export default function SpecPage() {
   };
 
   const handleMainTabChange = (tab: MainTab) => {
-    setMainTab(tab);
-    setStep(1);
+    if (tab === mainTab) return;
+    setTabLoading(true);
     setFieldErrors({});
+    // 짧은 지연 후 탭 전환
+    setTimeout(() => {
+      setMainTab(tab);
+      setStep(1);
+      setTabLoading(false);
+    }, 150);
   };
 
   // 실제 PNG 다운로드 로직
@@ -1175,32 +1180,24 @@ export default function SpecPage() {
           />
         </div>
 
-        {/* 폼 콘텐츠 (슬라이드 + 블러 애니메이션) */}
+        {/* 폼 콘텐츠 */}
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1a1a1a]">
-          <Tabs value={`${mainTab}-${step}`} className="w-full">
-            <TabsContents className="min-h-[400px]">
-              {/* 캠핑카 폼 단계 */}
-              <TabsContent value="camper-1" className="p-5">
-                <CamperForm step={1} data={camperData} setData={setCamperData} errors={fieldErrors} clearError={(key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; })} />
-              </TabsContent>
-              <TabsContent value="camper-2" className="p-5">
-                <CamperForm step={2} data={camperData} setData={setCamperData} />
-              </TabsContent>
-              <TabsContent value="camper-3" className="p-5">
-                <CamperForm step={3} data={camperData} setData={setCamperData} />
-              </TabsContent>
-              {/* 카라반 폼 단계 */}
-              <TabsContent value="caravan-1" className="p-5">
-                <CaravanForm step={1} data={caravanData} setData={setCaravanData} errors={fieldErrors} clearError={(key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; })} />
-              </TabsContent>
-              <TabsContent value="caravan-2" className="p-5">
-                <CaravanForm step={2} data={caravanData} setData={setCaravanData} />
-              </TabsContent>
-              <TabsContent value="caravan-3" className="p-5">
-                <CaravanForm step={3} data={caravanData} setData={setCaravanData} />
-              </TabsContent>
-            </TabsContents>
-          </Tabs>
+          {tabLoading ? (
+            <div className="flex min-h-[400px] items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
+              </div>
+            </div>
+          ) : (
+            <div className="min-h-[400px] p-5">
+              {mainTab === 'camper' ? (
+                <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
+              ) : (
+                <CaravanForm step={step} data={caravanData} setData={setCaravanData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
+              )}
+            </div>
+          )}
 
           {/* 하단 버튼 */}
           <div className="flex gap-2 border-t border-gray-100 p-5 dark:border-gray-800">
