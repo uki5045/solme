@@ -1191,9 +1191,9 @@ export default function SpecPage() {
               style={{
                 width: 'calc(33.333% - 2.67px)',
                 left: 4,
-                // 다크모드: 테두리 스타일, 라이트모드: 배경 채우기
+                // 다크모드: 어두운 배경 + 테두리, 라이트모드: 배경 채우기
                 backgroundColor: isDarkMode
-                  ? 'transparent'
+                  ? '#2a2a2a'
                   : statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
                 border: isDarkMode
                   ? `2px solid ${statusTab === 'intake' ? '#9ca3af' : statusTab === 'productization' ? '#fbbf24' : '#4ade80'}`
