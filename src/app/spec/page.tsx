@@ -1244,13 +1244,10 @@ export default function SpecPage() {
               style={{
                 width: 'calc(33.333% - 2.67px)',
                 left: 4,
-                // 다크모드: 어두운 배경 + 테두리, 라이트모드: 배경 채우기
+                // 다크모드: soft/tinted 스타일 (15% opacity), 라이트모드: 솔리드 배경
                 backgroundColor: isDarkMode
-                  ? '#2a2a2a'
+                  ? statusTab === 'intake' ? 'rgba(107, 114, 128, 0.15)' : statusTab === 'productization' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)'
                   : statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
-                border: isDarkMode
-                  ? `2px solid ${statusTab === 'intake' ? '#9ca3af' : statusTab === 'productization' ? '#fbbf24' : '#4ade80'}`
-                  : 'none',
               }}
               animate={{
                 x: `${statusIndex * 100}%`,
@@ -1266,8 +1263,8 @@ export default function SpecPage() {
               const count = vehicleList.filter(v => v.status === status).length;
               const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
               const isActive = statusTab === status;
-              // 다크모드 활성 탭 색상
-              const darkActiveColor = status === 'intake' ? 'text-gray-300' : status === 'productization' ? 'text-amber-400' : 'text-green-400';
+              // 다크모드 활성 탭 색상 (soft/tinted 스타일 - 100% 색상)
+              const darkActiveColor = status === 'intake' ? 'text-gray-400' : status === 'productization' ? 'text-amber-500' : 'text-green-500';
               return (
                 <button
                   key={status}
@@ -1281,7 +1278,7 @@ export default function SpecPage() {
                 >
                   <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
                     isActive
-                      ? (isDarkMode ? 'bg-transparent border border-current' : 'bg-white/20 text-white')
+                      ? (isDarkMode ? 'bg-current/20' : 'bg-white/20 text-white')
                       : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                   }`}>
                     {count}
