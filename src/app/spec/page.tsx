@@ -1278,7 +1278,7 @@ export default function SpecPage() {
                   key={status}
                   data-status={status}
                   onClick={() => setStatusTab(status)}
-                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-base font-semibold transition-colors ${
+                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-base font-semibold ${
                     isActive
                       ? (isDarkMode ? darkActiveColor : 'text-white')
                       : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
