@@ -320,23 +320,12 @@ export default function SpecPage() {
     });
   };
 
-  // 검색어 변경 시 해당 차량이 있는 탭으로 자동 이동 (전체 탭이면 이동 불필요)
+  // 검색어 입력 시 전체 탭으로 이동
   useEffect(() => {
-    if (!searchQuery.trim() || statusTab === 'all') return;
-
-    const query = searchQuery.trim().toLowerCase();
-    // 차량번호, 모델명, 제조사 중 하나라도 일치하는 차량 찾기
-    const matchedVehicle = vehicleList.find((v) => {
-      const vehicleNumber = v.vehicleNumber?.toLowerCase() || '';
-      const modelName = v.modelName?.toLowerCase() || '';
-      const manufacturer = v.manufacturer?.toLowerCase() || '';
-      return vehicleNumber.includes(query) || modelName.includes(query) || manufacturer.includes(query);
-    });
-
-    if (matchedVehicle && matchedVehicle.status !== statusTab) {
-      setStatusTab(matchedVehicle.status);
+    if (searchQuery.trim() && statusTab !== 'all') {
+      setStatusTab('all');
     }
-  }, [searchQuery, vehicleList, statusTab]);
+  }, [searchQuery, statusTab]);
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
