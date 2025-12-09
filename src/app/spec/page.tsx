@@ -1102,7 +1102,7 @@ export default function SpecPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="pointer-events-auto fixed bottom-6 left-1/2 z-40 w-full max-w-xs -translate-x-1/2"
+              className="pointer-events-auto fixed bottom-20 left-1/2 z-40 w-full max-w-xs -translate-x-1/2 lg:bottom-6"
             >
               <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:bg-[#1a1a1a] dark:ring-white/10">
                 <div className="p-4">
