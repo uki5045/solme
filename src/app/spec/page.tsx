@@ -1895,7 +1895,6 @@ function CamperForm({
   if (step === 1) {
     return (
       <>
-        <SectionTitle>차량 정보</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
           <FormRow label="차량번호">
             <div className="relative">
@@ -2151,7 +2150,6 @@ function CaravanForm({
   if (step === 1) {
     return (
       <>
-        <SectionTitle>차량 정보</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
           <FormRow label="차량번호">
             <div className="relative">
