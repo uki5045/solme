@@ -952,269 +952,6 @@ export default function SpecPage() {
         {/* 좌측: 폼 영역 */}
         <div ref={leftSectionRef} className={`relative w-full max-w-[520px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
 
-        {/* 삭제 확인 모달 */}
-        <AnimatePresence>
-          {deleteModal.show && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-              onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="mb-4 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                    <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">데이터 삭제</h3>
-                  <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                    차량번호 <span className="font-semibold text-red-600 dark:text-red-400">{deleteModal.vehicleNumber}</span>
-                    <br />데이터를 삭제하시겠습니까?
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
-                    className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
-                  >
-                    삭제
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* 초기화 확인 모달 */}
-        <AnimatePresence>
-          {resetModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-              onClick={() => setResetModal(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="mb-4 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                    <svg className="h-6 w-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">입력 초기화</h3>
-                  <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold text-red-500 dark:text-red-400">{mainTab === 'camper' ? '캠핑카' : '카라반'}</span> 입력 내용을
-                    <br />모두 지우시겠습니까?
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setResetModal(false)}
-                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={confirmReset}
-                    className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
-                  >
-                    초기화
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* 덮어쓰기 확인 모달 */}
-        <AnimatePresence>
-          {overwriteModal.show && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-              onClick={() => setOverwriteModal({ show: false, callback: null })}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="mb-4 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                    <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">중복 차량번호</h3>
-                  <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                    이미 저장된 차량번호입니다.
-                    <br />기존 데이터를 <span className="font-semibold text-amber-600 dark:text-amber-400">덮어쓰시겠습니까?</span>
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setOverwriteModal({ show: false, callback: null })}
-                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (overwriteModal.callback) {
-                        overwriteModal.callback();
-                      }
-                      setOverwriteModal({ show: false, callback: null });
-                    }}
-                    className="flex-1 rounded-xl bg-amber-500 py-3 text-base font-semibold text-white transition-all hover:bg-amber-600"
-                  >
-                    덮어쓰기
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* 상태 변경 확인 모달 */}
-        <AnimatePresence>
-          {statusChangeModal.show && statusChangeModal.newStatus && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-              onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="mb-4 text-center">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
-                    <svg className="h-6 w-6 text-accent-600 dark:text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">상태 변경</h3>
-                  <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                    차량번호 <span className="font-semibold text-gray-900 dark:text-gray-100">{statusChangeModal.vehicleNumber}</span>
-                    <br />
-                    <span className="font-semibold text-accent-600 dark:text-accent-400">
-                      {{ intake: '입고', productization: '상품화', advertising: '광고' }[statusChangeModal.newStatus]}
-                    </span> 상태로 변경하시겠습니까?
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
-                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const { vehicleNumber, newStatus } = statusChangeModal;
-                      setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
-                      if (newStatus) {
-                        await updateVehicleStatus(vehicleNumber, newStatus);
-                      }
-                    }}
-                    className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
-                  >
-                    변경
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Toast 알림 */}
-        <AnimatePresence>
-          {toast.show && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="pointer-events-auto fixed bottom-20 left-1/2 z-40 w-full max-w-xs -translate-x-1/2 lg:bottom-6"
-            >
-              <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:bg-[#1a1a1a] dark:ring-white/10">
-                <div className="p-4">
-                  <div className="flex items-center">
-                    <div className="shrink-0">
-                      {toast.type === 'success' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
-                          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                          </svg>
-                        </div>
-                      )}
-                      {toast.type === 'error' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500">
-                          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </div>
-                      )}
-                      {toast.type === 'warning' && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400">
-                          <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <p className="text-base font-medium text-gray-900 dark:text-gray-100">{toast.message}</p>
-                    </div>
-                    <div className="ml-3 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setToast({ show: false, message: '', type: 'success' })}
-                        className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 dark:bg-transparent dark:text-gray-500 dark:hover:text-gray-400"
-                      >
-                        <span className="sr-only">Close</span>
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* 애니메이션 메인 탭 */}
         <Tabs
           defaultValue="camper"
@@ -1819,6 +1556,269 @@ export default function SpecPage() {
           </motion.div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* 삭제 확인 모달 */}
+      <AnimatePresence>
+        {deleteModal.show && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+            onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                  <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">데이터 삭제</h3>
+                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                  차량번호 <span className="font-semibold text-red-600 dark:text-red-400">{deleteModal.vehicleNumber}</span>
+                  <br />데이터를 삭제하시겠습니까?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
+                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
+                >
+                  삭제
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 초기화 확인 모달 */}
+      <AnimatePresence>
+        {resetModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+            onClick={() => setResetModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                  <svg className="h-6 w-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">입력 초기화</h3>
+                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold text-red-500 dark:text-red-400">{mainTab === 'camper' ? '캠핑카' : '카라반'}</span> 입력 내용을
+                  <br />모두 지우시겠습니까?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setResetModal(false)}
+                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmReset}
+                  className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
+                >
+                  초기화
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 덮어쓰기 확인 모달 */}
+      <AnimatePresence>
+        {overwriteModal.show && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+            onClick={() => setOverwriteModal({ show: false, callback: null })}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                  <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">중복 차량번호</h3>
+                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                  이미 저장된 차량번호입니다.
+                  <br />기존 데이터를 <span className="font-semibold text-amber-600 dark:text-amber-400">덮어쓰시겠습니까?</span>
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setOverwriteModal({ show: false, callback: null })}
+                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    if (overwriteModal.callback) {
+                      overwriteModal.callback();
+                    }
+                    setOverwriteModal({ show: false, callback: null });
+                  }}
+                  className="flex-1 rounded-xl bg-amber-500 py-3 text-base font-semibold text-white transition-all hover:bg-amber-600"
+                >
+                  덮어쓰기
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 상태 변경 확인 모달 */}
+      <AnimatePresence>
+        {statusChangeModal.show && statusChangeModal.newStatus && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+            onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
+                  <svg className="h-6 w-6 text-accent-600 dark:text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">상태 변경</h3>
+                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                  차량번호 <span className="font-semibold text-accent-600 dark:text-accent-400">{statusChangeModal.vehicleNumber}</span>
+                  <br />
+                  <span className="font-semibold text-accent-600 dark:text-accent-400">
+                    {{ intake: '입고', productization: '상품화', advertising: '광고' }[statusChangeModal.newStatus]}
+                  </span> 상태로 변경하시겠습니까?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={async () => {
+                    const { vehicleNumber, newStatus } = statusChangeModal;
+                    setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
+                    if (newStatus) {
+                      await updateVehicleStatus(vehicleNumber, newStatus);
+                    }
+                  }}
+                  className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
+                >
+                  변경
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast 알림 */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="pointer-events-auto fixed bottom-20 left-1/2 z-50 w-full max-w-xs -translate-x-1/2 lg:bottom-6"
+          >
+            <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:bg-[#1a1a1a] dark:ring-white/10">
+              <div className="p-4">
+                <div className="flex items-center">
+                  <div className="shrink-0">
+                    {toast.type === 'success' && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
+                        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      </div>
+                    )}
+                    {toast.type === 'error' && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500">
+                        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </div>
+                    )}
+                    {toast.type === 'warning' && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400">
+                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-base font-medium text-gray-900 dark:text-gray-100">{toast.message}</p>
+                  </div>
+                  <div className="ml-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setToast({ show: false, message: '', type: 'success' })}
+                      className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 dark:bg-transparent dark:text-gray-500 dark:hover:text-gray-400"
+                    >
+                      <span className="sr-only">Close</span>
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* 하단 탭바 - 모바일 PWA */}
