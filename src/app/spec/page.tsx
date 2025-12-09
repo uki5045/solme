@@ -1220,7 +1220,7 @@ export default function SpecPage() {
               onClick={goNext}
               className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
             >
-              {step === 3 ? '미리보기' : '다음'}
+              {step === 3 ? '저장' : '다음'}
             </button>
           </div>
         </div>
@@ -1532,7 +1532,7 @@ export default function SpecPage() {
                   onClick={() => downloadPNG(displayType)}
                   className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
                 >
-                  PNG 다운로드
+                  다운로드
                 </button>
                 {!isPreviewMode && (
                   <button
