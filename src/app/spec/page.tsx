@@ -319,23 +319,7 @@ export default function SpecPage() {
     });
   };
 
-  // 검색어 변경 시 해당 차량이 있는 탭으로 자동 이동
-  useEffect(() => {
-    if (!searchQuery.trim()) return;
-
-    const query = searchQuery.trim().toLowerCase();
-    // 차량번호, 모델명, 제조사 중 하나라도 일치하는 차량 찾기
-    const matchedVehicle = vehicleList.find((v) => {
-      const vehicleNumber = v.vehicleNumber?.toLowerCase() || '';
-      const modelName = v.modelName?.toLowerCase() || '';
-      const manufacturer = v.manufacturer?.toLowerCase() || '';
-      return vehicleNumber.includes(query) || modelName.includes(query) || manufacturer.includes(query);
-    });
-
-    if (matchedVehicle && matchedVehicle.status !== statusTab) {
-      setStatusTab(matchedVehicle.status);
-    }
-  }, [searchQuery, vehicleList, statusTab]);
+  // 검색어가 있으면 전체 탭에서 검색 (탭 이동 불필요)
 
   // localStorage 저장 debounce (500ms)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -1321,11 +1305,14 @@ export default function SpecPage() {
               {listLoading ? (
                 <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
               ) : (() => {
+                const isSearching = !!searchQuery.trim();
+                const query = searchQuery.toLowerCase();
+
                 const filteredList = vehicleList
-                  .filter((item) => item.status === statusTab)
+                  // 검색 중이면 전체에서, 아니면 현재 탭에서만
+                  .filter((item) => isSearching ? true : item.status === statusTab)
                   .filter((item) => {
-                    if (!searchQuery.trim()) return true;
-                    const query = searchQuery.toLowerCase();
+                    if (!isSearching) return true;
                     // 차량번호, 모델명, 제조사로 검색
                     return (
                       item.vehicleNumber.toLowerCase().includes(query) ||
@@ -1338,13 +1325,19 @@ export default function SpecPage() {
                   const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
                   return (
                     <div className="py-8 text-center text-sm text-gray-400">
-                      {searchQuery.trim()
+                      {isSearching
                         ? `"${searchQuery}" 검색 결과가 없습니다`
                         : `${labels[statusTab]} 상태의 차량이 없습니다`
                       }
                     </div>
                   );
                 }
+
+                const statusLabels: Record<VehicleStatus, { label: string; color: string }> = {
+                  intake: { label: '입고', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
+                  productization: { label: '상품화', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
+                  advertising: { label: '광고', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+                };
 
                 return (
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -1389,9 +1382,16 @@ export default function SpecPage() {
                               !
                             </span>
                           )}
-                          <span className={`ml-auto rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
-                            {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                          </span>
+                          <div className="ml-auto flex items-center gap-1.5">
+                            {isSearching && (
+                              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusLabels[item.status].color}`}>
+                                {statusLabels[item.status].label}
+                              </span>
+                            )}
+                            <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                              {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+                            </span>
+                          </div>
                         </div>
                         <div className="text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</div>
                         {item.manufacturer && (
