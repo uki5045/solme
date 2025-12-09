@@ -202,6 +202,7 @@ export default function SpecPage() {
   const caravanResultRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const [formHeight, setFormHeight] = useState<number | null>(null);
+  const [resultScale, setResultScale] = useState(1);
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message, type });
@@ -611,6 +612,27 @@ export default function SpecPage() {
     // 고정 너비 800px (내부 grid-cols-2 레이아웃에 맞춤)
     return 800;
   };
+
+  // 모바일에서 결과 모달 축소 비율 계산
+  useEffect(() => {
+    if (!showResult) return;
+
+    const calculateScale = () => {
+      const resultWidth = 800; // getResultWidth()
+      const padding = 40; // 모달 패딩 (p-5 = 20px * 2)
+      const availableWidth = window.innerWidth - padding;
+
+      if (availableWidth < resultWidth) {
+        setResultScale(availableWidth / resultWidth);
+      } else {
+        setResultScale(1);
+      }
+    };
+
+    calculateScale();
+    window.addEventListener('resize', calculateScale);
+    return () => window.removeEventListener('resize', calculateScale);
+  }, [showResult]);
 
   const openResetModal = () => {
     setResetModal(true);
@@ -1555,6 +1577,13 @@ export default function SpecPage() {
                 )}
               </div>
               <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#111111]">
+                <div
+                  style={{
+                    transform: `scale(${resultScale})`,
+                    transformOrigin: 'top left',
+                    width: resultScale < 1 ? `${100 / resultScale}%` : '100%',
+                  }}
+                >
                 {displayType === 'camper' ? (
                   <div ref={camperResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
                     <div className="grid grid-cols-2 gap-5 mb-5">
@@ -1645,6 +1674,7 @@ export default function SpecPage() {
                     </OptionCard>
                   </div>
                 )}
+                </div>
               </div>
             </motion.div>
           </motion.div>
