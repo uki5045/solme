@@ -1513,7 +1513,7 @@ export default function SpecPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 pb-20 lg:p-5 lg:pb-5"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setShowResult(false);
@@ -1525,7 +1525,7 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="flex max-h-[95vh] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1a1a1a]"
+              className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1a1a1a] lg:max-h-[95vh]"
             >
               <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-[#1a1a1a]">
                 <button
