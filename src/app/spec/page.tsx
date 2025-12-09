@@ -202,7 +202,7 @@ export default function SpecPage() {
   const caravanResultRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const [formHeight, setFormHeight] = useState<number | null>(null);
-  const [resultScale, setResultScale] = useState(1);
+  const [isMobileView, setIsMobileView] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message, type });
@@ -613,26 +613,16 @@ export default function SpecPage() {
     return 800;
   };
 
-  // 모바일에서 결과 모달 축소 비율 계산
+  // 모바일 뷰 감지
   useEffect(() => {
-    if (!showResult) return;
-
-    const calculateScale = () => {
-      const resultWidth = 800; // getResultWidth()
-      const padding = 40; // 모달 패딩 (p-5 = 20px * 2)
-      const availableWidth = window.innerWidth - padding;
-
-      if (availableWidth < resultWidth) {
-        setResultScale(availableWidth / resultWidth);
-      } else {
-        setResultScale(1);
-      }
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 768);
     };
 
-    calculateScale();
-    window.addEventListener('resize', calculateScale);
-    return () => window.removeEventListener('resize', calculateScale);
-  }, [showResult]);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const openResetModal = () => {
     setResetModal(true);
@@ -1577,13 +1567,8 @@ export default function SpecPage() {
                 )}
               </div>
               <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#111111]">
-                <div
-                  style={{
-                    transform: `scale(${resultScale})`,
-                    transformOrigin: 'top left',
-                    width: resultScale < 1 ? `${100 / resultScale}%` : '100%',
-                  }}
-                >
+                {/* 다운로드용 기존 표 (숨김) */}
+                <div className={isMobileView ? 'absolute -left-[9999px]' : ''}>
                 {displayType === 'camper' ? (
                   <div ref={camperResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
                     <div className="grid grid-cols-2 gap-5 mb-5">
@@ -1675,6 +1660,97 @@ export default function SpecPage() {
                   </div>
                 )}
                 </div>
+
+                {/* 모바일용 리스트 뷰 */}
+                {isMobileView && (
+                  <div className="space-y-4">
+                    {displayType === 'camper' ? (
+                      <>
+                        {/* 차량 정보 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">차량 정보</h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-500">베이스 차량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.baseVehicle || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.manufacturer || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.modelName || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.vehicleType || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.hasStructureMod && displayCamperData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})` : displayYearData.value}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-900 dark:text-gray-100">{parseFirstReg(displayCamperData.firstReg)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">주행거리</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.garageProof || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">필요 면허</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.license || '-'}</span></div>
+                          </div>
+                        </div>
+                        {/* 제원 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">제원</h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-500">길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">배기량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">연료</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.fuel || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">변속기</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.transmission || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">연비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">승차정원</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.cashReceipt || '-'}</span></div>
+                          </div>
+                        </div>
+                        {/* 옵션 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">옵션</h3>
+                          <div className="space-y-3 text-sm">
+                            <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCamperData.batteryType || '배터리', value: displayCamperData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCamperData.solar, unit: 'W' }, { label: '인버터', value: displayCamperData.inverter, unit: 'Kw' }])}</div></div>
+                            <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCamperData.exterior)}</div></div>
+                            <div><span className="text-gray-500">내장</span><div className="mt-1">{formatOptions(displayCamperData.interior)}</div></div>
+                            <div><span className="text-gray-500">편의</span><div className="mt-1">{formatOptions(displayCamperData.convenience)}</div></div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* 카라반 차량 정보 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">차량 정보</h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.manufacturer || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.modelName || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.vehicleType || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.hasStructureMod && displayCaravanData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})` : displayYearData.value}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-900 dark:text-gray-100">{parseFirstReg(displayCaravanData.firstReg)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.garageProof || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">취침인원</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.cashReceipt || '-'}</span></div>
+                          </div>
+                        </div>
+                        {/* 카라반 제원 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">제원</h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-500">외부 길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">외부 너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">외부 높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">공차 중량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최대 허용 중량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'}</span></div>
+                          </div>
+                        </div>
+                        {/* 카라반 옵션 */}
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">옵션</h3>
+                          <div className="space-y-3 text-sm">
+                            <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCaravanData.batteryType || '배터리', value: displayCaravanData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCaravanData.solar, unit: 'W' }, { label: '인버터', value: displayCaravanData.inverter, unit: 'Kw' }])}</div></div>
+                            <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCaravanData.exterior)}</div></div>
+                            <div><span className="text-gray-500">내장</span><div className="mt-1">{formatOptions(displayCaravanData.interior)}</div></div>
+                            <div><span className="text-gray-500">편의</span><div className="mt-1">{formatOptions(displayCaravanData.convenience)}</div></div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
