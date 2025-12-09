@@ -194,6 +194,7 @@ export default function SpecPage() {
   const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
+  const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTouchRef = useRef<{ x: number; y: number; item: VehicleListItem } | null>(null);
   const leftSectionRef = useRef<HTMLDivElement>(null);
@@ -387,6 +388,11 @@ export default function SpecPage() {
   useEffect(() => {
     fetchVehicleList();
   }, []);
+
+  // 상태 변경 요청 (모달 표시)
+  const requestStatusChange = (vehicleNumber: string, newStatus: VehicleStatus) => {
+    setStatusChangeModal({ show: true, vehicleNumber, newStatus });
+  };
 
   // 상태 변경 함수
   const updateVehicleStatus = async (vehicleNumber: string, newStatus: VehicleStatus) => {
@@ -1095,6 +1101,63 @@ export default function SpecPage() {
           )}
         </AnimatePresence>
 
+        {/* 상태 변경 확인 모달 */}
+        <AnimatePresence>
+          {statusChangeModal.show && statusChangeModal.newStatus && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+              onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mb-4 text-center">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-accent-100 dark:bg-accent-900/30">
+                    <svg className="h-6 w-6 text-accent-600 dark:text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">상태 변경</h3>
+                  <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                    차량번호 <span className="font-semibold text-gray-900 dark:text-gray-100">{statusChangeModal.vehicleNumber}</span>
+                    <br />
+                    <span className="font-semibold text-accent-600 dark:text-accent-400">
+                      {{ intake: '입고', productization: '상품화', advertising: '광고' }[statusChangeModal.newStatus]}
+                    </span> 상태로 변경하시겠습니까?
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+                    className="flex-1 rounded-xl border border-gray-200 bg-white py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const { vehicleNumber, newStatus } = statusChangeModal;
+                      setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
+                      if (newStatus) {
+                        await updateVehicleStatus(vehicleNumber, newStatus);
+                      }
+                    }}
+                    className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
+                  >
+                    변경
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Toast 알림 */}
         <AnimatePresence>
           {toast.show && (
@@ -1438,7 +1501,7 @@ export default function SpecPage() {
                     key={status}
                     onClick={() => {
                       if (contextMenu.item && !isCurrentStatus) {
-                        updateVehicleStatus(contextMenu.item.vehicleNumber, status);
+                        requestStatusChange(contextMenu.item.vehicleNumber, status);
                       }
                       setContextMenu({ show: false, x: 0, y: 0, item: null });
                     }}
