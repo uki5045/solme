@@ -14,6 +14,65 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/animate-ui/tabs';
+import type { Notification } from '@/lib/supabase';
+
+// 필드명 한글 변환 (알림 표시용)
+const fieldLabels: Record<string, string> = {
+  vehicleNumber: '차량번호',
+  baseVehicle: '베이스차량',
+  manufacturer: '제조사',
+  modelName: '모델명',
+  yearMonth: '연식',
+  registrationDate: '최초등록일',
+  mileage: '주행거리',
+  price: '가격',
+  cashReceipt: '현금영수증',
+  vehicleCategory: '차종',
+  vehicleType: '차종',
+  license: '면허',
+  structureChange: '구조변경',
+  length: '길이',
+  width: '너비',
+  height: '높이',
+  displacement: '배기량',
+  fuelEconomy: '연비',
+  seatCapacity: '승차정원',
+  fuel: '연료',
+  transmission: '변속기',
+  garageProof: '차고지증명',
+  extLength: '외부길이',
+  intLength: '내부길이',
+  extHeight: '외부높이',
+  intHeight: '내부높이',
+  extWidth: '외부너비',
+  intWidth: '내부너비',
+  curbWeight: '공차중량',
+  maxWeight: '최대중량',
+  batteryCapacity: '배터리',
+  batteryType: '배터리종류',
+  solar: '태양광',
+  solarCapacity: '태양광',
+  inverter: '인버터',
+  inverterCapacity: '인버터',
+  saleType: '구분',
+  hasAC: '에어컨',
+  hasHeating: '난방',
+  hasRefrigerator: '냉장고',
+  hasTV: 'TV',
+  hasBathroom: '화장실',
+  etcOptions: '기타옵션',
+  exterior: '외장',
+  interior: '내장',
+  convenience: '편의',
+  sleepCapacity: '취침인원',
+  year: '연식',
+  firstReg: '최초등록',
+  hasStructureMod: '구조변경',
+  structureModDate: '구조변경일',
+};
+
+// 필드명 한글 변환 함수
+const getFieldLabel = (field: string): string => fieldLabels[field] || field;
 
 type MainTab = 'camper' | 'caravan';
 type FormStep = 1 | 2 | 3;
@@ -29,6 +88,7 @@ interface CamperData {
   hasStructureMod: boolean;
   structureModDate: string;
   mileage: string;
+  saleType: string;
   garageProof: string;
   license: string;
   length: string;
@@ -60,6 +120,7 @@ interface CaravanData {
   structureModDate: string;
   garageProof: string;
   sleepCapacity: string;
+  saleType: string;
   cashReceipt: string;
   extLength: string;
   intLength: string;
@@ -89,6 +150,7 @@ const initialCamperData: CamperData = {
   hasStructureMod: false,
   structureModDate: '',
   mileage: '',
+  saleType: '매입',
   garageProof: '불필요',
   license: '2종 보통면허',
   length: '',
@@ -120,6 +182,7 @@ const initialCaravanData: CaravanData = {
   structureModDate: '',
   garageProof: '불필요',
   sleepCapacity: '',
+  saleType: '매입',
   cashReceipt: '가능',
   extLength: '',
   intLength: '',
@@ -154,8 +217,9 @@ const onlyDecimalPlus = (value: string): string => {
   return value.replace(/[^\d.+]/g, '');
 };
 
-type VehicleStatus = 'intake' | 'productization' | 'advertising';
-type StatusTabType = VehicleStatus | 'all';
+type VehicleStatus = 'intake' | 'productization' | 'advertising' | 'sold';
+type ActiveStatus = Exclude<VehicleStatus, 'sold'>; // sold 제외 (별도 뷰)
+type StatusTabType = ActiveStatus | 'all';
 
 interface VehicleListItem {
   id: number;
@@ -166,6 +230,7 @@ interface VehicleListItem {
   updatedAt: string;
   status: VehicleStatus;
   isIncomplete: boolean;
+  saleType: string;
 }
 
 export default function SpecPage() {
@@ -191,8 +256,22 @@ export default function SpecPage() {
   const [statusIndex, setStatusIndex] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
-  const [highlightedVehicle, setHighlightedVehicle] = useState<string | null>(null);
+
+  // 알림 관련 상태
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  // TODO: 알림 클릭 시 해당 차량 카드 하이라이트 기능 구현 예정
+  const [highlightedVehicle, _setHighlightedVehicle] = useState<string | null>(null);
+  void _setHighlightedVehicle; // ESLint 경고 방지 (추후 알림 기능에서 사용)
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSoldView, setShowSoldView] = useState(false);
+  const [soldSearchQuery, setSoldSearchQuery] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const [soldContextMenu, setSoldContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -202,7 +281,6 @@ export default function SpecPage() {
   const camperResultRef = useRef<HTMLDivElement>(null);
   const caravanResultRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
-  const [formHeight, setFormHeight] = useState<number | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
@@ -224,29 +302,6 @@ export default function SpecPage() {
       document.documentElement.style.backgroundColor = originalHtmlBg;
       document.body.style.backgroundColor = originalBodyBg;
     };
-  }, []);
-
-  useEffect(() => {
-    try {
-      const savedCamper = localStorage.getItem('spec-camper');
-      const savedCaravan = localStorage.getItem('spec-caravan');
-      if (savedCamper) {
-        const parsed = JSON.parse(savedCamper);
-        if (typeof parsed === 'object' && parsed !== null) {
-          setCamperData({ ...initialCamperData, ...parsed });
-        }
-      }
-      if (savedCaravan) {
-        const parsed = JSON.parse(savedCaravan);
-        if (typeof parsed === 'object' && parsed !== null) {
-          setCaravanData({ ...initialCaravanData, ...parsed });
-        }
-      }
-    } catch (e) {
-      console.error('로컬스토리지 데이터 파싱 오류:', e);
-      localStorage.removeItem('spec-camper');
-      localStorage.removeItem('spec-caravan');
-    }
   }, []);
 
   // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
@@ -322,51 +377,75 @@ export default function SpecPage() {
     });
   };
 
+  // 알림 가져오기 (showLoading: 초기 로드 시만 스피너 표시)
+  const fetchNotifications = useCallback(async (showLoading = false) => {
+    if (showLoading) setNotificationsLoading(true);
+    try {
+      const response = await fetch('/api/notifications?limit=20');
+      if (response.ok) {
+        const result = await response.json();
+        setNotifications(result.data || []);
+        setUnreadCount(result.unreadCount || 0);
+      }
+    } catch (err) {
+      console.error('알림 로드 실패:', err);
+    } finally {
+      if (showLoading) setNotificationsLoading(false);
+    }
+  }, []);
+
+  // 알림 읽음 처리
+  const markAllAsRead = async () => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAllRead: true }),
+      });
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('읽음 처리 실패:', err);
+    }
+  };
+
+  // 알림 삭제
+  const clearAllNotifications = async () => {
+    try {
+      await fetch('/api/notifications?deleteAll=true', { method: 'DELETE' });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('알림 삭제 실패:', err);
+    }
+  };
+
+  // 초기 알림 로드 & 30초마다 폴링
+  useEffect(() => {
+    fetchNotifications(true); // 초기 로드만 스피너 표시
+    const interval = setInterval(() => fetchNotifications(false), 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // 알림 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
   // 검색어 입력 시 전체 탭으로 이동
   useEffect(() => {
     if (searchQuery.trim() && statusTab !== 'all') {
       setStatusTab('all');
     }
   }, [searchQuery, statusTab]);
-
-  // localStorage 저장 debounce (500ms)
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem('spec-camper', JSON.stringify(camperData));
-      } catch (e) {
-        if ((e as Error).name === 'QuotaExceededError') {
-          console.warn('localStorage 용량 초과');
-        }
-      }
-    }, 500);
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, [camperData]);
-
-  useEffect(() => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem('spec-caravan', JSON.stringify(caravanData));
-      } catch (e) {
-        if ((e as Error).name === 'QuotaExceededError') {
-          console.warn('localStorage 용량 초과');
-        }
-      }
-    }, 500);
-    return () => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, [caravanData]);
 
   // 차량 목록 조회
   const fetchVehicleList = async () => {
@@ -409,10 +488,10 @@ export default function SpecPage() {
         return false;
       }
 
-      // 목록 새로고침
+      // 목록 및 알림 새로고침
       fetchVehicleList();
-      const statusLabels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
-      showToast(`${statusLabels[newStatus]}(으)로 변경되었습니다.`, 'success');
+      fetchNotifications(false);
+      showToast('상태를 변경했습니다.', 'success');
       return true;
     } catch {
       showToast('상태 변경 중 오류가 발생했습니다.', 'error');
@@ -428,6 +507,28 @@ export default function SpecPage() {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [contextMenu.show]);
+
+  // 판매완료 컨텍스트 메뉴 닫기 (외부 클릭 시)
+  useEffect(() => {
+    const handleClickOutside = () => setSoldContextMenu({ show: false, x: 0, y: 0, item: null });
+    if (soldContextMenu.show) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [soldContextMenu.show]);
+
+  // 사용자 드롭다운 닫기 (외부 클릭 시)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    if (showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showUserDropdown]);
 
   // 롱프레스 핸들러 (모바일)
   const handleTouchStart = useCallback((e: React.TouchEvent, item: VehicleListItem) => {
@@ -466,33 +567,6 @@ export default function SpecPage() {
     longPressTouchRef.current = null;
   }, []);
 
-  // 차량번호 입력 시 기존 차량 검색 및 자동 탭 이동 (완전 일치만)
-  const searchVehicleByNumber = useCallback((vehicleNumber: string) => {
-    if (!vehicleNumber.trim()) {
-      setHighlightedVehicle(null);
-      return;
-    }
-
-    const query = vehicleNumber.trim().toLowerCase();
-    const matchedVehicle = vehicleList.find(
-      (v) => v.vehicleNumber.toLowerCase() === query
-    );
-
-    if (matchedVehicle) {
-      // 해당 상태 탭으로 자동 이동
-      if (matchedVehicle.status !== statusTab) {
-        setStatusTab(matchedVehicle.status);
-      }
-      // 해당 차량 하이라이트
-      setHighlightedVehicle(matchedVehicle.vehicleNumber);
-      // 모바일에서는 차량 목록으로 전환
-      if (window.innerWidth < 1024) {
-        setMobileView('list');
-      }
-    } else {
-      setHighlightedVehicle(null);
-    }
-  }, [vehicleList, statusTab]);
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
   const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
@@ -525,23 +599,36 @@ export default function SpecPage() {
     }
   };
 
-  // 미리보기에서 수정 버튼 클릭 시 폼에 데이터 적용
-  const applyPreviewToForm = () => {
-    if (!previewData) return;
+  // 컨텍스트 메뉴에서 수정 클릭 시 바로 폼에 데이터 로드 (모달 없이)
+  const loadVehicleToForm = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
+    try {
+      const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
+      const result = await response.json();
 
-    if (previewData.type === 'camper') {
-      setCamperData(previewData.data as CamperData);
-      setMainTab('camper');
-    } else {
-      setCaravanData(previewData.data as CaravanData);
-      setMainTab('caravan');
+      if (!response.ok) {
+        showToast(result.error || '데이터를 불러올 수 없습니다.', 'error');
+        return;
+      }
+
+      const { data } = result;
+      const savedData = data.data as Record<string, string>;
+
+      // 폼에 직접 데이터 적용
+      if (vehicleType === 'camper') {
+        setCamperData({ ...initialCamperData, ...savedData } as CamperData);
+        setMainTab('camper');
+      } else {
+        setCaravanData({ ...initialCaravanData, ...savedData } as CaravanData);
+        setMainTab('caravan');
+      }
+
+      setStep(1);
+      setFieldErrors({});
+      showToast('데이터를 불러왔습니다.', 'success');
+    } catch (e) {
+      console.error('데이터 로드 오류:', e);
+      showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
     }
-
-    setStep(1);
-    setFieldErrors({});
-    setShowResult(false);
-    setPreviewData(null);
-    showToast('데이터를 불러왔습니다. 수정 후 완료를 눌러주세요.', 'success');
   };
 
   const formatNumber = (value: string): string => {
@@ -550,6 +637,25 @@ export default function SpecPage() {
     const parts = num.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return parts.join('.');
+  };
+
+  // 상대 시간 포맷 (방금 전, N분 전, N시간 전 등)
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffSec < 60) return '방금 전';
+    if (diffMin < 60) return `${diffMin}분 전`;
+    if (diffHour < 24) return `${diffHour}시간 전`;
+    if (diffDay < 7) return `${diffDay}일 전`;
+
+    // 일주일 이상이면 날짜 표시
+    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
   };
 
   const parseYear = (value: string): { label: string; value: string } => {
@@ -637,10 +743,8 @@ export default function SpecPage() {
   const confirmReset = () => {
     if (mainTab === 'camper') {
       setCamperData(initialCamperData);
-      localStorage.removeItem('spec-camper');
     } else {
       setCaravanData(initialCaravanData);
-      localStorage.removeItem('spec-caravan');
     }
     setStep(1);
     setResetModal(false);
@@ -680,14 +784,15 @@ export default function SpecPage() {
         return false;
       }
 
-      // 저장 성공 시 목록 새로고침
+      // 저장 성공 시 목록 및 알림 새로고침
       fetchVehicleList();
+      fetchNotifications(false);
       return true;
     } catch {
       showToast('저장 중 오류가 발생했습니다.', 'error');
       return false;
     }
-  }, [camperData, caravanData]);
+  }, [camperData, caravanData, fetchNotifications]);
 
   // 중복 확인 후 저장 (모달 표시)
   const saveWithDuplicateCheck = useCallback(async (type: MainTab, onSuccess: () => void) => {
@@ -702,14 +807,14 @@ export default function SpecPage() {
       setOverwriteModal({
         show: true,
         callback: async () => {
-          await saveToDatabase(type);
-          onSuccess();
+          const success = await saveToDatabase(type);
+          if (success) onSuccess();
         },
       });
     } else {
       // 중복 아니면 바로 저장
-      await saveToDatabase(type);
-      onSuccess();
+      const success = await saveToDatabase(type);
+      if (success) onSuccess();
     }
   }, [camperData, caravanData, checkDuplicate, saveToDatabase]);
 
@@ -741,14 +846,25 @@ export default function SpecPage() {
     }
   };
 
-  const goNext = () => {
+  // 차량번호 형식 검증 (00가0000 또는 000가0000)
+  const isValidVehicleNumber = (num: string): boolean => {
+    const pattern = /^\d{2,3}[가-힣]\d{4}$/;
+    return pattern.test(num.trim());
+  };
+
+  const goNext = async () => {
     // Step 1 필수 입력 검증
     if (step === 1) {
       const errors: Record<string, string> = {};
       const currentData = mainTab === 'camper' ? camperData : caravanData;
 
       // 공통 필수: 차량번호
-      if (!currentData.vehicleNumber.trim()) errors.vehicleNumber = '필수 입력';
+      if (!currentData.vehicleNumber.trim()) {
+        errors.vehicleNumber = '필수 입력';
+      } else if (!isValidVehicleNumber(currentData.vehicleNumber)) {
+        errors.vehicleNumber = '형식 오류';
+        showToast('올바른 차량 번호를 입력해주세요.', 'error');
+      }
 
       if (mainTab === 'camper') {
         if (!camperData.baseVehicle.trim()) errors.baseVehicle = '필수 입력';
@@ -770,7 +886,14 @@ export default function SpecPage() {
     if (step < 3) {
       setStep((s) => (s + 1) as FormStep);
     } else {
-      setShowResult(true);
+      // Step 3에서 저장 버튼 클릭 시 바로 저장 처리
+      const data = mainTab === 'camper' ? camperData : caravanData;
+      const currentTab = mainTab;
+      if (data.vehicleNumber.trim()) {
+        await saveWithDuplicateCheck(currentTab, () => resetAfterSave(currentTab));
+      } else {
+        resetAfterSave(currentTab);
+      }
     }
   };
 
@@ -779,28 +902,13 @@ export default function SpecPage() {
     showToast('저장되었습니다.', 'success');
     if (type === 'camper') {
       setCamperData(initialCamperData);
-      localStorage.removeItem('spec-camper');
     } else {
       setCaravanData(initialCaravanData);
-      localStorage.removeItem('spec-caravan');
     }
     setStep(1);
     setFieldErrors({});
     setShowResult(false);
   }, []);
-
-  // 완료 버튼 - 중복 확인 후 저장
-  const handleComplete = async () => {
-    const data = mainTab === 'camper' ? camperData : caravanData;
-    const currentTab = mainTab; // 클로저 문제 방지
-    // 먼저 결과 모달 닫기
-    setShowResult(false);
-    if (data.vehicleNumber.trim()) {
-      await saveWithDuplicateCheck(currentTab, () => resetAfterSave(currentTab));
-    } else {
-      resetAfterSave(currentTab);
-    }
-  };
 
   const goPrev = () => {
     if (step > 1) {
@@ -810,10 +918,6 @@ export default function SpecPage() {
 
   const handleMainTabChange = (tab: MainTab) => {
     if (tab === mainTab) return;
-    // 현재 폼 높이 저장
-    if (formContainerRef.current) {
-      setFormHeight(formContainerRef.current.offsetHeight);
-    }
     setTabLoading(true);
     setFieldErrors({});
     // 짧은 지연 후 탭 전환
@@ -821,7 +925,6 @@ export default function SpecPage() {
       setMainTab(tab);
       setStep(1);
       setTabLoading(false);
-      setFormHeight(null);
     }, 150);
   };
 
@@ -903,54 +1006,339 @@ export default function SpecPage() {
     await performDownloadPNG(type);
   };
 
-  const yearData = mainTab === 'camper' ? parseYear(camperData.year) : parseYear(caravanData.year);
-
   return (
     <>
       {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 */}
       <div
-        className="fixed inset-0 -z-10 bg-gray-100 dark:bg-[#111111]"
+        className="fixed inset-0 -z-10 bg-gray-100 dark:bg-[#121418]"
         aria-hidden="true"
       />
 
-      <div className="min-h-dvh bg-gray-100 font-sans text-gray-900 dark:bg-[#111111] dark:text-gray-100">
+      <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
       {/* 헤더 - PC만 */}
-      <div className="sticky top-0 z-40 hidden border-b border-gray-200 bg-white/80 pt-[env(safe-area-inset-top)] backdrop-blur-md dark:border-gray-700 dark:bg-[#1a1a1a]/80 lg:block">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-4">
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden text-sm font-medium text-gray-600 dark:text-gray-400 sm:block">
-              {session?.user?.email}
-            </span>
-            {/* 다크모드 토글 */}
+      <header className="sticky top-0 z-40 hidden pt-[env(safe-area-inset-top)] lg:block">
+        {/* 토스트 모드 헤더 - 임팩트 있는 애니메이션 */}
+        <AnimatePresence mode="wait">
+          {toast.show && (
+            <motion.div
+              initial={{ y: '-100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '-100%', opacity: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 25,
+                mass: 0.8
+              }}
+              className="absolute inset-0 z-10 flex h-14 items-center justify-center gap-3 border-b border-gray-200/80 bg-white/95 shadow-lg shadow-gray-200/50 backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/95 dark:shadow-black/30"
+            >
+              {/* 아이콘 컨테이너 - 바운스 효과 */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  delay: 0.15,
+                  type: 'spring',
+                  stiffness: 400,
+                  damping: 15
+                }}
+                className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                  toast.type === 'success'
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/40'
+                    : toast.type === 'error'
+                    ? 'bg-red-500 text-white shadow-md shadow-red-500/40'
+                    : 'bg-amber-500 text-white shadow-md shadow-amber-500/40'
+                }`}
+              >
+                {toast.type === 'success' && (
+                  <motion.svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="3"
+                    stroke="currentColor"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ delay: 0.3, duration: 0.3 }}
+                  >
+                    <motion.path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.5 12.75l6 6 9-13.5"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ delay: 0.35, duration: 0.25 }}
+                    />
+                  </motion.svg>
+                )}
+                {toast.type === 'error' && (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                {toast.type === 'warning' && (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                  </svg>
+                )}
+              </motion.div>
+              {/* 텍스트 - 타이핑 효과 */}
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.25, ease: 'easeOut' }}
+                className="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100"
+              >
+                {toast.message}
+              </motion.span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* 기본 헤더 */}
+        <div className={`border-b border-gray-200/80 bg-white/70 backdrop-blur-xl transition-opacity duration-200 dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90 ${toast.show ? 'opacity-0' : 'opacity-100'}`}>
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          {/* 좌측: 사용자 정보 (클릭 시 드롭다운) */}
+          <div ref={userDropdownRef} className="relative">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {/* 프로필 아바타 */}
+              <div className="relative">
+                {session?.user?.image ? (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
+                    <img
+                      src={session.user.image}
+                      alt="프로필"
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-400 to-accent-600 text-sm font-bold text-white shadow-sm">
+                    {(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}
+                  </div>
+                )}
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-[#1c1f26]" />
+              </div>
+              {/* 이름/이메일 */}
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  {session?.user?.name || session?.user?.email?.split('@')[0]}
+                </span>
+                {session?.user?.name && (
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    {session?.user?.email}
+                  </span>
+                )}
+              </div>
+            </button>
+
+            {/* 사용자 드롭다운 메뉴 */}
+            <AnimatePresence>
+              {showUserDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+                >
+                  <div className="border-b border-gray-100 px-4 py-3 dark:border-[#454c5c]">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      signOut({ callbackUrl: '/' });
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    로그아웃
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* 우측: 액션 버튼들 */}
+          <div className="flex items-center gap-1.5">
+            {/* 알림 버튼 + 드롭다운 */}
+            <div ref={notificationRef} className="relative">
+              <button
+                onClick={() => {
+                  const willOpen = !showNotifications;
+                  setShowNotifications(willOpen);
+                  // 알림창 열 때 자동 읽음 처리
+                  if (willOpen && unreadCount > 0) {
+                    markAllAsRead();
+                  }
+                }}
+                className="group relative flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                title="알림"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                {/* 알림 뱃지 */}
+                {unreadCount > 0 && (
+                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-md shadow-red-500/50 ring-2 ring-white dark:ring-[#121418] dark:shadow-red-500/40">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* 알림 드롭다운 */}
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full z-50 mt-2 w-[320px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-lg dark:border-[#2a2f3a] dark:bg-[#1c1f26]"
+                  >
+                    {/* 헤더 */}
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-[#2a2f3a]">
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">알림</span>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={clearAllNotifications}
+                          className="text-[13px] font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          삭제
+                        </button>
+                      )}
+                    </div>
+
+                    {/* 알림 목록 */}
+                    <div className="max-h-[360px] overflow-y-auto">
+                      {notificationsLoading ? (
+                        <div className="flex items-center justify-center py-10">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent-500 dark:border-gray-700 dark:border-t-accent-400" />
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="py-10 text-center">
+                          <svg className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">알림이 없습니다</p>
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`flex gap-3 border-b border-gray-100 px-4 py-3.5 last:border-0 dark:border-[#2a2f3a]/60 ${
+                              !notification.is_read ? 'bg-accent-50/40 dark:bg-accent-500/[0.08]' : ''
+                            }`}
+                          >
+                            {/* 아바타 */}
+                            {notification.user_image ? (
+                              <img
+                                src={notification.user_image}
+                                alt={notification.user_name || '사용자'}
+                                className="h-9 w-9 shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                  {notification.user_name?.charAt(0) || '?'}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* 내용 */}
+                            <div className="min-w-0 flex-1">
+                              {/* 차량번호 + 타입 뱃지 + 읽지않음 */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">
+                                  {notification.vehicle_number}
+                                </span>
+                                <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-sm ${
+                                  notification.type === 'vehicle_created'
+                                    ? 'bg-emerald-100 text-emerald-700 shadow-emerald-200/50 dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-emerald-500/20'
+                                    : notification.type === 'status_changed'
+                                    ? 'bg-amber-100 text-amber-700 shadow-amber-200/50 dark:bg-amber-500/15 dark:text-amber-400 dark:shadow-amber-500/20'
+                                    : 'bg-blue-100 text-blue-700 shadow-blue-200/50 dark:bg-blue-500/15 dark:text-blue-400 dark:shadow-blue-500/20'
+                                }`}>
+                                  {notification.type === 'vehicle_created' ? '신규' : notification.type === 'status_changed' ? '상태' : '수정'}
+                                </span>
+                                {!notification.is_read && (
+                                  <span className="h-2 w-2 rounded-full bg-accent-500 shadow-sm shadow-accent-500/50" />
+                                )}
+                              </div>
+
+                              {/* 변경 필드 */}
+                              {notification.details?.changed_fields && notification.details.changed_fields.length > 0 && (
+                                <p className="mt-1.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">
+                                  {notification.details.changed_fields.slice(0, 5).map(f => getFieldLabel(f)).join(', ')}
+                                  {notification.details.changed_fields.length > 5 && ` 외 ${notification.details.changed_fields.length - 5}개`}
+                                </p>
+                              )}
+
+                              {/* 사용자명 + 시간 */}
+                              <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                                {notification.user_name && <span>{notification.user_name} · </span>}
+                                {notification.created_at && formatRelativeTime(notification.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* 테마 토글 */}
             <button
               onClick={toggleDarkMode}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-              title={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              title={isDarkMode ? '라이트 모드' : '다크 모드'}
             >
               {isDarkMode ? (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                 </svg>
               ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
                 </svg>
               )}
             </button>
+
+            {/* 구분선 */}
+            <div className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+
+            {/* 판매완료 */}
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
-              className="flex h-7 shrink-0 items-center rounded-lg bg-gray-100 px-2 text-xs font-medium text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+              onClick={() => setShowSoldView(true)}
+              className="flex h-9 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
             >
-              로그아웃
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>판매완료</span>
+              {vehicleList.filter(v => v.status === 'sold').length > 0 && (
+                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gray-500 px-1.5 text-xs font-bold text-white dark:bg-gray-600">
+                  {vehicleList.filter(v => v.status === 'sold').length}
+                </span>
+              )}
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </header>
 
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-32 pt-[calc(env(safe-area-inset-top)+1rem)] lg:flex-row lg:items-start lg:gap-6 lg:pb-5 lg:pt-5">
 
         {/* 좌측: 폼 영역 */}
-        <div ref={leftSectionRef} className={`relative w-full max-w-[520px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
+        <div ref={leftSectionRef} className={`relative w-full max-w-[440px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
 
         {/* 애니메이션 메인 탭 */}
         <Tabs
@@ -960,18 +1348,18 @@ export default function SpecPage() {
           className="mb-3"
         >
           <TabsList
-            className="grid w-full grid-cols-2 bg-white shadow-sm dark:bg-[#1a1a1a]"
-            indicatorClassName="bg-accent-500"
+            className="grid w-full grid-cols-2 !border-0 !bg-white shadow-sm dark:!bg-[#1c1f26]"
+            indicatorClassName="bg-gradient-to-b from-accent-500 to-accent-600 shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-500/30"
           >
             <TabsTrigger
               value="camper"
-              className="rounded-lg py-3 text-base font-semibold text-gray-400 data-[state=active]:text-white dark:text-gray-500 dark:data-[state=active]:text-white"
+              className="rounded-lg py-3 text-base font-semibold text-gray-500 transition-colors duration-200 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
             >
               캠핑카
             </TabsTrigger>
             <TabsTrigger
               value="caravan"
-              className="rounded-lg py-3 text-base font-semibold text-gray-400 data-[state=active]:text-white dark:text-gray-500 dark:data-[state=active]:text-white"
+              className="rounded-lg py-3 text-base font-semibold text-gray-500 transition-colors duration-200 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
             >
               카라반
             </TabsTrigger>
@@ -979,7 +1367,7 @@ export default function SpecPage() {
         </Tabs>
 
         {/* 차량 검색 (데스크탑에서만 표시) */}
-        <div className="mb-3 hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1a1a1a] lg:block">
+        <div className="mb-3 hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1c1f26] lg:block">
           <input
             type="text"
             value={searchQuery}
@@ -990,11 +1378,10 @@ export default function SpecPage() {
         </div>
 
         {/* 폼 콘텐츠 */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1a1a1a]">
+        <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
           {tabLoading ? (
             <div
-              className="flex items-center justify-center"
-              style={{ height: formHeight || 400 }}
+              className="flex h-[780px] items-center justify-center"
             >
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
@@ -1002,7 +1389,7 @@ export default function SpecPage() {
               </div>
             </div>
           ) : (
-            <div ref={formContainerRef} className="p-5">
+            <div ref={formContainerRef} className="h-[780px] overflow-y-auto p-5">
               {mainTab === 'camper' ? (
                 <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
               ) : (
@@ -1011,26 +1398,26 @@ export default function SpecPage() {
             </div>
           )}
 
-          {/* 하단 버튼 */}
-          <div className="flex gap-2 border-t border-gray-100 p-5 dark:border-gray-800">
+          {/* 하단 버튼 - 항상 하단에 고정 */}
+          <div className="mt-auto flex gap-3 border-t border-gray-100 p-5 dark:border-gray-800">
             {step === 1 ? (
               <button
                 onClick={openResetModal}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-300 dark:hover:bg-[#333333]"
+                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
               >
                 초기화
               </button>
             ) : (
               <button
                 onClick={goPrev}
-                className="flex-1 rounded-xl border border-accent-500 bg-white py-3 text-base font-semibold text-accent-500 transition-all hover:bg-accent-50 dark:border-gray-600 dark:bg-[#2a2a2a] dark:text-gray-300 dark:hover:bg-[#333333]"
+                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
               >
                 이전
               </button>
             )}
             <button
               onClick={goNext}
-              className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
+              className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
             >
               {step === 3 ? '저장' : '다음'}
             </button>
@@ -1046,68 +1433,80 @@ export default function SpecPage() {
         >
           {/* 미리보기 로딩 오버레이 */}
           {previewLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm dark:bg-[#111111]/80">
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm dark:bg-[#121418]/80">
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
               </div>
             </div>
           )}
-          {/* 상태 탭 헤더 (캠핑카/카라반 탭과 동일 스타일 + 애니메이션) */}
-          <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-xl bg-white p-1 shadow-sm dark:bg-[#1a1a1a]">
+          {/* 상태 탭 헤더 */}
+          <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-1.5 shadow-sm dark:bg-[#1c1f26]">
             {/* 슬라이딩 인디케이터 */}
             <motion.div
-              className="absolute top-1 bottom-1 rounded-lg"
+              className="absolute top-1.5 bottom-1.5 rounded-xl"
               style={{
-                width: 'calc(25% - 2px)',
-                left: 4,
-                // 다크모드: soft/tinted 스타일 (15% opacity), 라이트모드: 솔리드 배경
-                backgroundColor: isDarkMode
-                  ? statusTab === 'all' ? 'rgba(59, 130, 246, 0.15)' : statusTab === 'intake' ? 'rgba(107, 114, 128, 0.15)' : statusTab === 'productization' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)'
-                  : statusTab === 'all' ? '#3b82f6' : statusTab === 'intake' ? '#6b7280' : statusTab === 'productization' ? '#f59e0b' : '#22c55e',
+                width: 'calc(25% - 3px)',
+                left: 6,
+                background: isDarkMode
+                  ? statusTab === 'all' ? 'linear-gradient(to bottom, #6b7280, #4b5563)'
+                  : statusTab === 'intake' ? 'linear-gradient(to bottom, #3b82f6, #2563eb)'
+                  : statusTab === 'productization' ? 'linear-gradient(to bottom, #f59e0b, #d97706)'
+                  : 'linear-gradient(to bottom, #22c55e, #16a34a)'
+                  : statusTab === 'all' ? 'linear-gradient(to bottom, #6b7280, #4b5563)'
+                  : statusTab === 'intake' ? 'linear-gradient(to bottom, #3b82f6, #2563eb)'
+                  : statusTab === 'productization' ? 'linear-gradient(to bottom, #f59e0b, #d97706)'
+                  : 'linear-gradient(to bottom, #22c55e, #16a34a)',
+                boxShadow: isDarkMode
+                  ? statusTab === 'all' ? '0 2px 8px rgba(107, 114, 128, 0.3)'
+                  : statusTab === 'intake' ? '0 2px 8px rgba(59, 130, 246, 0.35)'
+                  : statusTab === 'productization' ? '0 2px 8px rgba(245, 158, 11, 0.35)'
+                  : '0 2px 8px rgba(34, 197, 94, 0.35)'
+                  : statusTab === 'all' ? '0 2px 6px rgba(107, 114, 128, 0.15)'
+                  : statusTab === 'intake' ? '0 2px 6px rgba(59, 130, 246, 0.2)'
+                  : statusTab === 'productization' ? '0 2px 6px rgba(245, 158, 11, 0.2)'
+                  : '0 2px 6px rgba(34, 197, 94, 0.2)',
               }}
               animate={{
                 x: `${statusIndex * 100}%`,
               }}
               transition={{
                 type: 'spring',
-                stiffness: 150,
-                damping: 20,
-                mass: 1,
+                stiffness: 200,
+                damping: 22,
+                mass: 0.8,
               }}
             />
             {(['all', 'intake', 'productization', 'advertising'] as StatusTabType[]).map((status) => {
               const count = status === 'all' ? vehicleList.length : vehicleList.filter(v => v.status === status).length;
               const labels: Record<StatusTabType, string> = { all: '전체', intake: '입고', productization: '상품화', advertising: '광고' };
               const isActive = statusTab === status;
-              // 다크모드 활성 탭 색상 (soft/tinted 스타일 - 100% 색상)
-              const darkActiveColor = status === 'all' ? 'text-blue-500' : status === 'intake' ? 'text-gray-400' : status === 'productization' ? 'text-amber-500' : 'text-green-500';
               return (
                 <button
                   key={status}
                   data-status={status}
                   onClick={() => { setSearchQuery(''); setStatusTab(status); }}
-                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold ${
+                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold transition-colors duration-200 ${
                     isActive
-                      ? (isDarkMode ? darkActiveColor : 'text-white')
+                      ? 'text-white'
                       : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
                   }`}
                 >
-                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-bold ${
+                  <span className="whitespace-nowrap">{labels[status]}</span>
+                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 text-xs font-medium transition-colors duration-200 ${
                     isActive
-                      ? (isDarkMode ? 'bg-current/20' : 'bg-white/20 text-white')
-                      : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                      ? 'bg-white/25 text-white'
+                      : 'bg-gray-200/60 text-gray-400 dark:bg-gray-700/50 dark:text-gray-500'
                   }`}>
                     {count}
                   </span>
-                  <span className="whitespace-nowrap">{labels[status]}</span>
                 </button>
               );
             })}
           </div>
 
           {/* 차량 검색 (모바일에서만 표시) */}
-          <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1a1a1a] lg:hidden">
+          <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1c1f26] lg:hidden">
             <input
               type="text"
               value={searchQuery}
@@ -1118,12 +1517,31 @@ export default function SpecPage() {
           </div>
 
           {/* 카드 리스트 영역 */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1a1a1a]">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
+            {/* 로딩 오버레이 - 깜빡임 방지 */}
+            <AnimatePresence>
+              {listLoading && vehicleList.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[2px] dark:bg-[#1c1f26]/60"
+                >
+                  <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg dark:bg-[#262a33]">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent-200 border-t-accent-500" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">업데이트 중...</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="flex-1 overflow-y-auto p-4">
-              {listLoading ? (
+              {listLoading && vehicleList.length === 0 ? (
                 <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
               ) : (() => {
                 const filteredList = vehicleList
+                  // sold 상태는 판매완료 뷰에서만 표시
+                  .filter((item) => item.status !== 'sold')
                   // 전체 탭이면 상태 필터 무시
                   .filter((item) => statusTab === 'all' ? true : item.status === statusTab)
                   .filter((item) => {
@@ -1139,9 +1557,10 @@ export default function SpecPage() {
 
                 // 전체 탭에서 상태 뱃지 표시용
                 const statusLabels: Record<VehicleStatus, { label: string; color: string }> = {
-                  intake: { label: '입고', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
-                  productization: { label: '상품화', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-                  advertising: { label: '광고', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+                  intake: { label: '입고', color: 'border border-gray-300 bg-gray-50 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:shadow-gray-900/30' },
+                  productization: { label: '상품화', color: 'border border-amber-300 bg-amber-50 text-amber-700 shadow-sm shadow-amber-200/50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:shadow-amber-500/20' },
+                  advertising: { label: '광고', color: 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20' },
+                  sold: { label: '판매완료', color: 'border border-gray-400 bg-gray-100 text-gray-500 shadow-sm dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400' },
                 };
 
                 if (filteredList.length === 0) {
@@ -1183,37 +1602,45 @@ export default function SpecPage() {
                             loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
                           }
                         }}
-                        className={`group relative cursor-pointer select-none rounded-lg border p-3 transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent-500 ${
-                          highlightedVehicle === item.vehicleNumber
-                            ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-400 dark:bg-amber-900/20'
-                            : 'border-gray-200 bg-white hover:border-accent-300 dark:border-gray-700 dark:bg-[#252525] dark:hover:border-accent-500'
+                        className={`spec-card ${
+                          highlightedVehicle === item.vehicleNumber ? 'spec-card--highlighted' : ''
                         }`}
                       >
-                        <div className="mb-1 flex items-center gap-2">
-                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{item.vehicleNumber}</span>
+                        {/* 차량번호 + 배지 (같은 줄) */}
+                        <div className="mb-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
+                              {item.saleType === '위탁' ? '위' : '매'}
+                            </span>
+                            <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {statusTab === 'all' && statusLabels[item.status] && (
+                              <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusLabels[item.status].color}`}>
+                                {statusLabels[item.status].label}
+                              </span>
+                            )}
+                            <span className={`rounded-md px-2 py-0.5 text-xs font-medium shadow-sm ${item.vehicleType === 'camper' ? 'border border-blue-300 bg-blue-50 text-blue-700 shadow-blue-200/50 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:shadow-blue-500/20' : 'border border-violet-300 bg-violet-50 text-violet-700 shadow-violet-200/50 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-400 dark:shadow-violet-500/20'}`}>
+                              {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 모델명 + 제조사 + 미입력 아이콘 */}
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</div>
+                            <div className="truncate text-xs text-gray-400 dark:text-gray-500">{item.manufacturer || '\u00A0'}</div>
+                          </div>
                           {item.isIncomplete && (
                             <span
-                              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-white"
+                              className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-bold text-white shadow-sm shadow-amber-400/50 dark:shadow-amber-400/60"
                               title="옵션 미입력"
                             >
                               !
                             </span>
                           )}
-                          <div className="ml-auto flex items-center gap-1.5">
-                            {statusTab === 'all' && (
-                              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${statusLabels[item.status].color}`}>
-                                {statusLabels[item.status].label}
-                              </span>
-                            )}
-                            <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
-                              {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                            </span>
-                          </div>
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</div>
-                        {item.manufacturer && (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">{item.manufacturer}</div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -1225,13 +1652,13 @@ export default function SpecPage() {
           {/* 컨텍스트 메뉴 (우클릭) */}
           {contextMenu.show && contextMenu.item && (
             <div
-              className="fixed z-50 min-w-[160px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-[#1a1a1a]"
+              className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
               style={{ left: contextMenu.x, top: contextMenu.y }}
               onClick={(e) => e.stopPropagation()}
             >
               {/* 상태 변경 */}
               {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
-                const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고' };
+                const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고', sold: '판매완료' };
                 const isCurrentStatus = contextMenu.item?.status === status;
                 return (
                   <button
@@ -1243,10 +1670,10 @@ export default function SpecPage() {
                       setContextMenu({ show: false, x: 0, y: 0, item: null });
                     }}
                     disabled={isCurrentStatus}
-                    className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors ${
+                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
                       isCurrentStatus
-                        ? 'bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
-                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                        ? 'cursor-default text-gray-500 dark:text-gray-500'
+                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]'
                     }`}
                   >
                     {isCurrentStatus && (
@@ -1260,17 +1687,36 @@ export default function SpecPage() {
               })}
 
               {/* 구분선 */}
-              <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+              <div className="my-1.5 border-t border-gray-100 dark:border-[#454c5c]" />
+
+              {/* 판매완료 */}
+              <button
+                onClick={() => {
+                  if (contextMenu.item) {
+                    requestStatusChange(contextMenu.item.vehicleNumber, 'sold');
+                  }
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                판매완료
+              </button>
+
+              {/* 구분선 */}
+              <div className="my-1.5 border-t border-gray-100 dark:border-[#454c5c]" />
 
               {/* 수정 */}
               <button
                 onClick={() => {
                   if (contextMenu.item) {
-                    loadVehicleFromCard(contextMenu.item.vehicleNumber, contextMenu.item.vehicleType);
+                    loadVehicleToForm(contextMenu.item.vehicleNumber, contextMenu.item.vehicleType);
                   }
                   setContextMenu({ show: false, x: 0, y: 0, item: null });
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1286,7 +1732,7 @@ export default function SpecPage() {
                   }
                   setContextMenu({ show: false, x: 0, y: 0, item: null });
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1302,7 +1748,6 @@ export default function SpecPage() {
       <AnimatePresence>
         {showResult && (() => {
           // 미리보기 데이터가 있으면 사용, 없으면 현재 폼 데이터 사용
-          const isPreviewMode = !!previewData;
           const displayType = previewData?.type || mainTab;
           const displayCamperData = (previewData?.type === 'camper' ? previewData.data : camperData) as CamperData;
           const displayCaravanData = (previewData?.type === 'caravan' ? previewData.data : caravanData) as CaravanData;
@@ -1325,48 +1770,26 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1a1a1a] lg:max-h-[95vh]"
+              className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1c1f26] lg:max-h-[95vh]"
             >
-              <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-700 dark:bg-[#1a1a1a]">
-                <button
-                  onClick={() => {
-                    if (isPreviewMode) {
-                      applyPreviewToForm();
-                    } else {
-                      setShowResult(false);
-                    }
-                  }}
-                  className="hidden rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 lg:block dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  ← 수정
-                </button>
+              <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
                 <button
                   onClick={() => downloadPNG(displayType)}
                   className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
                 >
                   다운로드
                 </button>
-                {!isPreviewMode && (
-                  <button
-                    onClick={handleComplete}
-                    className="rounded-xl bg-accent-500 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-accent-600"
-                  >
-                    완료
-                  </button>
-                )}
-                {isPreviewMode && (
-                  <button
-                    onClick={() => {
-                      setShowResult(false);
-                      setPreviewData(null);
-                    }}
-                    className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                  >
-                    닫기
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setShowResult(false);
+                    setPreviewData(null);
+                  }}
+                  className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  닫기
+                </button>
               </div>
-              <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#111111]">
+              <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#121418]">
                 {/* 다운로드용 기존 표 (숨김) */}
                 <div className={isMobileView ? 'absolute -left-[9999px]' : ''}>
                 {displayType === 'camper' ? (
@@ -1467,38 +1890,38 @@ export default function SpecPage() {
                     {displayType === 'camper' ? (
                       <>
                         {/* 차량 정보 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">차량 정보</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">차량 정보</h3>
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">베이스 차량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.baseVehicle || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.manufacturer || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.modelName || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.vehicleType || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.hasStructureMod && displayCamperData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})` : displayYearData.value}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-900 dark:text-gray-100">{parseFirstReg(displayCamperData.firstReg)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">주행거리</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.garageProof || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">필요 면허</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.license || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">베이스 차량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.baseVehicle || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.manufacturer || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.modelName || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.vehicleType || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.hasStructureMod && displayCamperData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})` : displayYearData.value}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-800 dark:text-gray-100">{parseFirstReg(displayCamperData.firstReg)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">주행거리</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.garageProof || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">필요 면허</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.license || '-'}</span></div>
                           </div>
                         </div>
                         {/* 제원 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">제원</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">제원</h3>
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">배기량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">연료</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.fuel || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">변속기</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.transmission || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">연비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">승차정원</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCamperData.cashReceipt || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">배기량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">연료</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.fuel || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">변속기</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.transmission || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">연비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">승차정원</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.cashReceipt || '-'}</span></div>
                           </div>
                         </div>
                         {/* 옵션 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">옵션</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">옵션</h3>
                           <div className="space-y-3 text-sm">
                             <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCamperData.batteryType || '배터리', value: displayCamperData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCamperData.solar, unit: 'W' }, { label: '인버터', value: displayCamperData.inverter, unit: 'Kw' }])}</div></div>
                             <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCamperData.exterior)}</div></div>
@@ -1510,36 +1933,36 @@ export default function SpecPage() {
                     ) : (
                       <>
                         {/* 카라반 차량 정보 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">차량 정보</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">차량 정보</h3>
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.manufacturer || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.modelName || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.vehicleType || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.hasStructureMod && displayCaravanData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})` : displayYearData.value}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-900 dark:text-gray-100">{parseFirstReg(displayCaravanData.firstReg)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.garageProof || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">취침인원</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.cashReceipt || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.manufacturer || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.modelName || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.vehicleType || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.hasStructureMod && displayCaravanData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})` : displayYearData.value}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-800 dark:text-gray-100">{parseFirstReg(displayCaravanData.firstReg)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.garageProof || '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">취침인원</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.cashReceipt || '-'}</span></div>
                           </div>
                         </div>
                         {/* 카라반 제원 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">제원</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">제원</h3>
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">외부 길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 길이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">외부 너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 너비</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">외부 높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 높이</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">공차 중량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최대 허용 중량</span><span className="font-medium text-gray-900 dark:text-gray-100">{displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">외부 길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">외부 너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">외부 높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">내부 높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">공차 중량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">최대 허용 중량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'}</span></div>
                           </div>
                         </div>
                         {/* 카라반 옵션 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1a1a1a]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-900 dark:text-gray-100">옵션</h3>
+                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
+                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">옵션</h3>
                           <div className="space-y-3 text-sm">
                             <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCaravanData.batteryType || '배터리', value: displayCaravanData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCaravanData.solar, unit: 'W' }, { label: '인버터', value: displayCaravanData.inverter, unit: 'Kw' }])}</div></div>
                             <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCaravanData.exterior)}</div></div>
@@ -1572,7 +1995,7 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 text-center">
@@ -1581,7 +2004,7 @@ export default function SpecPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">데이터 삭제</h3>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">데이터 삭제</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
                   차량번호 <span className="font-semibold text-red-600 dark:text-red-400">{deleteModal.vehicleNumber}</span>
                   <br />데이터를 삭제하시겠습니까?
@@ -1590,13 +2013,13 @@ export default function SpecPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
-                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
                 >
                   취소
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
+                  className="flex-1 rounded-xl bg-gradient-to-b from-red-500 to-red-600 py-3 text-base font-semibold text-white shadow-sm shadow-red-500/15 transition-all duration-200 hover:from-red-400 hover:to-red-500 hover:shadow hover:shadow-red-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-red-500/30 dark:hover:shadow-lg dark:hover:shadow-red-500/40"
                 >
                   삭제
                 </button>
@@ -1620,7 +2043,7 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 text-center">
@@ -1629,7 +2052,7 @@ export default function SpecPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">입력 초기화</h3>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">입력 초기화</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
                   <span className="font-semibold text-red-500 dark:text-red-400">{mainTab === 'camper' ? '캠핑카' : '카라반'}</span> 입력 내용을
                   <br />모두 지우시겠습니까?
@@ -1638,13 +2061,13 @@ export default function SpecPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setResetModal(false)}
-                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
                 >
                   취소
                 </button>
                 <button
                   onClick={confirmReset}
-                  className="flex-1 rounded-xl bg-red-500 py-3 text-base font-semibold text-white transition-all hover:bg-red-600"
+                  className="flex-1 rounded-xl bg-gradient-to-b from-red-500 to-red-600 py-3 text-base font-semibold text-white shadow-sm shadow-red-500/15 transition-all duration-200 hover:from-red-400 hover:to-red-500 hover:shadow hover:shadow-red-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-red-500/30 dark:hover:shadow-lg dark:hover:shadow-red-500/40"
                 >
                   초기화
                 </button>
@@ -1668,7 +2091,7 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 text-center">
@@ -1677,7 +2100,7 @@ export default function SpecPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">중복 차량번호</h3>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">중복 차량번호</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
                   이미 저장된 차량번호입니다.
                   <br />기존 데이터를 <span className="font-semibold text-amber-600 dark:text-amber-400">덮어쓰시겠습니까?</span>
@@ -1686,7 +2109,7 @@ export default function SpecPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setOverwriteModal({ show: false, callback: null })}
-                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
                 >
                   취소
                 </button>
@@ -1697,7 +2120,7 @@ export default function SpecPage() {
                     }
                     setOverwriteModal({ show: false, callback: null });
                   }}
-                  className="flex-1 rounded-xl bg-amber-500 py-3 text-base font-semibold text-white transition-all hover:bg-amber-600"
+                  className="flex-1 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 py-3 text-base font-semibold text-white shadow-sm shadow-amber-500/15 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow hover:shadow-amber-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-amber-500/30 dark:hover:shadow-lg dark:hover:shadow-amber-500/40"
                 >
                   덮어쓰기
                 </button>
@@ -1721,7 +2144,7 @@ export default function SpecPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1a1a1a]"
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 text-center">
@@ -1730,19 +2153,19 @@ export default function SpecPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">상태 변경</h3>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">상태 변경</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  차량번호 <span className="font-semibold text-accent-600 dark:text-accent-400">{statusChangeModal.vehicleNumber}</span>
+                  차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{statusChangeModal.vehicleNumber}</span>
                   <br />
-                  <span className="font-semibold text-accent-600 dark:text-accent-400">
-                    {{ intake: '입고', productization: '상품화', advertising: '광고' }[statusChangeModal.newStatus]}
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {{ intake: '입고', productization: '상품화', advertising: '광고', sold: '판매완료' }[statusChangeModal.newStatus!]}
                   </span> 상태로 변경하시겠습니까?
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
-                  className="flex-1 rounded-xl bg-gray-100 py-3 text-base font-semibold text-gray-600 transition-all hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
                 >
                   취소
                 </button>
@@ -1754,7 +2177,7 @@ export default function SpecPage() {
                       await updateVehicleStatus(vehicleNumber, newStatus);
                     }
                   }}
-                  className="flex-1 rounded-xl bg-accent-500 py-3 text-base font-semibold text-white transition-all hover:bg-accent-600"
+                  className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
                 >
                   변경
                 </button>
@@ -1764,74 +2187,243 @@ export default function SpecPage() {
         )}
       </AnimatePresence>
 
-      {/* Toast 알림 */}
+      {/* 판매완료 뷰 모달 */}
       <AnimatePresence>
+        {showSoldView && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]"
+          >
+            {/* 헤더 */}
+            <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90">
+              <div className="flex h-14 items-center justify-between px-4">
+                <button
+                  onClick={() => setShowSoldView(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
+                <div className="w-9" />
+              </div>
+            </div>
+
+            {/* 검색바 */}
+            <div className="p-4 pb-2">
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                  type="text"
+                  value={soldSearchQuery}
+                  onChange={(e) => setSoldSearchQuery(e.target.value)}
+                  placeholder="차량번호, 모델명으로 검색"
+                  className="form-input pl-12"
+                />
+              </div>
+            </div>
+
+            {/* 카드 목록 */}
+            <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+              {(() => {
+                const soldList = vehicleList
+                  .filter(v => v.status === 'sold')
+                  .filter(v => {
+                    if (!soldSearchQuery.trim()) return true;
+                    const q = soldSearchQuery.toLowerCase();
+                    return v.vehicleNumber.toLowerCase().includes(q) ||
+                           v.modelName?.toLowerCase().includes(q) ||
+                           v.manufacturer?.toLowerCase().includes(q);
+                  });
+
+                if (soldList.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
+                        <svg className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                        {soldSearchQuery.trim() ? `"${soldSearchQuery}" 검색 결과가 없습니다` : '판매완료된 차량이 없습니다'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3 pt-2">
+                    {soldList.map((item) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setSoldContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
+                        }}
+                        className="spec-card--sold"
+                      >
+                        {/* 판매완료 배지 */}
+                        <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/25">
+                          SOLD
+                        </div>
+
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40' : 'bg-emerald-500 shadow-emerald-500/40'}`}>
+                              {item.saleType === '위탁' ? '위' : '매'}
+                            </span>
+                            <div>
+                              <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+                              <span className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-400'}`}>
+                                {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</p>
+                          {item.manufacturer && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{item.manufacturer}</p>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                            {new Date(item.updatedAt).toLocaleDateString('ko-KR')} 판매완료
+                          </span>
+                          <button
+                            onClick={() => {
+                              setShowSoldView(false);
+                              setTimeout(() => {
+                                requestStatusChange(item.vehicleNumber, 'intake');
+                              }, 100);
+                            }}
+                            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:shadow-accent-500/30"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            재등록
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* 판매완료 컨텍스트 메뉴 */}
+            {soldContextMenu.show && soldContextMenu.item && (
+              <div
+                className="fixed z-[60] min-w-[160px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+                style={{ left: soldContextMenu.x, top: soldContextMenu.y }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => {
+                    const vehicleNumber = soldContextMenu.item?.vehicleNumber;
+                    setSoldContextMenu({ show: false, x: 0, y: 0, item: null });
+                    setShowSoldView(false);
+                    if (vehicleNumber) {
+                      setTimeout(() => {
+                        requestStatusChange(vehicleNumber, 'intake');
+                      }, 100);
+                    }
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                  재등록 (입고)
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
+      <AnimatePresence mode="wait">
         {toast.show && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="pointer-events-auto fixed bottom-20 left-1/2 z-50 w-full max-w-xs -translate-x-1/2 lg:bottom-6"
+            initial={{ opacity: 0, y: -30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{
+              type: 'spring',
+              stiffness: 350,
+              damping: 25,
+              mass: 0.8
+            }}
+            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top)+1rem)] z-50 -translate-x-1/2 lg:hidden"
           >
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 dark:bg-[#1a1a1a] dark:ring-white/10">
-              <div className="p-4">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    {toast.type === 'success' && (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
-                        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      </div>
-                    )}
-                    {toast.type === 'error' && (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500">
-                        <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </div>
-                    )}
-                    {toast.type === 'warning' && (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400">
-                        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="ml-3 flex-1">
-                    <p className="text-base font-medium text-gray-900 dark:text-gray-100">{toast.message}</p>
-                  </div>
-                  <div className="ml-3 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setToast({ show: false, message: '', type: 'success' })}
-                      className="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 dark:bg-transparent dark:text-gray-500 dark:hover:text-gray-400"
-                    >
-                      <span className="sr-only">Close</span>
-                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <div className={`
+              flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-lg
+              ${toast.type === 'success'
+                ? 'bg-gray-900 text-white shadow-gray-900/30 dark:bg-gray-100 dark:text-gray-900 dark:shadow-white/20'
+                : toast.type === 'error'
+                ? 'bg-red-600 text-white shadow-red-600/40'
+                : 'bg-amber-500 text-white shadow-amber-500/40'
+              }
+            `}>
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 15 }}
+                className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                  toast.type === 'success'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-white/20 text-white'
+                }`}
+              >
+                {toast.type === 'success' && (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                )}
+                {toast.type === 'error' && (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                {toast.type === 'warning' && (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                )}
+              </motion.div>
+              {toast.message}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* 하단 탭바 - 모바일 PWA */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-gray-700 dark:bg-[#1a1a1a] lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-[#363b47] dark:bg-[#1c1f26] lg:hidden">
         <div className="grid h-14 grid-cols-4">
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
-            className="flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+            onClick={() => setShowSoldView(true)}
+            className="relative flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-xs font-semibold">로그아웃</span>
+            <span className="text-xs font-semibold">판매완료</span>
+            {vehicleList.filter(v => v.status === 'sold').length > 0 && (
+              <span className="absolute right-3 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gray-500 px-1 text-[10px] font-bold text-white">
+                {vehicleList.filter(v => v.status === 'sold').length}
+              </span>
+            )}
           </button>
           {/* 다크모드 토글 */}
           <button
@@ -1979,15 +2571,20 @@ function CamperForm({
             />
           </div>
         </FormRow>
-        <div className="mb-2.5">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={data.hasStructureMod}
-              onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 bg-white checked:border-accent-500 checked:bg-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-[#2a2a2a] dark:checked:border-accent-400 dark:checked:bg-accent-400"
-            />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
+        <div className="mb-3">
+          <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
+            <div className="relative flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={data.hasStructureMod}
+                onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
+                className="peer h-5 w-5 cursor-pointer appearance-none rounded-md bg-gradient-to-b from-white to-gray-50 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-all duration-200 checked:from-accent-500 checked:to-accent-600 hover:from-gray-50 hover:to-gray-100 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.15)] checked:hover:from-accent-400 checked:hover:to-accent-500 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:ring-offset-0 dark:from-[#2a2f3a] dark:to-[#262a33] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] dark:checked:from-accent-400 dark:checked:to-accent-500 dark:hover:from-[#2e3340] dark:hover:to-[#282d36] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] dark:checked:hover:from-accent-300 dark:checked:hover:to-accent-400"
+              />
+              <svg viewBox="0 0 12 12" className="pointer-events-none absolute size-3 scale-0 text-white opacity-0 transition-all duration-150 peer-checked:scale-100 peer-checked:opacity-100">
+                <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-6" />
+              </svg>
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">구조변경</span>
           </label>
           {data.hasStructureMod && (
             <div className="mt-2 flex gap-2">
@@ -2019,9 +2616,16 @@ function CamperForm({
           )}
         </div>
         <FormRow label="주행거리">
-          <div className="relative">
-            <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35000" className={`form-input ${errors.mileage ? 'form-input-error pr-10' : ''}`} />
-            {errors.mileage && <ErrorIcon />}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35000" className={`form-input pr-14 ${errors.mileage ? 'form-input-error' : ''}`} />
+              <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 dark:text-gray-500">Km</span>
+              {errors.mileage && <span className="pointer-events-none absolute right-12 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-500 shadow-sm shadow-red-400/30"><span className="text-xs font-bold text-white">!</span></span>}
+            </div>
+            <FormSelect value={data.saleType} onChange={(e) => setData({ ...data, saleType: e.target.value })} className="w-24 shrink-0">
+              <option value="매입">매입</option>
+              <option value="위탁">위탁</option>
+            </FormSelect>
           </div>
         </FormRow>
         {/* 드롭다운 2x2 그리드 */}
@@ -2062,24 +2666,23 @@ function CamperForm({
   if (step === 2) {
     return (
       <>
-        <SectionTitle>제원</SectionTitle>
-        <FormRow label="길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.length} onChange={(e) => setData({ ...data, length: onlyNumbers(e.target.value) })} placeholder="7315" className="form-input" />
+        <FormRow label="길이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.length} onChange={(e) => setData({ ...data, length: onlyNumbers(e.target.value) })} placeholder="7315" />
         </FormRow>
-        <FormRow label="너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.width} onChange={(e) => setData({ ...data, width: onlyNumbers(e.target.value) })} placeholder="2060" className="form-input" />
+        <FormRow label="너비">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.width} onChange={(e) => setData({ ...data, width: onlyNumbers(e.target.value) })} placeholder="2060" />
         </FormRow>
-        <FormRow label="높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.height} onChange={(e) => setData({ ...data, height: onlyNumbers(e.target.value) })} placeholder="2850" className="form-input" />
+        <FormRow label="높이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.height} onChange={(e) => setData({ ...data, height: onlyNumbers(e.target.value) })} placeholder="2850" />
         </FormRow>
-        <FormRow label="배기량 (cc)">
-          <input type="text" inputMode="numeric" value={data.displacement} onChange={(e) => setData({ ...data, displacement: onlyNumbers(e.target.value) })} placeholder="2497" className="form-input" />
+        <FormRow label="배기량">
+          <InputWithUnit unit="cc" type="text" inputMode="numeric" value={data.displacement} onChange={(e) => setData({ ...data, displacement: onlyNumbers(e.target.value) })} placeholder="2497" />
         </FormRow>
-        <FormRow label="연비 (km/L)">
-          <input type="text" inputMode="decimal" value={data.fuelEconomy} onChange={(e) => setData({ ...data, fuelEconomy: onlyDecimal(e.target.value) })} placeholder="8.5" className="form-input" />
+        <FormRow label="연비">
+          <InputWithUnit unit="km/L" type="text" inputMode="decimal" value={data.fuelEconomy} onChange={(e) => setData({ ...data, fuelEconomy: onlyDecimal(e.target.value) })} placeholder="8.5" />
         </FormRow>
         <FormRow label="승차정원">
-          <input type="text" inputMode="numeric" value={data.seatCapacity} onChange={(e) => setData({ ...data, seatCapacity: onlyNumbers(e.target.value) })} placeholder="9" className="form-input" />
+          <InputWithUnit unit="명" type="text" inputMode="numeric" value={data.seatCapacity} onChange={(e) => setData({ ...data, seatCapacity: onlyNumbers(e.target.value) })} placeholder="9" />
         </FormRow>
         {/* 드롭다운 1x2 그리드 */}
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -2103,24 +2706,22 @@ function CamperForm({
 
   return (
     <>
-      <SectionTitle>전기</SectionTitle>
-      <FormRow label="배터리 (Ah)">
+      <FormRow label="배터리">
         <div className="flex gap-2">
-          <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-24 shrink-0">
+          <InputWithUnit unit="Ah" type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="min-w-0 flex-1" />
+          <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-28 shrink-0">
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
-      <FormRow label="태양광 (W)">
-        <input type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="200" className="form-input" />
+      <FormRow label="태양광">
+        <InputWithUnit unit="W" type="text" inputMode="numeric" value={data.solar} onChange={(e) => setData({ ...data, solar: onlyNumbers(e.target.value) })} placeholder="200" />
       </FormRow>
-      <FormRow label="인버터 (Kw)">
-        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" className="form-input" />
+      <FormRow label="인버터">
+        <InputWithUnit unit="Kw" type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" />
       </FormRow>
-      <SectionTitle hint="스페이스 2번으로 구분">옵션</SectionTitle>
-      <FormRow label="외관">
+      <FormRow label="외관" hint="스페이스 2번으로 구분">
         <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="내장">
@@ -2237,15 +2838,20 @@ function CaravanForm({
             />
           </div>
         </FormRow>
-        <div className="mb-2.5">
-          <label className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={data.hasStructureMod}
-              onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
-              className="h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 bg-white checked:border-accent-500 checked:bg-accent-500 focus:ring-accent-500 dark:border-gray-600 dark:bg-[#2a2a2a] dark:checked:border-accent-400 dark:checked:bg-accent-400"
-            />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">구조변경</span>
+        <div className="mb-3">
+          <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
+            <div className="relative flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={data.hasStructureMod}
+                onChange={(e) => setData({ ...data, hasStructureMod: e.target.checked, structureModDate: e.target.checked ? data.structureModDate : '' })}
+                className="peer h-5 w-5 cursor-pointer appearance-none rounded-md bg-gradient-to-b from-white to-gray-50 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-all duration-200 checked:from-accent-500 checked:to-accent-600 hover:from-gray-50 hover:to-gray-100 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.15)] checked:hover:from-accent-400 checked:hover:to-accent-500 active:scale-95 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:ring-offset-0 dark:from-[#2a2f3a] dark:to-[#262a33] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] dark:checked:from-accent-400 dark:checked:to-accent-500 dark:hover:from-[#2e3340] dark:hover:to-[#282d36] dark:hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] dark:checked:hover:from-accent-300 dark:checked:hover:to-accent-400"
+              />
+              <svg viewBox="0 0 12 12" className="pointer-events-none absolute size-3 scale-0 text-white opacity-0 transition-all duration-150 peer-checked:scale-100 peer-checked:opacity-100">
+                <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-6" />
+              </svg>
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">구조변경</span>
           </label>
           {data.hasStructureMod && (
             <div className="mt-2 flex gap-2">
@@ -2277,7 +2883,13 @@ function CaravanForm({
           )}
         </div>
         <FormRow label="취침인원">
-          <input type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" className="form-input" />
+          <div className="flex gap-2">
+            <input type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" className="form-input flex-1" />
+            <FormSelect value={data.saleType} onChange={(e) => setData({ ...data, saleType: e.target.value })} className="w-24 shrink-0">
+              <option value="매입">매입</option>
+              <option value="위탁">위탁</option>
+            </FormSelect>
+          </div>
         </FormRow>
         <div className="grid grid-cols-2 gap-3">
           <FormRow label="차고지 증명">
@@ -2300,30 +2912,29 @@ function CaravanForm({
   if (step === 2) {
     return (
       <>
-        <SectionTitle>제원</SectionTitle>
-        <FormRow label="외부 길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.extLength} onChange={(e) => setData({ ...data, extLength: onlyNumbers(e.target.value) })} placeholder="7315" className="form-input" />
+        <FormRow label="외부 길이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.extLength} onChange={(e) => setData({ ...data, extLength: onlyNumbers(e.target.value) })} placeholder="7315" />
         </FormRow>
-        <FormRow label="내부 길이 (mm)">
-          <input type="text" inputMode="numeric" value={data.intLength} onChange={(e) => setData({ ...data, intLength: onlyNumbers(e.target.value) })} placeholder="5660" className="form-input" />
+        <FormRow label="내부 길이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.intLength} onChange={(e) => setData({ ...data, intLength: onlyNumbers(e.target.value) })} placeholder="5660" />
         </FormRow>
-        <FormRow label="외부 높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.extHeight} onChange={(e) => setData({ ...data, extHeight: onlyNumbers(e.target.value) })} placeholder="2650" className="form-input" />
+        <FormRow label="외부 높이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.extHeight} onChange={(e) => setData({ ...data, extHeight: onlyNumbers(e.target.value) })} placeholder="2650" />
         </FormRow>
-        <FormRow label="내부 높이 (mm)">
-          <input type="text" inputMode="numeric" value={data.intHeight} onChange={(e) => setData({ ...data, intHeight: onlyNumbers(e.target.value) })} placeholder="1955" className="form-input" />
+        <FormRow label="내부 높이">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.intHeight} onChange={(e) => setData({ ...data, intHeight: onlyNumbers(e.target.value) })} placeholder="1955" />
         </FormRow>
-        <FormRow label="외부 너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="2320" className="form-input" />
+        <FormRow label="외부 너비">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.extWidth} onChange={(e) => setData({ ...data, extWidth: onlyNumbers(e.target.value) })} placeholder="2320" />
         </FormRow>
-        <FormRow label="내부 너비 (mm)">
-          <input type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" className="form-input" />
+        <FormRow label="내부 너비">
+          <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" />
         </FormRow>
-        <FormRow label="공차 중량 (kg)">
-          <input type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="1450" className="form-input" />
+        <FormRow label="공차 중량">
+          <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="1450" />
         </FormRow>
-        <FormRow label="최대 허용 중량 (kg)">
-          <input type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="1800" className="form-input" />
+        <FormRow label="최대 허용 중량">
+          <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="1800" />
         </FormRow>
       </>
     );
@@ -2331,24 +2942,22 @@ function CaravanForm({
 
   return (
     <>
-      <SectionTitle>전기</SectionTitle>
-      <FormRow label="배터리 (Ah)">
+      <FormRow label="배터리">
         <div className="flex gap-2">
-          <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-24 shrink-0">
+          <InputWithUnit unit="Ah" type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="min-w-0 flex-1" />
+          <FormSelect value={data.batteryType} onChange={(e) => setData({ ...data, batteryType: e.target.value })} className="w-28 shrink-0">
             <option value="인산철">인산철</option>
             <option value="딥싸이클">딥싸이클</option>
           </FormSelect>
-          <input type="text" value={data.batteryCapacity} onChange={(e) => setData({ ...data, batteryCapacity: e.target.value })} placeholder="200" className="form-input min-w-0 flex-1" />
         </div>
       </FormRow>
-      <FormRow label="태양광 (W)">
-        <input type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="200" className="form-input" />
+      <FormRow label="태양광">
+        <InputWithUnit unit="W" type="text" value={data.solar} onChange={(e) => setData({ ...data, solar: e.target.value })} placeholder="200" />
       </FormRow>
-      <FormRow label="인버터 (Kw)">
-        <input type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" className="form-input" />
+      <FormRow label="인버터">
+        <InputWithUnit unit="Kw" type="text" value={data.inverter} onChange={(e) => setData({ ...data, inverter: onlyDecimalPlus(e.target.value) })} placeholder="3" />
       </FormRow>
-      <SectionTitle hint="스페이스 2번으로 구분">옵션</SectionTitle>
-      <FormRow label="외관">
+      <FormRow label="외관" hint="스페이스 2번으로 구분">
         <textarea value={data.exterior} onChange={(e) => setData({ ...data, exterior: e.target.value })} className="form-input min-h-[70px] resize-y" />
       </FormRow>
       <FormRow label="내장">
@@ -2361,18 +2970,10 @@ function CaravanForm({
   );
 }
 
-function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
-  return (
-    <h3 className="mb-3 mt-5 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent-500 first:mt-0">
-      {children}
-      {hint && <span className="text-xs font-normal normal-case text-gray-400">{hint}</span>}
-    </h3>
-  );
-}
 
 function ErrorIcon() {
   return (
-    <div className="pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-red-400">
+    <div className="pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-500 shadow-sm shadow-red-400/30">
       <span className="text-xs font-bold text-white">!</span>
     </div>
   );
@@ -2388,10 +2989,16 @@ function FormRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-2.5">
-      <label className="mb-1.5 block text-sm font-medium text-gray-500">{label}</label>
+    <div className="mb-4">
+      <label className="mb-2 flex items-baseline gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+        <span>{label}</span>
+        {hint && (
+          <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500">
+            {hint}
+          </span>
+        )}
+      </label>
       {children}
-      {hint && <div className="mt-1 text-[11px] text-gray-400">{hint}</div>}
     </div>
   );
 }
@@ -2408,17 +3015,39 @@ function FormSelect({
   className?: string;
 }) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`group relative ${className}`}>
       <select
         value={value}
         onChange={onChange}
-        className="w-full appearance-none rounded-lg bg-white py-2.5 pl-3 pr-8 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-200 focus:outline-2 focus:-outline-offset-2 focus:outline-accent-500 dark:bg-[#2a2a2a] dark:text-gray-100 dark:outline-gray-700"
+        className="form-select"
       >
         {children}
       </select>
-      <svg viewBox="0 0 16 16" fill="currentColor" className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400 dark:text-gray-500">
-        <path fillRule="evenodd" clipRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
-      </svg>
+      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 group-focus-within:text-accent-500">
+        <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-gray-500 transition-colors group-focus-within:text-accent-500 dark:text-gray-400">
+          <path fillRule="evenodd" clipRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function InputWithUnit({
+  unit,
+  className = '',
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  unit: string;
+}) {
+  return (
+    <div className={`relative ${className}`}>
+      <input
+        {...props}
+        className="form-input w-full pr-14"
+      />
+      <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 dark:text-gray-500">
+        {unit}
+      </span>
     </div>
   );
 }
@@ -2451,7 +3080,7 @@ function ResultRow({ label, value }: { label: string; value: string }) {
       <td className="w-2/5 border-r border-gray-200 bg-gray-50 px-5 py-3.5 text-base font-medium text-gray-500">
         {label}
       </td>
-      <td className="bg-white px-5 py-3.5 text-base font-semibold text-gray-900">
+      <td className="bg-white px-5 py-3.5 text-base font-semibold text-gray-800">
         {value}
       </td>
     </tr>
@@ -2484,7 +3113,7 @@ function OptionRow({
       <td className="w-24 shrink-0 border-r border-gray-200 bg-gray-50 px-5 py-4 text-center text-base font-medium text-gray-500 align-middle">
         {label}
       </td>
-      <td className="bg-white px-5 py-4 text-base font-medium text-gray-900">
+      <td className="bg-white px-5 py-4 text-base font-medium text-gray-800">
         {children}
       </td>
     </tr>

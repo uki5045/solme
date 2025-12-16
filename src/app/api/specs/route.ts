@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { getSupabaseAdmin } from '@/lib/supabase-server';
 import { rateLimit } from '@/lib/rate-limit';
 import { vehicleDataSchema, searchQuerySchema } from '@/lib/validation';
+import { notifyVehicleCreated, notifyVehicleUpdated, detectChangedFields } from '@/lib/notifications';
 
 // 인증 확인 헬퍼
 async function checkAuth() {
@@ -99,20 +100,25 @@ export async function POST(request: NextRequest) {
     }
 
     const { vehicleNumber, vehicleType, data } = validation.data;
+    const formData = data as Record<string, string>;
 
     const supabase = getSupabaseAdmin();
 
-    // 기존 데이터 확인
+    // 기존 데이터 확인 (전체 데이터 포함)
     const { data: existing } = await supabase
       .from('vehicle_specs')
-      .select('id')
+      .select('*')
       .eq('vehicle_number', vehicleNumber)
       .single();
 
     let error;
+    let isNewVehicle = false;
 
     if (existing) {
-      // 업데이트
+      // 업데이트 - 변경된 필드 감지
+      const existingData = (existing.data || {}) as Record<string, string>;
+      const changedFields = detectChangedFields(existingData, formData);
+
       const result = await supabase
         .from('vehicle_specs')
         .update({
@@ -122,8 +128,15 @@ export async function POST(request: NextRequest) {
         })
         .eq('vehicle_number', vehicleNumber);
       error = result.error;
+
+      // 알림 생성 (변경사항 있을 때만)
+      if (!error && changedFields.length > 0) {
+        const user = { name: session.user?.name || undefined, image: session.user?.image || undefined };
+        await notifyVehicleUpdated(vehicleNumber, vehicleType, changedFields, user);
+      }
     } else {
       // 새로 삽입
+      isNewVehicle = true;
       const result = await supabase
         .from('vehicle_specs')
         .insert({
@@ -133,6 +146,12 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         });
       error = result.error;
+
+      // 새 차량 등록 알림
+      if (!error) {
+        const user = { name: session.user?.name || undefined, image: session.user?.image || undefined };
+        await notifyVehicleCreated(vehicleNumber, vehicleType, formData.modelName, user);
+      }
     }
 
     if (error) {
@@ -142,7 +161,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '저장 중 오류가 발생했습니다.' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, isNew: isNewVehicle });
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.error('[API/specs] Unexpected error:', err);

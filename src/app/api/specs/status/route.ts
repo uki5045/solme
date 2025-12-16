@@ -3,12 +3,13 @@ import { auth } from '@/auth';
 import { getSupabaseAdmin } from '@/lib/supabase-server';
 import { rateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { notifyStatusChanged } from '@/lib/notifications';
 
 // 상태 변경 스키마
 const statusUpdateSchema = z.object({
   vehicleNumber: z.string().min(1, '차량번호는 필수입니다'),
-  status: z.enum(['intake', 'productization', 'advertising'], {
-    message: '상태는 intake, productization, advertising 중 하나여야 합니다',
+  status: z.enum(['intake', 'productization', 'advertising', 'sold'], {
+    message: '상태는 intake, productization, advertising, sold 중 하나여야 합니다',
   }),
 });
 
@@ -44,16 +45,18 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // 존재 여부 확인
+    // 기존 데이터 확인 (현재 상태 포함)
     const { data: existing } = await supabase
       .from('vehicle_specs')
-      .select('id')
+      .select('id, status, vehicle_type')
       .eq('vehicle_number', vehicleNumber)
       .single();
 
     if (!existing) {
       return NextResponse.json({ error: '데이터를 찾을 수 없습니다.' }, { status: 404 });
     }
+
+    const oldStatus = existing.status || 'intake';
 
     // 상태 업데이트
     const { error } = await supabase
@@ -67,6 +70,12 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       console.error('[API/specs/status] Supabase update error:', JSON.stringify(error, null, 2));
       return NextResponse.json({ error: `상태 변경 실패: ${error.message}` }, { status: 500 });
+    }
+
+    // 상태 변경 알림 생성 (다른 상태로 변경됐을 때만)
+    if (oldStatus !== status) {
+      const user = { name: session.user?.name || undefined, image: session.user?.image || undefined };
+      await notifyStatusChanged(vehicleNumber, existing.vehicle_type, oldStatus, status, user);
     }
 
     return NextResponse.json({ success: true, status });

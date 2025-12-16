@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
         updatedAt: item.updated_at,
         status: item.status || 'intake', // DB constraint: intake, productization, advertising
         isIncomplete,
+        saleType: d.saleType || '매입',
       };
     });
 

@@ -173,10 +173,14 @@ function ProcessStep({ item, index, isLast, isFirst }: { item: typeof steps[0]; 
     const mainElement = document.querySelector("main");
     if (!mainElement) return;
 
-    updateProgress();
+    // 초기 상태 계산을 비동기로 처리하여 cascading render 방지
+    const rafId = requestAnimationFrame(() => {
+      updateProgress();
+    });
     mainElement.addEventListener("scroll", updateProgress, { passive: true });
 
     return () => {
+      cancelAnimationFrame(rafId);
       mainElement.removeEventListener("scroll", updateProgress);
     };
   }, [updateProgress]);

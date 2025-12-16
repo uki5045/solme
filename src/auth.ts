@@ -24,7 +24,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // 특정 이메일만 허용
       return ALLOWED_EMAILS.includes(user.email || '');
     },
-    async session({ session }) {
+    async jwt({ token, user }) {
+      // 최초 로그인 시 user 정보를 token에 저장
+      if (user) {
+        token.name = user.name;
+        token.picture = user.image;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // token에서 세션으로 정보 전달
+      if (session.user) {
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string;
+      }
       return session;
     },
   },

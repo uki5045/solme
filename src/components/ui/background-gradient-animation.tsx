@@ -1,6 +1,12 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
+
+// Safari 감지 (클라이언트 사이드에서만 실행)
+const getIsSafari = () => {
+  if (typeof window === "undefined") return false;
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+};
 
 export const BackgroundGradientAnimation = ({
   gradientBackgroundStart = "rgb(108, 0, 162)",
@@ -34,20 +40,16 @@ export const BackgroundGradientAnimation = ({
   containerClassName?: string;
 }) => {
   const interactiveRef = useRef<HTMLDivElement>(null);
+  const curXRef = useRef(0);
+  const curYRef = useRef(0);
 
-  const [curX, setCurX] = useState(0);
-  const [curY, setCurY] = useState(0);
   const [tgX, setTgX] = useState(0);
   const [tgY, setTgY] = useState(0);
+
+  // CSS 변수 설정 (마운트 시 한 번만)
   useEffect(() => {
-    document.body.style.setProperty(
-      "--gradient-background-start",
-      gradientBackgroundStart
-    );
-    document.body.style.setProperty(
-      "--gradient-background-end",
-      gradientBackgroundEnd
-    );
+    document.body.style.setProperty("--gradient-background-start", gradientBackgroundStart);
+    document.body.style.setProperty("--gradient-background-end", gradientBackgroundEnd);
     document.body.style.setProperty("--first-color", firstColor);
     document.body.style.setProperty("--second-color", secondColor);
     document.body.style.setProperty("--third-color", thirdColor);
@@ -56,21 +58,15 @@ export const BackgroundGradientAnimation = ({
     document.body.style.setProperty("--pointer-color", pointerColor);
     document.body.style.setProperty("--size", size);
     document.body.style.setProperty("--blending-value", blendingValue);
-  }, []);
+  }, [gradientBackgroundStart, gradientBackgroundEnd, firstColor, secondColor, thirdColor, fourthColor, fifthColor, pointerColor, size, blendingValue]);
 
+  // 부드러운 마우스 이동 애니메이션 (ref 사용으로 리렌더 방지)
   useEffect(() => {
-    function move() {
-      if (!interactiveRef.current) {
-        return;
-      }
-      setCurX(curX + (tgX - curX) / 20);
-      setCurY(curY + (tgY - curY) / 20);
-      interactiveRef.current.style.transform = `translate(${Math.round(
-        curX
-      )}px, ${Math.round(curY)}px)`;
-    }
+    if (!interactiveRef.current) return;
 
-    move();
+    curXRef.current = curXRef.current + (tgX - curXRef.current) / 20;
+    curYRef.current = curYRef.current + (tgY - curYRef.current) / 20;
+    interactiveRef.current.style.transform = `translate(${Math.round(curXRef.current)}px, ${Math.round(curYRef.current)}px)`;
   }, [tgX, tgY]);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -81,10 +77,8 @@ export const BackgroundGradientAnimation = ({
     }
   };
 
-  const [isSafari, setIsSafari] = useState(false);
-  useEffect(() => {
-    setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
-  }, []);
+  // Safari 감지 (lazy initialization, SSR 호환)
+  const isSafari = useMemo(() => getIsSafari(), []);
 
   return (
     <div

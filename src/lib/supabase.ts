@@ -18,3 +18,23 @@ export interface VehicleSpec {
   created_at?: string;
   updated_at?: string;
 }
+
+// 알림 타입 정의
+export type NotificationType = 'vehicle_created' | 'vehicle_updated' | 'status_changed';
+
+export interface Notification {
+  id?: number;
+  type: NotificationType;
+  vehicle_number: string;
+  vehicle_type: 'camper' | 'caravan';
+  message: string;
+  details?: {
+    changed_fields?: string[];
+    old_status?: string;
+    new_status?: string;
+  };
+  is_read: boolean;
+  created_at?: string;
+  user_name?: string;
+  user_image?: string;
+}

@@ -92,23 +92,26 @@ function TabsList({ children, className, indicatorClassName, ...props }: TabsLis
       data-slot="tabs-list"
       role="tablist"
       className={cn(
-        'relative inline-flex items-center rounded-xl bg-gray-100 p-1',
+        'relative inline-flex items-center rounded-xl border border-gray-200/60 bg-gray-100/80 p-1 backdrop-blur-sm dark:border-gray-700/50 dark:bg-gray-800/50',
         className
       )}
       {...props}
     >
       {/* Sliding indicator */}
       <motion.div
-        className={cn('absolute top-1 bottom-1 rounded-lg bg-white shadow-sm', indicatorClassName)}
+        className={cn(
+          'absolute top-1 bottom-1 rounded-lg bg-white shadow-md dark:bg-gray-700',
+          indicatorClassName
+        )}
         animate={{
           left: indicatorStyle.left,
           width: indicatorStyle.width,
         }}
         transition={{
           type: 'spring',
-          stiffness: 150,
-          damping: 20,
-          mass: 1,
+          stiffness: 400,
+          damping: 30,
+          mass: 0.8,
         }}
       />
       {children}
