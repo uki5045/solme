@@ -1266,6 +1266,11 @@ export default function SpecPage() {
             </div>
           </div>
 
+          {/* 중앙: 버전 표시 */}
+          <span className="hidden text-[10px] font-medium tracking-wider text-gray-400 sm:block dark:text-gray-600">
+            v1.0
+          </span>
+
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center gap-1 lg:gap-1.5">
             {/* 알림 버튼 + 드롭다운 - 데스크톱만 */}
