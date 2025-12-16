@@ -655,6 +655,7 @@ export default function SpecPage() {
 
       setStep(1);
       setFieldErrors({});
+      setMobileView('form'); // 모바일에서 등록 화면으로 전환
       showToast('데이터를 불러왔습니다.', 'success');
     } catch (e) {
       console.error('데이터 로드 오류:', e);
