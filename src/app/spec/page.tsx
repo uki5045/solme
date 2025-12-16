@@ -1015,8 +1015,8 @@ export default function SpecPage() {
       />
 
       <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
-      {/* 헤더 - PC만 */}
-      <header className="sticky top-0 z-40 hidden pt-[env(safe-area-inset-top)] lg:block">
+      {/* 헤더 */}
+      <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
         {/* 토스트 모드 헤더 - 임팩트 있는 애니메이션 */}
         <AnimatePresence mode="wait">
           {toast.show && (
@@ -1097,76 +1097,113 @@ export default function SpecPage() {
 
         {/* 기본 헤더 */}
         <div className={`border-b border-gray-200/80 bg-white/70 backdrop-blur-xl transition-opacity duration-200 dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90 ${toast.show ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          {/* 좌측: 사용자 정보 (클릭 시 드롭다운) */}
-          <div ref={userDropdownRef} className="relative">
-            <button
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              {/* 프로필 아바타 */}
-              <div className="relative">
-                {session?.user?.image ? (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
-                    <img
-                      src={session.user.image}
-                      alt="프로필"
-                      className="h-full w-full rounded-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-400 to-accent-600 text-sm font-bold text-white shadow-sm">
-                    {(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}
-                  </div>
-                )}
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-[#1c1f26]" />
-              </div>
-              {/* 이름/이메일 */}
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                  {session?.user?.name || session?.user?.email?.split('@')[0]}
-                </span>
-                {session?.user?.name && (
-                  <span className="text-xs text-gray-500 dark:text-gray-500">
-                    {session?.user?.email}
-                  </span>
-                )}
-              </div>
-            </button>
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6">
+          {/* 좌측: 모바일 - 뷰 전환 탭 / 데스크톱 - 사용자 정보 */}
+          <div className="flex items-center">
+            {/* 모바일: 뷰 전환 탭 (등록/목록/완료) */}
+            <div className="flex items-center gap-0.5 rounded-xl bg-gray-100 p-1 lg:hidden dark:bg-gray-800">
+              <button
+                onClick={() => { setMobileView('form'); setShowSoldView(false); }}
+                className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
+                  mobileView === 'form' && !showSoldView
+                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                등록
+              </button>
+              <button
+                onClick={() => { setMobileView('list'); setShowSoldView(false); }}
+                className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
+                  mobileView === 'list' && !showSoldView
+                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                목록
+              </button>
+              <button
+                onClick={() => setShowSoldView(true)}
+                className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
+                  showSoldView
+                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                완료
+              </button>
+            </div>
 
-            {/* 사용자 드롭다운 메뉴 */}
-            <AnimatePresence>
-              {showUserDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute left-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-                >
-                  <div className="border-b border-gray-100 px-4 py-3 dark:border-[#454c5c]">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
-                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowUserDropdown(false);
-                      signOut({ callbackUrl: '/' });
-                    }}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+            {/* 데스크톱: 사용자 정보 */}
+            <div ref={userDropdownRef} className="relative hidden lg:block">
+              <button
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {/* 프로필 아바타 */}
+                <div className="relative">
+                  {session?.user?.image ? (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
+                      <img
+                        src={session.user.image}
+                        alt="프로필"
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-400 to-accent-600 text-sm font-bold text-white shadow-sm">
+                      {(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-[#1c1f26]" />
+                </div>
+                {/* 이름/이메일 */}
+                <div className="flex flex-col text-left">
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    {session?.user?.name || session?.user?.email?.split('@')[0]}
+                  </span>
+                  {session?.user?.name && (
+                    <span className="text-xs text-gray-500 dark:text-gray-500">
+                      {session?.user?.email}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {/* 사용자 드롭다운 메뉴 */}
+              <AnimatePresence>
+                {showUserDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
                   >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                    </svg>
-                    로그아웃
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    <div className="border-b border-gray-100 px-4 py-3 dark:border-[#454c5c]">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
+                      <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        signOut({ callbackUrl: '/' });
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                      </svg>
+                      로그아웃
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* 우측: 액션 버튼들 */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 lg:gap-1.5">
             {/* 알림 버튼 + 드롭다운 */}
             <div ref={notificationRef} className="relative">
               <button
@@ -1312,13 +1349,13 @@ export default function SpecPage() {
               )}
             </button>
 
-            {/* 구분선 */}
-            <div className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
+            {/* 구분선 - 데스크톱만 */}
+            <div className="mx-1 hidden h-5 w-px bg-gray-200 lg:block dark:bg-gray-700" />
 
-            {/* 판매완료 */}
+            {/* 판매완료 - 데스크톱만 */}
             <button
               onClick={() => setShowSoldView(true)}
-              className="flex h-9 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+              className="hidden h-9 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 lg:flex dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1330,15 +1367,66 @@ export default function SpecPage() {
                 </span>
               )}
             </button>
+
+            {/* 모바일: 아바타 */}
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="relative flex h-8 w-8 items-center justify-center rounded-full lg:hidden"
+            >
+              {session?.user?.image ? (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
+                  <img
+                    src={session.user.image}
+                    alt="프로필"
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent-400 to-accent-600 text-sm font-bold text-white shadow-sm">
+                  {(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}
+                </div>
+              )}
+              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-white bg-emerald-500 dark:border-[#1c1f26]" />
+            </button>
+
+            {/* 모바일: 사용자 드롭다운 */}
+            <AnimatePresence>
+              {showUserDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-4 top-full z-50 mt-2 min-w-[200px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl lg:hidden dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+                >
+                  <div className="border-b border-gray-100 px-4 py-3 dark:border-[#454c5c]">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{session?.user?.name}</p>
+                    <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      signOut({ callbackUrl: '/' });
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    로그아웃
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-32 pt-[calc(env(safe-area-inset-top)+1rem)] lg:flex-row lg:items-start lg:gap-6 lg:pb-5 lg:pt-5">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-5 pt-4 lg:flex-row lg:items-start lg:gap-6 lg:pt-5">
 
         {/* 좌측: 폼 영역 */}
-        <div ref={leftSectionRef} className={`relative w-full max-w-[440px] shrink-0 ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
+        <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:max-w-[440px] ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
 
         {/* 애니메이션 메인 탭 */}
         <Tabs
@@ -2408,63 +2496,6 @@ export default function SpecPage() {
         )}
       </AnimatePresence>
 
-      {/* 하단 탭바 - 모바일 PWA */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] dark:border-[#363b47] dark:bg-[#1c1f26] lg:hidden">
-        <div className="grid h-14 grid-cols-4">
-          <button
-            onClick={() => setShowSoldView(true)}
-            className="relative flex flex-col items-center justify-center gap-1 text-gray-500 transition-colors active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-xs font-semibold">판매완료</span>
-            {vehicleList.filter(v => v.status === 'sold').length > 0 && (
-              <span className="absolute right-3 top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-gray-500 px-1 text-[10px] font-bold text-white">
-                {vehicleList.filter(v => v.status === 'sold').length}
-              </span>
-            )}
-          </button>
-          {/* 다크모드 토글 */}
-          <button
-            onClick={toggleDarkMode}
-            className="flex flex-col items-center justify-center gap-1 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
-          >
-            {isDarkMode ? (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-              </svg>
-            )}
-            <span className="text-xs font-semibold">테마</span>
-          </button>
-          <button
-            onClick={() => setMobileView('form')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 dark:active:bg-gray-800 ${
-              mobileView === 'form' ? 'text-accent-500' : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span className="text-xs font-semibold">등록</span>
-          </button>
-          <button
-            onClick={() => setMobileView('list')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors active:bg-gray-100 dark:active:bg-gray-800 ${
-              mobileView === 'list' ? 'text-accent-500' : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            <span className="text-xs font-semibold">목록</span>
-          </button>
-        </div>
-      </div>
     </div>
     </>
   );
