@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.3
+            v1.4
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -2405,14 +2405,9 @@ export default function SpecPage() {
       </AnimatePresence>
 
       {/* 판매완료 뷰 모달 */}
-      <AnimatePresence>
-        {showSoldView && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]"
-          >
+      {showSoldView && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]">
+
             {/* 헤더 */}
             <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90">
               <div className="flex h-14 items-center justify-between px-4">
@@ -2470,10 +2465,8 @@ export default function SpecPage() {
                 return (
                   <div className="space-y-3 pt-2">
                     {soldList.map((item) => (
-                      <motion.div
+                      <div
                         key={item.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setSoldContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
@@ -2523,7 +2516,7 @@ export default function SpecPage() {
                             재등록
                           </button>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 );
@@ -2555,9 +2548,8 @@ export default function SpecPage() {
                 </button>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
       <AnimatePresence mode="wait">
