@@ -1049,7 +1049,7 @@ export default function SpecPage() {
       <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
       {/* 헤더 */}
       <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
-        {/* 토스트 모드 헤더 - 임팩트 있는 애니메이션 */}
+        {/* 토스트 모드 헤더 - 데스크톱만 (모바일은 하단 toast 사용) */}
         <AnimatePresence mode="wait">
           {toast.show && (
             <motion.div
@@ -1062,7 +1062,7 @@ export default function SpecPage() {
                 damping: 25,
                 mass: 0.8
               }}
-              className="absolute inset-0 z-10 flex h-14 items-center justify-center gap-3 border-b border-gray-200/80 bg-white/95 shadow-lg shadow-gray-200/50 backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/95 dark:shadow-black/30"
+              className="absolute inset-0 z-10 hidden h-14 items-center justify-center gap-3 border-b border-gray-200/80 bg-white/95 shadow-lg shadow-gray-200/50 backdrop-blur-xl lg:flex dark:border-[#2a2f3a] dark:bg-[#1c1f26]/95 dark:shadow-black/30"
             >
               {/* 아이콘 컨테이너 - 바운스 효과 */}
               <motion.div
