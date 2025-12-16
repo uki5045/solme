@@ -74,6 +74,37 @@ const fieldLabels: Record<string, string> = {
 // 필드명 한글 변환 함수
 const getFieldLabel = (field: string): string => fieldLabels[field] || field;
 
+// 스텝별 필드 분류
+const stepFields = {
+  info: [ // 1스텝 - 정보
+    'vehicleNumber', 'baseVehicle', 'manufacturer', 'modelName', 'yearMonth', 'year',
+    'registrationDate', 'firstReg', 'mileage', 'price', 'cashReceipt', 'vehicleCategory',
+    'vehicleType', 'license', 'structureChange', 'hasStructureMod', 'structureModDate',
+    'saleType', 'garageProof'
+  ],
+  spec: [ // 2스텝 - 제원
+    'length', 'width', 'height', 'displacement', 'fuelEconomy', 'seatCapacity',
+    'fuel', 'transmission', 'extLength', 'intLength', 'extHeight', 'intHeight',
+    'extWidth', 'intWidth', 'curbWeight', 'maxWeight', 'sleepCapacity'
+  ],
+  option: [ // 3스텝 - 옵션
+    'batteryCapacity', 'batteryType', 'solar', 'solarCapacity', 'inverter',
+    'inverterCapacity', 'hasAC', 'hasHeating', 'hasRefrigerator', 'hasTV',
+    'hasBathroom', 'etcOptions', 'exterior', 'interior', 'convenience'
+  ]
+};
+
+// 변경된 필드를 스텝명으로 변환
+const getChangedSteps = (fields: string[]): string[] => {
+  const steps = new Set<string>();
+  fields.forEach(field => {
+    if (stepFields.info.includes(field)) steps.add('정보');
+    else if (stepFields.spec.includes(field)) steps.add('제원');
+    else if (stepFields.option.includes(field)) steps.add('옵션');
+  });
+  return Array.from(steps);
+};
+
 type MainTab = 'camper' | 'caravan';
 type FormStep = 1 | 2 | 3;
 
@@ -1237,7 +1268,7 @@ export default function SpecPage() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full z-50 mt-2 w-[320px] overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-lg dark:border-[#2a2f3a] dark:bg-[#1c1f26]"
+                    className="fixed inset-x-4 top-16 z-50 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-lg lg:absolute lg:inset-x-auto lg:right-0 lg:top-full lg:mt-2 lg:w-[320px] dark:border-[#2a2f3a] dark:bg-[#1c1f26]"
                   >
                     {/* 헤더 */}
                     <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-[#2a2f3a]">
@@ -1309,11 +1340,10 @@ export default function SpecPage() {
                                 )}
                               </div>
 
-                              {/* 변경 필드 */}
+                              {/* 변경 스텝 */}
                               {notification.details?.changed_fields && notification.details.changed_fields.length > 0 && (
                                 <p className="mt-1.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">
-                                  {notification.details.changed_fields.slice(0, 5).map(f => getFieldLabel(f)).join(', ')}
-                                  {notification.details.changed_fields.length > 5 && ` 외 ${notification.details.changed_fields.length - 5}개`}
+                                  {getChangedSteps(notification.details.changed_fields).join(', ')}
                                 </p>
                               )}
 
