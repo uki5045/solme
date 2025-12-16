@@ -59,7 +59,7 @@ function Tabs({
   );
 }
 
-// TabsList - container for triggers with sliding indicator
+// TabsList - container for triggers (NO animation)
 interface TabsListProps extends React.ComponentProps<'div'> {
   children: React.ReactNode;
   indicatorClassName?: string;
@@ -96,10 +96,10 @@ function TabsList({ children, className, indicatorClassName, ...props }: TabsLis
       )}
       {...props}
     >
-      {/* Sliding indicator - CSS transition (no JS animation) */}
+      {/* Indicator - NO animation */}
       <div
         className={cn(
-          'absolute top-1 bottom-1 rounded-lg bg-white shadow-md transition-all duration-150 ease-out dark:bg-gray-700',
+          'absolute top-1 bottom-1 rounded-lg bg-white shadow-md dark:bg-gray-700',
           indicatorClassName
         )}
         style={{
@@ -132,10 +132,10 @@ function TabsTrigger({ value, children, className, ...props }: TabsTriggerProps)
       aria-selected={isActive}
       onClick={() => setActiveValue(value)}
       className={cn(
-        'relative z-10 inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+        'relative z-10 inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',
-        isActive ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700',
+        isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400',
         className
       )}
       {...props}
@@ -145,7 +145,7 @@ function TabsTrigger({ value, children, className, ...props }: TabsTriggerProps)
   );
 }
 
-// TabsContents - container for tab contents with CSS transition
+// TabsContents - container (renders only active tab)
 interface TabsContentsProps extends React.ComponentProps<'div'> {
   children: React.ReactNode;
 }
@@ -158,7 +158,8 @@ function TabsContents({
   const { activeValue } = useTabs();
   const childrenArray = React.Children.toArray(children);
 
-  const activeIndex = childrenArray.findIndex(
+  // 활성 탭만 찾아서 렌더링
+  const activeChild = childrenArray.find(
     (child): child is React.ReactElement<{ value: string }> =>
       React.isValidElement(child) &&
       typeof child.props === 'object' &&
@@ -170,24 +171,15 @@ function TabsContents({
   return (
     <div
       data-slot="tabs-contents"
-      className={cn('overflow-clip', className)}
+      className={cn('', className)}
       {...props}
     >
-      <div
-        className="flex transition-transform duration-150 ease-out"
-        style={{ transform: `translateX(${activeIndex * -100}%)` }}
-      >
-        {childrenArray.map((child, index) => (
-          <div key={index} className="w-full flex-shrink-0">
-            {child}
-          </div>
-        ))}
-      </div>
+      {activeChild}
     </div>
   );
 }
 
-// TabsContent - individual tab content (CSS transition only)
+// TabsContent - individual tab content (NO animation)
 interface TabsContentProps extends React.ComponentProps<'div'> {
   value: string;
   children: React.ReactNode;
@@ -199,22 +191,12 @@ function TabsContent({
   className,
   ...props
 }: TabsContentProps) {
-  const { activeValue } = useTabs();
-  const isActive = activeValue === value;
-
   return (
     <div
       role="tabpanel"
       data-slot="tabs-content"
       data-value={value}
-      className={cn(
-        'w-full transition-opacity duration-150 ease-out',
-        isActive ? 'opacity-100' : 'opacity-30',
-        className
-      )}
-      aria-hidden={!isActive}
-      // inert: 비활성 탭 내부 요소 Tab 키 접근 차단
-      inert={!isActive || undefined}
+      className={cn('w-full', className)}
       {...props}
     >
       {children}
