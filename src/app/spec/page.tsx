@@ -1377,6 +1377,27 @@ export default function SpecPage() {
             </div>
 
             {/* 테마 토글 */}
+            {/* 알림 버튼 - 모바일 */}
+            <button
+              onClick={() => {
+                const willOpen = !showNotifications;
+                setShowNotifications(willOpen);
+                if (willOpen && unreadCount > 0) {
+                  markAllAsRead();
+                }
+              }}
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 lg:hidden dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              title="알림"
+            >
+              <BellIcon className="size-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-md shadow-red-500/50 ring-2 ring-white dark:ring-[#1c1f26] dark:shadow-red-500/40">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* 다크모드 토글 */}
             <button
               onClick={toggleDarkMode}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -1450,6 +1471,94 @@ export default function SpecPage() {
                     <ArrowRightStartOnRectangleIcon className="size-4" />
                     로그아웃
                   </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* 모바일: 알림 드롭다운 */}
+            <AnimatePresence>
+              {showNotifications && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-4 top-full z-50 mt-2 w-[calc(100vw-32px)] max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl lg:hidden dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+                >
+                  <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-[#2a2f3a]">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">알림</span>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAllNotifications}
+                        className="text-[13px] font-medium text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-[50vh] overflow-y-auto">
+                    {notificationsLoading ? (
+                      <div className="flex items-center justify-center py-10">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-accent-500 dark:border-gray-700 dark:border-t-accent-400" />
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="py-10 text-center">
+                        <BellIcon className="mx-auto size-10 text-gray-300 dark:text-gray-600" />
+                        <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">알림이 없습니다</p>
+                      </div>
+                    ) : (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`flex gap-3 border-b border-gray-100 px-4 py-3.5 last:border-0 dark:border-[#2a2f3a]/60 ${
+                            !notification.is_read ? 'bg-accent-50/40 dark:bg-accent-500/[0.08]' : ''
+                          }`}
+                        >
+                          {notification.user_image ? (
+                            <img
+                              src={notification.user_image}
+                              alt={notification.user_name || '사용자'}
+                              className="h-9 w-9 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                {notification.user_name?.charAt(0) || '?'}
+                              </span>
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">
+                                {notification.vehicle_number}
+                              </span>
+                              <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-sm ${
+                                notification.type === 'vehicle_created'
+                                  ? 'bg-emerald-100 text-emerald-700 shadow-emerald-200/50 dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-emerald-500/20'
+                                  : notification.type === 'status_changed'
+                                  ? 'bg-amber-100 text-amber-700 shadow-amber-200/50 dark:bg-amber-500/15 dark:text-amber-400 dark:shadow-amber-500/20'
+                                  : 'bg-blue-100 text-blue-700 shadow-blue-200/50 dark:bg-blue-500/15 dark:text-blue-400 dark:shadow-blue-500/20'
+                              }`}>
+                                {notification.type === 'vehicle_created' ? '신규' : notification.type === 'status_changed' ? '상태' : '수정'}
+                              </span>
+                              {!notification.is_read && (
+                                <span className="h-2 w-2 rounded-full bg-accent-500 shadow-sm shadow-accent-500/50" />
+                              )}
+                            </div>
+                            {notification.details?.changed_fields && notification.details.changed_fields.length > 0 && (
+                              <p className="mt-1.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">
+                                {getChangedSteps(notification.details.changed_fields).join(', ')}
+                              </p>
+                            )}
+                            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                              {notification.user_name && <span>{notification.user_name} · </span>}
+                              {notification.created_at && formatRelativeTime(notification.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
