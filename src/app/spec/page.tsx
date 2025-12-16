@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.2
+            v1.3
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1694,12 +1694,13 @@ export default function SpecPage() {
           )}
           {/* 상태 탭 헤더 */}
           <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-1.5 shadow-sm dark:bg-[#1c1f26]">
-            {/* 슬라이딩 인디케이터 */}
-            <motion.div
+            {/* 인디케이터 - 애니메이션 없음 */}
+            <div
               className="absolute top-1.5 bottom-1.5 rounded-xl"
               style={{
                 width: 'calc(25% - 3px)',
                 left: 6,
+                transform: `translateX(${statusIndex * 100}%)`,
                 background: isDarkMode
                   ? statusTab === 'all' ? 'linear-gradient(to bottom, #6b7280, #4b5563)'
                   : statusTab === 'intake' ? 'linear-gradient(to bottom, #3b82f6, #2563eb)'
@@ -1718,15 +1719,6 @@ export default function SpecPage() {
                   : statusTab === 'intake' ? '0 2px 6px rgba(59, 130, 246, 0.2)'
                   : statusTab === 'productization' ? '0 2px 6px rgba(245, 158, 11, 0.2)'
                   : '0 2px 6px rgba(34, 197, 94, 0.2)',
-              }}
-              animate={{
-                x: `${statusIndex * 100}%`,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 200,
-                damping: 22,
-                mass: 0.8,
               }}
             />
             {(['all', 'intake', 'productization', 'advertising'] as StatusTabType[]).map((status) => {
