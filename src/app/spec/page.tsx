@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,6 +31,8 @@ import {
   TabsTrigger,
 } from '@/components/animate-ui/tabs';
 import type { Notification } from '@/lib/supabase';
+import VehicleCard from '@/components/spec/VehicleCard';
+import type { VehicleItem, StatusLabel } from '@/components/spec/VehicleCard';
 
 // 필드명 한글 변환 (알림 표시용)
 const fieldLabels: Record<string, string> = {
@@ -279,6 +281,14 @@ interface VehicleListItem {
   isIncomplete: boolean;
   saleType: string;
 }
+
+// 상태 라벨 (컴포넌트 외부 상수 - 리렌더링 방지)
+const STATUS_LABELS: Record<VehicleStatus, StatusLabel> = {
+  intake: { label: '입고', color: 'border border-gray-300 bg-gray-50 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:shadow-gray-900/30' },
+  productization: { label: '상품화', color: 'border border-amber-300 bg-amber-50 text-amber-700 shadow-sm shadow-amber-200/50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:shadow-amber-500/20' },
+  advertising: { label: '광고', color: 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20' },
+  sold: { label: '판매완료', color: 'border border-gray-400 bg-gray-100 text-gray-500 shadow-sm dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400' },
+};
 
 export default function SpecPage() {
   const { data: session } = useSession();
@@ -617,7 +627,7 @@ export default function SpecPage() {
 
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
-  const loadVehicleFromCard = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
+  const loadVehicleFromCard = useCallback(async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
     setPreviewLoading(true);
     try {
       const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
@@ -645,7 +655,12 @@ export default function SpecPage() {
     } finally {
       setPreviewLoading(false);
     }
-  };
+  }, [showToast]);
+
+  // 컨텍스트 메뉴 열기 핸들러 (VehicleCard용)
+  const handleContextMenu = useCallback((e: React.MouseEvent, item: VehicleListItem) => {
+    setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
+  }, []);
 
   // 컨텍스트 메뉴에서 수정 클릭 시 바로 폼에 데이터 로드 (모달 없이)
   const loadVehicleToForm = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
@@ -1787,14 +1802,6 @@ export default function SpecPage() {
                     );
                   });
 
-                // 전체 탭에서 상태 뱃지 표시용
-                const statusLabels: Record<VehicleStatus, { label: string; color: string }> = {
-                  intake: { label: '입고', color: 'border border-gray-300 bg-gray-50 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:shadow-gray-900/30' },
-                  productization: { label: '상품화', color: 'border border-amber-300 bg-amber-50 text-amber-700 shadow-sm shadow-amber-200/50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:shadow-amber-500/20' },
-                  advertising: { label: '광고', color: 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20' },
-                  sold: { label: '판매완료', color: 'border border-gray-400 bg-gray-100 text-gray-500 shadow-sm dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400' },
-                };
-
                 if (filteredList.length === 0) {
                   const labels: Record<StatusTabType, string> = { all: '전체', intake: '입고', productization: '상품화', advertising: '광고' };
                   return (
@@ -1810,70 +1817,19 @@ export default function SpecPage() {
                 return (
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                     {filteredList.map((item) => (
-                      <div
+                      <VehicleCard
                         key={item.id}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`${item.vehicleNumber} ${item.vehicleType === 'camper' ? '캠핑카' : '카라반'} 불러오기`}
-                        onClick={() => {
-                          // 롱프레스로 메뉴가 열린 경우 클릭 무시
-                          if (!contextMenu.show) {
-                            loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
-                          }
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
-                        }}
-                        onTouchStart={(e) => handleTouchStart(e, item)}
+                        item={item}
+                        statusTab={statusTab}
+                        statusLabels={STATUS_LABELS}
+                        highlightedVehicle={highlightedVehicle}
+                        onLoad={loadVehicleFromCard}
+                        onContextMenu={handleContextMenu}
+                        onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            loadVehicleFromCard(item.vehicleNumber, item.vehicleType);
-                          }
-                        }}
-                        className={`spec-card ${
-                          highlightedVehicle === item.vehicleNumber ? 'spec-card--highlighted' : ''
-                        }`}
-                      >
-                        {/* 차량번호 + 배지 (같은 줄) */}
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
-                              {item.saleType === '위탁' ? '위' : '매'}
-                            </span>
-                            <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {statusTab === 'all' && statusLabels[item.status] && (
-                              <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusLabels[item.status].color}`}>
-                                {statusLabels[item.status].label}
-                              </span>
-                            )}
-                            <span className={`rounded-md px-2 py-0.5 text-xs font-medium shadow-sm ${item.vehicleType === 'camper' ? 'border border-blue-300 bg-blue-50 text-blue-700 shadow-blue-200/50 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:shadow-blue-500/20' : 'border border-violet-300 bg-violet-50 text-violet-700 shadow-violet-200/50 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-400 dark:shadow-violet-500/20'}`}>
-                              {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* 모델명 + 제조사 + 미입력 아이콘 */}
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</div>
-                            <div className="truncate text-xs text-gray-400 dark:text-gray-500">{item.manufacturer || '\u00A0'}</div>
-                          </div>
-                          {item.isIncomplete && (
-                            <span
-                              className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-bold text-white shadow-sm shadow-amber-400/50 dark:shadow-amber-400/60"
-                              title="옵션 미입력"
-                            >
-                              !
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                        contextMenuOpen={contextMenu.show}
+                      />
                     ))}
                   </div>
                 );
