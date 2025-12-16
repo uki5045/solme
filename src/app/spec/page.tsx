@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.4
+            v1.5
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1605,13 +1605,13 @@ export default function SpecPage() {
           >
             <TabsTrigger
               value="camper"
-              className="rounded-lg py-3 text-base font-semibold text-gray-500 transition-colors duration-200 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
+              className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
             >
               캠핑카
             </TabsTrigger>
             <TabsTrigger
               value="caravan"
-              className="rounded-lg py-3 text-base font-semibold text-gray-500 transition-colors duration-200 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
+              className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
             >
               카라반
             </TabsTrigger>
@@ -1730,14 +1730,14 @@ export default function SpecPage() {
                   key={status}
                   data-status={status}
                   onClick={() => { setSearchQuery(''); setStatusTab(status); }}
-                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold transition-colors duration-200 ${
+                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold ${
                     isActive
                       ? 'text-white'
-                      : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                      : 'text-gray-400 dark:text-gray-500'
                   }`}
                 >
                   <span className="whitespace-nowrap">{labels[status]}</span>
-                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 text-xs font-medium transition-colors duration-200 ${
+                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 text-xs font-medium ${
                     isActive
                       ? 'bg-white/25 text-white'
                       : 'bg-gray-200/60 text-gray-400 dark:bg-gray-700/50 dark:text-gray-500'
