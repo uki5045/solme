@@ -8,7 +8,23 @@ import {
   InformationCircleIcon,
   ChatBubbleBottomCenterTextIcon,
   Cog6ToothIcon,
-} from '@heroicons/react/24/outline';
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  CheckIcon,
+  ArrowRightStartOnRectangleIcon,
+  BellIcon,
+  SunIcon,
+  MoonIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  TagIcon,
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  PhotoIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/16/solid';
 import {
   Tabs,
   TabsList,
@@ -275,6 +291,7 @@ export default function SpecPage() {
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; vehicleNumber: string }>({ show: false, vehicleNumber: '' });
   const [resetModal, setResetModal] = useState(false);
   const [overwriteModal, setOverwriteModal] = useState<{ show: boolean; callback: (() => void) | null }>({ show: false, callback: null });
+  const [saveConfirmModal, setSaveConfirmModal] = useState<{ show: boolean; vehicleNumber: string; callback: (() => void) | null }>({ show: false, vehicleNumber: '', callback: null });
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'warning' }>({ show: false, message: '', type: 'success' });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [vehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
@@ -844,9 +861,15 @@ export default function SpecPage() {
         },
       });
     } else {
-      // 중복 아니면 바로 저장
-      const success = await saveToDatabase(type);
-      if (success) onSuccess();
+      // 중복 아니면 신규 저장 확인 모달 표시
+      setSaveConfirmModal({
+        show: true,
+        vehicleNumber,
+        callback: async () => {
+          const success = await saveToDatabase(type);
+          if (success) onSuccess();
+        },
+      });
     }
   }, [camperData, caravanData, checkDuplicate, saveToDatabase]);
 
@@ -1104,14 +1127,10 @@ export default function SpecPage() {
                   </motion.svg>
                 )}
                 {toast.type === 'error' && (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XMarkIcon className="size-4" />
                 )}
                 {toast.type === 'warning' && (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
-                  </svg>
+                  <ExclamationTriangleIcon className="size-4" />
                 )}
               </motion.div>
               {/* 텍스트 - 타이핑 효과 */}
@@ -1223,9 +1242,7 @@ export default function SpecPage() {
                       }}
                       className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                      </svg>
+                      <ArrowRightStartOnRectangleIcon className="size-4" />
                       로그아웃
                     </button>
                   </motion.div>
@@ -1250,9 +1267,7 @@ export default function SpecPage() {
                 className="group relative flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 title="알림"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                </svg>
+                <BellIcon className="size-5" />
                 {/* 알림 뱃지 */}
                 {unreadCount > 0 && (
                   <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-md shadow-red-500/50 ring-2 ring-white dark:ring-[#121418] dark:shadow-red-500/40">
@@ -1292,9 +1307,7 @@ export default function SpecPage() {
                         </div>
                       ) : notifications.length === 0 ? (
                         <div className="py-10 text-center">
-                          <svg className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                          </svg>
+                          <BellIcon className="mx-auto size-10 text-gray-300 dark:text-gray-600" />
                           <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">알림이 없습니다</p>
                         </div>
                       ) : (
@@ -1370,13 +1383,9 @@ export default function SpecPage() {
               title={isDarkMode ? '라이트 모드' : '다크 모드'}
             >
               {isDarkMode ? (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                </svg>
+                <SunIcon className="size-5" />
               ) : (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
+                <MoonIcon className="size-5" />
               )}
             </button>
 
@@ -1388,9 +1397,6 @@ export default function SpecPage() {
               onClick={() => setShowSoldView(true)}
               className="hidden h-9 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 lg:flex dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
               <span>판매완료</span>
               {vehicleList.filter(v => v.status === 'sold').length > 0 && (
                 <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gray-500 px-1.5 text-xs font-bold text-white dark:bg-gray-600">
@@ -1441,9 +1447,7 @@ export default function SpecPage() {
                     }}
                     className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
                   >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                    </svg>
+                    <ArrowRightStartOnRectangleIcon className="size-4" />
                     로그아웃
                   </button>
                 </motion.div>
@@ -1796,33 +1800,12 @@ export default function SpecPage() {
                     }`}
                   >
                     {isCurrentStatus && (
-                      <svg className="h-4 w-4 text-accent-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                      <CheckIcon className="size-4 text-accent-500" />
                     )}
                     <span className={isCurrentStatus ? '' : 'ml-6'}>{labels[status]}</span>
                   </button>
                 );
               })}
-
-              {/* 구분선 */}
-              <div className="my-1.5 border-t border-gray-100 dark:border-[#454c5c]" />
-
-              {/* 판매완료 */}
-              <button
-                onClick={() => {
-                  if (contextMenu.item) {
-                    requestStatusChange(contextMenu.item.vehicleNumber, 'sold');
-                  }
-                  setContextMenu({ show: false, x: 0, y: 0, item: null });
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-emerald-600 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                판매완료
-              </button>
 
               {/* 구분선 */}
               <div className="my-1.5 border-t border-gray-100 dark:border-[#454c5c]" />
@@ -1837,10 +1820,22 @@ export default function SpecPage() {
                 }}
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                <PencilSquareIcon className="size-4" />
                 수정
+              </button>
+
+              {/* 판매완료 */}
+              <button
+                onClick={() => {
+                  if (contextMenu.item) {
+                    requestStatusChange(contextMenu.item.vehicleNumber, 'sold');
+                  }
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
+              >
+                <TagIcon className="size-4" />
+                판매완료
               </button>
 
               {/* 삭제 */}
@@ -1853,9 +1848,7 @@ export default function SpecPage() {
                 }}
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <TrashIcon className="size-4" />
                 삭제
               </button>
             </div>
@@ -2119,9 +2112,7 @@ export default function SpecPage() {
             >
               <div className="mb-4 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <TrashIcon className="size-6 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">데이터 삭제</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
@@ -2167,9 +2158,7 @@ export default function SpecPage() {
             >
               <div className="mb-4 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <svg className="h-6 w-6 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  <ArrowPathIcon className="size-6 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">입력 초기화</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
@@ -2215,9 +2204,7 @@ export default function SpecPage() {
             >
               <div className="mb-4 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                  <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <ExclamationTriangleIcon className="size-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">중복 차량번호</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
@@ -2249,6 +2236,57 @@ export default function SpecPage() {
         )}
       </AnimatePresence>
 
+      {/* 신규 저장 확인 모달 */}
+      <AnimatePresence>
+        {saveConfirmModal.show && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+            onClick={() => setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null })}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                  <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">저장 확인</h3>
+                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
+                  차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{saveConfirmModal.vehicleNumber}</span>
+                  <br />데이터를 저장하시겠습니까?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null })}
+                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => {
+                    if (saveConfirmModal.callback) {
+                      saveConfirmModal.callback();
+                    }
+                    setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null });
+                  }}
+                  className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-sm shadow-accent-500/15 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow hover:shadow-accent-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-accent-500/30 dark:hover:shadow-lg dark:hover:shadow-accent-500/40"
+                >
+                  저장
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 상태 변경 확인 모달 */}
       <AnimatePresence>
         {statusChangeModal.show && statusChangeModal.newStatus && (
@@ -2268,9 +2306,7 @@ export default function SpecPage() {
             >
               <div className="mb-4 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                  <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">상태 변경</h3>
                 <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
@@ -2322,9 +2358,7 @@ export default function SpecPage() {
                   onClick={() => setShowSoldView(false)}
                   className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                  </svg>
+                  <ChevronLeftIcon className="size-5" />
                 </button>
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
                 <div className="w-9" />
@@ -2334,9 +2368,7 @@ export default function SpecPage() {
             {/* 검색바 */}
             <div className="p-4 pb-2">
               <div className="relative">
-                <svg className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
+                <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={soldSearchQuery}
@@ -2364,9 +2396,7 @@ export default function SpecPage() {
                   return (
                     <div className="flex flex-col items-center justify-center py-16">
                       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-                        <svg className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <CheckCircleIcon className="size-8 text-gray-400 dark:text-gray-500" />
                       </div>
                       <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                         {soldSearchQuery.trim() ? `"${soldSearchQuery}" 검색 결과가 없습니다` : '판매완료된 차량이 없습니다'}
@@ -2427,9 +2457,7 @@ export default function SpecPage() {
                             }}
                             className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:shadow-accent-500/30"
                           >
-                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                            </svg>
+                            <ArrowPathIcon className="size-3.5" />
                             재등록
                           </button>
                         </div>
@@ -2460,9 +2488,7 @@ export default function SpecPage() {
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
+                  <ArrowPathIcon className="size-4" />
                   재등록 (입고)
                 </button>
               </div>
@@ -2506,19 +2532,13 @@ export default function SpecPage() {
                 }`}
               >
                 {toast.type === 'success' && (
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
+                  <CheckIcon className="size-3" />
                 )}
                 {toast.type === 'error' && (
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XMarkIcon className="size-3" />
                 )}
                 {toast.type === 'warning' && (
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008z" />
-                  </svg>
+                  <ExclamationTriangleIcon className="size-3" />
                 )}
               </motion.div>
               {toast.message}
@@ -3086,9 +3106,7 @@ function FormSelect({
         {children}
       </select>
       <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 transition-colors duration-200 group-focus-within:text-accent-500">
-        <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-gray-500 transition-colors group-focus-within:text-accent-500 dark:text-gray-400">
-          <path fillRule="evenodd" clipRule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
-        </svg>
+        <ChevronDownIcon className="size-4 text-gray-500 transition-colors group-focus-within:text-accent-500 dark:text-gray-400" />
       </div>
     </div>
   );

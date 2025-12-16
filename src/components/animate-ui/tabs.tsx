@@ -68,7 +68,7 @@ interface TabsListProps extends React.ComponentProps<'div'> {
 
 function TabsList({ children, className, indicatorClassName, ...props }: TabsListProps) {
   const { activeValue } = useTabs();
-  const [indicatorStyle, setIndicatorStyle] = React.useState({ left: 0, width: 0 });
+  const [indicatorStyle, setIndicatorStyle] = React.useState({ x: 0, width: 0 });
   const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -80,7 +80,7 @@ function TabsList({ children, className, indicatorClassName, ...props }: TabsLis
 
     if (activeButton) {
       setIndicatorStyle({
-        left: activeButton.offsetLeft,
+        x: activeButton.offsetLeft,
         width: activeButton.offsetWidth,
       });
     }
@@ -97,21 +97,20 @@ function TabsList({ children, className, indicatorClassName, ...props }: TabsLis
       )}
       {...props}
     >
-      {/* Sliding indicator */}
+      {/* Sliding indicator - GPU accelerated */}
       <motion.div
         className={cn(
-          'absolute top-1 bottom-1 rounded-lg bg-white shadow-md dark:bg-gray-700',
+          'absolute left-0 top-1 bottom-1 rounded-lg bg-white shadow-md will-change-transform dark:bg-gray-700',
           indicatorClassName
         )}
         animate={{
-          left: indicatorStyle.left,
+          x: indicatorStyle.x,
           width: indicatorStyle.width,
         }}
         transition={{
-          type: 'spring',
-          stiffness: 400,
-          damping: 30,
-          mass: 0.8,
+          type: 'tween',
+          duration: 0.2,
+          ease: [0.25, 0.1, 0.25, 1],
         }}
       />
       {children}
@@ -162,10 +161,9 @@ function TabsContents({
   children,
   className,
   transition = {
-    type: 'spring',
-    stiffness: 150,
-    damping: 20,
-    mass: 1,
+    type: 'tween',
+    duration: 0.25,
+    ease: [0.25, 0.1, 0.25, 1],
   },
   ...props
 }: TabsContentsProps) {
@@ -188,7 +186,7 @@ function TabsContents({
       {...props}
     >
       <motion.div
-        className="flex"
+        className="flex will-change-transform"
         animate={{ x: `${activeIndex * -100}%` }}
         transition={transition}
       >
@@ -202,7 +200,7 @@ function TabsContents({
   );
 }
 
-// TabsContent - individual tab content with blur effect
+// TabsContent - individual tab content (optimized for mobile)
 interface TabsContentProps extends HTMLMotionProps<'div'> {
   value: string;
   children: React.ReactNode;
@@ -222,17 +220,15 @@ function TabsContent({
       role="tabpanel"
       data-slot="tabs-content"
       data-value={value}
-      className={cn('w-full', className)}
-      initial={{ filter: 'blur(0px)', opacity: 1 }}
+      className={cn('w-full will-change-[opacity,transform]', className)}
       animate={{
-        filter: isActive ? 'blur(0px)' : 'blur(4px)',
-        opacity: isActive ? 1 : 0.5,
+        opacity: isActive ? 1 : 0.3,
         scale: isActive ? 1 : 0.98,
       }}
       transition={{
-        type: 'spring',
-        stiffness: 150,
-        damping: 20,
+        type: 'tween',
+        duration: 0.2,
+        ease: 'easeOut',
       }}
       aria-hidden={!isActive}
       // inert: 비활성 탭 내부 요소 Tab 키 접근 차단
