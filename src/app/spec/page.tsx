@@ -1128,7 +1128,7 @@ export default function SpecPage() {
         </AnimatePresence>
 
         {/* 기본 헤더 */}
-        <div className={`border-b border-gray-200/80 bg-white/70 backdrop-blur-xl transition-opacity duration-200 dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90 ${toast.show ? 'opacity-0' : 'opacity-100'}`}>
+        <div className={`border-b border-gray-200/80 bg-white/70 backdrop-blur-xl transition-opacity duration-200 dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90 ${toast.show ? 'lg:opacity-0' : 'opacity-100'}`}>
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6">
           {/* 좌측: 모바일 - 뷰 전환 탭 / 데스크톱 - 사용자 정보 */}
           <div className="flex items-center">
