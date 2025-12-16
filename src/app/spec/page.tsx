@@ -1235,8 +1235,8 @@ export default function SpecPage() {
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center gap-1 lg:gap-1.5">
-            {/* 알림 버튼 + 드롭다운 */}
-            <div ref={notificationRef} className="relative">
+            {/* 알림 버튼 + 드롭다운 - 데스크톱만 */}
+            <div ref={notificationRef} className="relative hidden lg:block">
               <button
                 onClick={() => {
                   const willOpen = !showNotifications;
