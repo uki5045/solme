@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.6
+            v1.7
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1632,16 +1632,14 @@ export default function SpecPage() {
         {/* 폼 콘텐츠 */}
         <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
           {tabLoading ? (
-            <div
-              className="flex h-[780px] items-center justify-center"
-            >
+            <div className="flex min-h-[200px] items-center justify-center">
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
               </div>
             </div>
           ) : (
-            <div ref={formContainerRef} className="h-[780px] overflow-y-auto p-5">
+            <div ref={formContainerRef} className="p-5">
               {mainTab === 'camper' ? (
                 <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
               ) : (
