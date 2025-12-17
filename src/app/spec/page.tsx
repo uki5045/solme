@@ -348,18 +348,31 @@ export default function SpecPage() {
     }, 4500);
   };
 
-  // iOS 18+ Safari 배경색 수정 (body 배경색으로 상단/하단 바 색상 결정)
+  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
   useEffect(() => {
-    const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
+    const pageBgColor = isDarkMode ? '#121418' : '#f3f4f6';
+    const headerBgColor = isDarkMode ? '#1c1f26' : '#ffffff';
 
-    // !important로 body 배경색 설정 (iOS 18+ Safari 대응)
-    document.body.style.setProperty('background-color', bgColor, 'important');
-    document.documentElement.style.setProperty('background-color', bgColor, 'important');
+    // HTML/Body 배경색 설정 (페이지 배경)
+    document.documentElement.style.backgroundColor = pageBgColor;
+    document.body.style.backgroundColor = pageBgColor;
+
+    // iOS Safari 상단/하단 바 색상 (theme-color) - 헤더 색상과 일치
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+      themeColorMeta = document.createElement('meta');
+      themeColorMeta.setAttribute('name', 'theme-color');
+      document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', headerBgColor);
 
     return () => {
       // 페이지 떠날 때 원래 레이아웃 색상으로 복원
-      document.body.style.setProperty('background-color', '#111111', 'important');
-      document.documentElement.style.setProperty('background-color', '#111111', 'important');
+      document.documentElement.style.backgroundColor = '#111111';
+      document.body.style.backgroundColor = '#111111';
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', '#111111');
+      }
     };
   }, [isDarkMode]);
 
@@ -1095,7 +1108,7 @@ export default function SpecPage() {
 
       <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
       {/* 헤더 */}
-      <header className="sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
+      <header className="sticky top-0 z-40 bg-white pt-[env(safe-area-inset-top)] dark:bg-[#1c1f26]">
         {/* 토스트 모드 헤더 - 데스크톱만 (모바일은 하단 toast 사용) */}
         <AnimatePresence mode="wait">
           {toast.show && (
