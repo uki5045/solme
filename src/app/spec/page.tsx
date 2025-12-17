@@ -608,23 +608,23 @@ export default function SpecPage() {
         </div>
 
         {/* 폼 콘텐츠 */}
-        <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-          {tabLoading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
+        <div className="relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
+          {/* 로딩 오버레이 */}
+          {tabLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px] dark:bg-[#1c1f26]/80">
               <div className="flex flex-col items-center gap-2">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
                 <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
               </div>
             </div>
-          ) : (
-            <div ref={formContainerRef} className="p-5">
-              {mainTab === 'camper' ? (
-                <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
-              ) : (
-                <CaravanForm step={step} data={caravanData} setData={setCaravanData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
-              )}
-            </div>
           )}
+          <div ref={formContainerRef} className="p-5">
+            {mainTab === 'camper' ? (
+              <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
+            ) : (
+              <CaravanForm step={step} data={caravanData} setData={setCaravanData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
+            )}
+          </div>
 
           {/* 하단 버튼 - 항상 하단에 고정 */}
           <div className="mt-auto flex gap-3 border-t border-gray-100 p-5 dark:border-gray-800">
