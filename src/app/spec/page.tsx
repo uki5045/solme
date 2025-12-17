@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -349,34 +349,29 @@ export default function SpecPage() {
   };
 
   // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
-  // useLayoutEffect: paint 전에 실행하여 깜빡임 방지
-  useLayoutEffect(() => {
-    // DOM 클래스를 직접 확인하여 다크모드 여부 판단 (상태 의존 X)
-    const isDark = document.documentElement.classList.contains('dark');
-    const headerBgColor = isDark ? '#1c1f26' : '#ffffff';
-    const bodyBgColor = isDark ? '#121418' : '#f3f4f6';
+  useEffect(() => {
+    const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
 
     // HTML/Body 배경색 설정
-    document.documentElement.style.backgroundColor = bodyBgColor;
-    document.body.style.backgroundColor = bodyBgColor;
+    document.documentElement.style.backgroundColor = bgColor;
+    document.body.style.backgroundColor = bgColor;
 
-    // iOS Safari 상단/하단 바 색상 (theme-color) - 헤더 배경색과 동일하게
-    // 기존 media query가 있는 theme-color 메타 태그들을 모두 제거 (우선순위 문제 해결)
-    const existingThemeColors = document.querySelectorAll('meta[name="theme-color"]');
-    existingThemeColors.forEach((meta) => meta.remove());
-
-    // 새로운 단일 theme-color 메타 태그 생성
-    const themeColorMeta = document.createElement('meta');
-    themeColorMeta.setAttribute('name', 'theme-color');
-    themeColorMeta.setAttribute('content', headerBgColor);
-    document.head.appendChild(themeColorMeta);
+    // iOS Safari 상단/하단 바 색상 (theme-color) 동적 변경
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+      themeColorMeta = document.createElement('meta');
+      themeColorMeta.setAttribute('name', 'theme-color');
+      document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', bgColor);
 
     return () => {
       // 페이지 떠날 때 원래 레이아웃 색상으로 복원
       document.documentElement.style.backgroundColor = '#111111';
       document.body.style.backgroundColor = '#111111';
-      // 동적으로 추가한 theme-color 제거 (layout.tsx의 원본이 다시 적용됨)
-      themeColorMeta.remove();
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', '#111111');
+      }
     };
   }, [isDarkMode]);
 
@@ -400,11 +395,6 @@ export default function SpecPage() {
 
   // 다크모드 감지 및 토글
   useEffect(() => {
-    // 쿠키 설정 헬퍼
-    const setThemeCookie = (theme: string) => {
-      document.cookie = `theme=${theme};path=/;max-age=31536000;SameSite=Lax`;
-    };
-
     // localStorage에서 저장된 테마 확인
     const savedTheme = localStorage.getItem('theme');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -412,17 +402,13 @@ export default function SpecPage() {
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
-      setThemeCookie('dark');
     } else if (savedTheme === 'light') {
       setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
-      setThemeCookie('light');
     } else {
       // 저장된 테마 없으면 시스템 설정 따름
-      const systemDark = mediaQuery.matches;
-      setIsDarkMode(systemDark);
-      setThemeCookie(systemDark ? 'dark' : 'light');
-      if (systemDark) {
+      setIsDarkMode(mediaQuery.matches);
+      if (mediaQuery.matches) {
         document.documentElement.classList.add('dark');
       }
     }
@@ -431,7 +417,6 @@ export default function SpecPage() {
       // 저장된 테마가 없을 때만 시스템 설정 따름
       if (!localStorage.getItem('theme')) {
         setIsDarkMode(e.matches);
-        setThemeCookie(e.matches ? 'dark' : 'light');
         if (e.matches) {
           document.documentElement.classList.add('dark');
         } else {
@@ -445,15 +430,22 @@ export default function SpecPage() {
 
   // 다크모드 토글 함수
   const toggleDarkMode = () => {
+    // 트랜지션 비활성화
+    document.documentElement.classList.add('no-transitions');
+
     const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
 
-    // localStorage + 쿠키 둘 다 저장 (SSR에서 쿠키 읽기 위함)
-    const themeValue = newDarkMode ? 'dark' : 'light';
-    localStorage.setItem('theme', themeValue);
-    document.cookie = `theme=${themeValue};path=/;max-age=31536000;SameSite=Lax`;
-
-    // 새로고침하여 SSR에서 쿠키 읽고 theme-color 적용
-    window.location.reload();
+    // 다음 프레임에서 트랜지션 다시 활성화
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('no-transitions');
+    });
   };
 
   // 알림 가져오기 (showLoading: 초기 로드 시만 스피너 표시)
@@ -1115,7 +1107,14 @@ export default function SpecPage() {
 
       <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
       {/* 헤더 */}
-      <header className="sticky top-0 z-40 bg-white pt-[env(safe-area-inset-top)] dark:bg-[#1c1f26]">
+      <header className="sticky top-0 z-40">
+        {/* iOS Safari 상단 영역 덮개 - 헤더와 같은 색상 */}
+        <div
+          className="absolute inset-x-0 bottom-full h-[100px] bg-white dark:bg-[#1c1f26]"
+          style={{ transform: 'translateZ(0)' }}
+        />
+        {/* Safe area padding */}
+        <div className="h-[env(safe-area-inset-top)] bg-white dark:bg-[#1c1f26]" />
         {/* 토스트 모드 헤더 - 데스크톱만 (모바일은 하단 toast 사용) */}
         <AnimatePresence mode="wait">
           {toast.show && (
@@ -1297,7 +1296,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.20
+            v2.0
           </span>
 
           {/* 우측: 액션 버튼들 */}

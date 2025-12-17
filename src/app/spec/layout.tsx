@@ -1,30 +1,23 @@
-import type { Viewport } from 'next';
-import { cookies } from 'next/headers';
+import type { Metadata, Viewport } from "next";
+import "./spec.css";
 
-// 동적 viewport - 쿠키에서 테마 읽어서 theme-color 설정
-export async function generateViewport(): Promise<Viewport> {
-  const cookieStore = await cookies();
-  const theme = cookieStore.get('theme')?.value;
+// spec 페이지 전용 viewport - 다크 테마 색상 고정
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#121418", // 다크 배경색 고정 (iOS Safari 상단/하단 바)
+};
 
-  // 쿠키에 저장된 테마에 따라 theme-color 설정
-  if (theme === 'dark') {
-    return {
-      themeColor: '#1c1f26', // 다크모드 헤더 색상
-    };
-  } else if (theme === 'light') {
-    return {
-      themeColor: '#ffffff', // 라이트모드 헤더 색상
-    };
-  }
-
-  // 쿠키 없으면 시스템 테마 따름 (기본 동작)
-  return {
-    themeColor: [
-      { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-      { media: '(prefers-color-scheme: dark)', color: '#1c1f26' },
-    ],
-  };
-}
+export const metadata: Metadata = {
+  title: "옵션표 생성기 | 쏠마린캠핑카",
+  description: "캠핑카/카라반 옵션표 생성 도구",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "옵션표 생성기",
+  },
+};
 
 export default function SpecLayout({
   children,
