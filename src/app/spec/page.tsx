@@ -123,6 +123,17 @@ const getChangedSteps = (fields: string[]): string[] => {
   return Array.from(steps);
 };
 
+// 줄바꿈을 두 칸 띄어쓰기로 변환 (옵션 필드용)
+const normalizeOptionText = (text: string): string => {
+  if (!text) return text;
+  // 연속된 줄바꿈(\n, \r\n)을 두 칸 띄어쓰기로 변환
+  return text
+    .split(/\r?\n+/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join('  ');
+};
+
 type MainTab = 'camper' | 'caravan';
 type FormStep = 1 | 2 | 3;
 
@@ -854,9 +865,17 @@ export default function SpecPage() {
 
   // 실제 저장 함수 (중복 확인 없이)
   const saveToDatabase = useCallback(async (type: MainTab): Promise<boolean> => {
-    const data = type === 'camper' ? camperData : caravanData;
-    const vehicleNumber = data.vehicleNumber.trim();
+    const rawData = type === 'camper' ? camperData : caravanData;
+    const vehicleNumber = rawData.vehicleNumber.trim();
     if (!vehicleNumber) return false;
+
+    // 옵션 필드 줄바꿈 → 두 칸 띄어쓰기 변환
+    const data = {
+      ...rawData,
+      exterior: normalizeOptionText(rawData.exterior),
+      interior: normalizeOptionText(rawData.interior),
+      convenience: normalizeOptionText(rawData.convenience),
+    };
 
     try {
       const response = await fetch('/api/specs', {
@@ -1306,7 +1325,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.2
+            v2.3
           </span>
 
           {/* 우측: 액션 버튼들 */}
