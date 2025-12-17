@@ -400,30 +400,29 @@ export default function SpecPage() {
 
   // 다크모드 감지 및 토글
   useEffect(() => {
-    // 모바일 감지 (lg breakpoint = 1024px)
-    const isMobile = window.innerWidth < 1024;
+    // 쿠키 설정 헬퍼
+    const setThemeCookie = (theme: string) => {
+      document.cookie = `theme=${theme};path=/;max-age=31536000;SameSite=Lax`;
+    };
 
-    // 모바일에서는 항상 라이트모드 강제
-    if (isMobile) {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-      return;
-    }
-
-    // 데스크톱: localStorage에서 저장된 테마 확인
+    // localStorage에서 저장된 테마 확인
     const savedTheme = localStorage.getItem('theme');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
+      setThemeCookie('dark');
     } else if (savedTheme === 'light') {
       setIsDarkMode(false);
       document.documentElement.classList.remove('dark');
+      setThemeCookie('light');
     } else {
       // 저장된 테마 없으면 시스템 설정 따름
-      setIsDarkMode(mediaQuery.matches);
-      if (mediaQuery.matches) {
+      const systemDark = mediaQuery.matches;
+      setIsDarkMode(systemDark);
+      setThemeCookie(systemDark ? 'dark' : 'light');
+      if (systemDark) {
         document.documentElement.classList.add('dark');
       }
     }
@@ -432,6 +431,7 @@ export default function SpecPage() {
       // 저장된 테마가 없을 때만 시스템 설정 따름
       if (!localStorage.getItem('theme')) {
         setIsDarkMode(e.matches);
+        setThemeCookie(e.matches ? 'dark' : 'light');
         if (e.matches) {
           document.documentElement.classList.add('dark');
         } else {
@@ -450,7 +450,12 @@ export default function SpecPage() {
 
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+
+    // localStorage + 쿠키 둘 다 저장 (SSR에서 쿠키 읽기 위함)
+    const themeValue = newDarkMode ? 'dark' : 'light';
+    localStorage.setItem('theme', themeValue);
+    document.cookie = `theme=${themeValue};path=/;max-age=31536000;SameSite=Lax`;
+
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -1453,10 +1458,10 @@ export default function SpecPage() {
               )}
             </button>
 
-            {/* 다크모드 토글 - 데스크톱만 (모바일은 라이트모드 고정) */}
+            {/* 다크모드 토글 */}
             <button
               onClick={toggleDarkMode}
-              className="hidden h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 lg:flex dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               title={isDarkMode ? '라이트 모드' : '다크 모드'}
             >
               {isDarkMode ? (
