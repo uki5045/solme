@@ -744,7 +744,7 @@ export default function SpecPage() {
 
   const formatOptions = (text: string): React.ReactNode => {
     if (!text || !text.trim()) return '-';
-    const items = text.split(/\s{2,}/).filter((item) => item.trim());
+    const items = text.split(/\s{2,}|\r?\n/).filter((item) => item.trim());
     if (items.length === 0) return '-';
     return (
       <div className="flex flex-wrap gap-1.5">
@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.5
+            v1.6
           </span>
 
           {/* 우측: 액션 버튼들 */}
