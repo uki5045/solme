@@ -89,9 +89,6 @@ const fieldLabels: Record<string, string> = {
   structureModDate: '구조변경일',
 };
 
-// 필드명 한글 변환 함수
-const getFieldLabel = (field: string): string => fieldLabels[field] || field;
-
 // 스텝별 필드 분류
 const stepFields = {
   info: [ // 1스텝 - 정보
@@ -1332,7 +1329,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.4
+            v2.5
           </span>
 
           {/* 우측: 액션 버튼들 */}
