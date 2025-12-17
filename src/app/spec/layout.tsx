@@ -1,12 +1,10 @@
 import type { Viewport } from 'next';
 
-// spec 페이지 전용 viewport - 라이트/다크 모두 대응
+// spec 페이지 전용 viewport
+// 모바일: 라이트모드 고정 → 흰색 theme-color
+// 데스크톱: 시스템 테마 따름
 export const viewport: Viewport = {
-  // 라이트모드: 흰색 헤더, 다크모드: 어두운 헤더
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#1c1f26' },
-  ],
+  themeColor: '#ffffff', // 모바일 라이트모드 고정
 };
 
 export default function SpecLayout({

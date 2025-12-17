@@ -400,7 +400,17 @@ export default function SpecPage() {
 
   // 다크모드 감지 및 토글
   useEffect(() => {
-    // localStorage에서 저장된 테마 확인
+    // 모바일 감지 (lg breakpoint = 1024px)
+    const isMobile = window.innerWidth < 1024;
+
+    // 모바일에서는 항상 라이트모드 강제
+    if (isMobile) {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
+      return;
+    }
+
+    // 데스크톱: localStorage에서 저장된 테마 확인
     const savedTheme = localStorage.getItem('theme');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -1294,7 +1304,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.18
+            v1.19
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1443,10 +1453,10 @@ export default function SpecPage() {
               )}
             </button>
 
-            {/* 다크모드 토글 */}
+            {/* 다크모드 토글 - 데스크톱만 (모바일은 라이트모드 고정) */}
             <button
               onClick={toggleDarkMode}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              className="hidden h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-all hover:bg-gray-100 hover:text-gray-700 lg:flex dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               title={isDarkMode ? '라이트 모드' : '다크 모드'}
             >
               {isDarkMode ? (
