@@ -348,19 +348,32 @@ export default function SpecPage() {
     }, 4500);
   };
 
-  // Safari 배경색 수정 (검은색 → 밝은 회색)
+  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
   useEffect(() => {
-    const originalHtmlBg = document.documentElement.style.backgroundColor;
-    const originalBodyBg = document.body.style.backgroundColor;
+    const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
 
-    document.documentElement.style.backgroundColor = '#f3f4f6';
-    document.body.style.backgroundColor = '#f3f4f6';
+    // HTML/Body 배경색 설정
+    document.documentElement.style.backgroundColor = bgColor;
+    document.body.style.backgroundColor = bgColor;
+
+    // iOS Safari 상단/하단 바 색상 (theme-color) 동적 변경
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+      themeColorMeta = document.createElement('meta');
+      themeColorMeta.setAttribute('name', 'theme-color');
+      document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', bgColor);
 
     return () => {
-      document.documentElement.style.backgroundColor = originalHtmlBg;
-      document.body.style.backgroundColor = originalBodyBg;
+      // 페이지 떠날 때 원래 레이아웃 색상으로 복원
+      document.documentElement.style.backgroundColor = '#111111';
+      document.body.style.backgroundColor = '#111111';
+      if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', '#111111');
+      }
     };
-  }, []);
+  }, [isDarkMode]);
 
   // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
   useEffect(() => {
@@ -1276,7 +1289,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.10
+            v1.11
           </span>
 
           {/* 우측: 액션 버튼들 */}
