@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -348,9 +348,13 @@ export default function SpecPage() {
     }, 4500);
   };
 
-  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
-  useEffect(() => {
-    const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
+  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응) - useLayoutEffect로 paint 전 실행
+  useLayoutEffect(() => {
+    // isDarkMode 상태 대신 직접 확인 (초기 렌더링 시 상태가 아직 설정 안됐을 수 있음)
+    const savedTheme = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const currentDarkMode = savedTheme === 'dark' || (savedTheme !== 'light' && systemDark);
+    const bgColor = currentDarkMode ? '#121418' : '#f3f4f6';
 
     // HTML/Body 배경색 설정
     document.documentElement.style.backgroundColor = bgColor;
@@ -1288,7 +1292,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.12
+            v1.13
           </span>
 
           {/* 우측: 액션 버튼들 */}
