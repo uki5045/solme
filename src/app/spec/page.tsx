@@ -894,6 +894,13 @@ export default function SpecPage() {
         return false;
       }
 
+      // 저장 성공 시 로컬 상태도 정규화된 값으로 업데이트
+      if (type === 'camper') {
+        setCamperData(data as CamperData);
+      } else {
+        setCaravanData(data as CaravanData);
+      }
+
       // 저장 성공 시 목록 및 알림 새로고침
       fetchVehicleList();
       fetchNotifications(false);
@@ -1325,7 +1332,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.3
+            v2.4
           </span>
 
           {/* 우측: 액션 버튼들 */}
