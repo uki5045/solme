@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
@@ -33,6 +34,7 @@ import {
 import type { Notification } from '@/lib/supabase';
 import VehicleCard from '@/components/spec/VehicleCard';
 import type { StatusLabel } from '@/components/spec/VehicleCard';
+import YearMonthInput from '@/components/spec/YearMonthInput';
 
 // 스텝별 필드 분류
 const stepFields = {
@@ -294,12 +296,12 @@ export default function SpecPage() {
   const formContainerRef = useRef<HTMLDivElement>(null);
   const [isMobileView, setIsMobileView] = useState(false);
 
-  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => {
       setToast({ show: false, message: '', type: 'success' });
     }, 4500);
-  };
+  }, []);
 
   // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
   useEffect(() => {
@@ -819,7 +821,7 @@ export default function SpecPage() {
       showToast('저장 중 오류가 발생했습니다.', 'error');
       return false;
     }
-  }, [camperData, caravanData, fetchNotifications]);
+  }, [camperData, caravanData, fetchNotifications, showToast]);
 
   // 중복 확인 후 저장 (모달 표시)
   const saveWithDuplicateCheck = useCallback(async (type: MainTab, onSuccess: () => void) => {
@@ -945,7 +947,7 @@ export default function SpecPage() {
     setStep(1);
     setFieldErrors({});
     setShowResult(false);
-  }, []);
+  }, [showToast]);
 
   const goPrev = () => {
     if (step > 1) {
@@ -1183,11 +1185,13 @@ export default function SpecPage() {
                 {/* 프로필 아바타 */}
                 <div className="relative">
                   {session?.user?.image ? (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
-                      <img
+                    <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
+                      <Image
                         src={session.user.image}
                         alt="프로필"
-                        className="h-full w-full rounded-full object-cover"
+                        width={36}
+                        height={36}
+                        className="rounded-full object-cover"
                       />
                     </div>
                   ) : (
@@ -1242,7 +1246,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.6
+            v2.7
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1314,10 +1318,12 @@ export default function SpecPage() {
                           >
                             {/* 아바타 */}
                             {notification.user_image ? (
-                              <img
+                              <Image
                                 src={notification.user_image}
                                 alt={notification.user_name || '사용자'}
-                                className="h-9 w-9 shrink-0 rounded-full object-cover"
+                                width={36}
+                                height={36}
+                                className="shrink-0 rounded-full object-cover"
                               />
                             ) : (
                               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
@@ -1426,11 +1432,13 @@ export default function SpecPage() {
               className="relative flex h-8 w-8 items-center justify-center rounded-full lg:hidden"
             >
               {session?.user?.image ? (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
-                  <img
+                <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-gray-100 to-gray-200 p-0.5 shadow-sm dark:from-gray-600 dark:to-gray-700">
+                  <Image
                     src={session.user.image}
                     alt="프로필"
-                    className="h-full w-full rounded-full object-cover"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
                   />
                 </div>
               ) : (
@@ -1509,10 +1517,12 @@ export default function SpecPage() {
                           }`}
                         >
                           {notification.user_image ? (
-                            <img
+                            <Image
                               src={notification.user_image}
                               alt={notification.user_name || '사용자'}
-                              className="h-9 w-9 shrink-0 rounded-full object-cover"
+                              width={36}
+                              height={36}
+                              className="shrink-0 rounded-full object-cover"
                             />
                           ) : (
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
@@ -2624,60 +2634,10 @@ function CamperForm({
           </FormRow>
         </div>
         <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.year.split('.')[0] || ''}
-              onChange={(e) => {
-                const yearVal = onlyNumbers(e.target.value);
-                const monthVal = data.year.split('.')[1] || '';
-                setData({ ...data, year: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="년"
-              className="form-input w-24"
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.year.split('.')[1] || ''}
-              onChange={(e) => {
-                const yearVal = data.year.split('.')[0] || '';
-                const monthVal = onlyNumbers(e.target.value);
-                setData({ ...data, year: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="월"
-              className="form-input w-16"
-            />
-          </div>
+          <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
         </FormRow>
         <FormRow label="최초등록일">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.firstReg.split('.')[0] || ''}
-              onChange={(e) => {
-                const yearVal = onlyNumbers(e.target.value);
-                const monthVal = data.firstReg.split('.')[1] || '';
-                setData({ ...data, firstReg: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="년"
-              className="form-input w-24"
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.firstReg.split('.')[1] || ''}
-              onChange={(e) => {
-                const yearVal = data.firstReg.split('.')[0] || '';
-                const monthVal = onlyNumbers(e.target.value);
-                setData({ ...data, firstReg: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="월"
-              className="form-input w-16"
-            />
-          </div>
+          <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
         </FormRow>
         <div className="mb-3">
           <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
@@ -2695,32 +2655,11 @@ function CamperForm({
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">구조변경</span>
           </label>
           {data.hasStructureMod && (
-            <div className="mt-2 flex gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={data.structureModDate.split('.')[0] || ''}
-                onChange={(e) => {
-                  const yearVal = onlyNumbers(e.target.value);
-                  const monthVal = data.structureModDate.split('.')[1] || '';
-                  setData({ ...data, structureModDate: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-                }}
-                placeholder="년"
-                className="form-input w-24"
-              />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={data.structureModDate.split('.')[1] || ''}
-                onChange={(e) => {
-                  const yearVal = data.structureModDate.split('.')[0] || '';
-                  const monthVal = onlyNumbers(e.target.value);
-                  setData({ ...data, structureModDate: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-                }}
-                placeholder="월"
-                className="form-input w-16"
-              />
-            </div>
+            <YearMonthInput
+              value={data.structureModDate}
+              onChange={(v) => setData({ ...data, structureModDate: v })}
+              className="mt-2"
+            />
           )}
         </div>
         <FormRow label="주행거리">
@@ -2891,60 +2830,10 @@ function CaravanForm({
           </FormRow>
         </div>
         <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.year.split('.')[0] || ''}
-              onChange={(e) => {
-                const yearVal = onlyNumbers(e.target.value);
-                const monthVal = data.year.split('.')[1] || '';
-                setData({ ...data, year: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="년"
-              className="form-input w-24"
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.year.split('.')[1] || ''}
-              onChange={(e) => {
-                const yearVal = data.year.split('.')[0] || '';
-                const monthVal = onlyNumbers(e.target.value);
-                setData({ ...data, year: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="월"
-              className="form-input w-16"
-            />
-          </div>
+          <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
         </FormRow>
         <FormRow label="최초등록일">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.firstReg.split('.')[0] || ''}
-              onChange={(e) => {
-                const yearVal = onlyNumbers(e.target.value);
-                const monthVal = data.firstReg.split('.')[1] || '';
-                setData({ ...data, firstReg: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="년"
-              className="form-input w-24"
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              value={data.firstReg.split('.')[1] || ''}
-              onChange={(e) => {
-                const yearVal = data.firstReg.split('.')[0] || '';
-                const monthVal = onlyNumbers(e.target.value);
-                setData({ ...data, firstReg: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-              }}
-              placeholder="월"
-              className="form-input w-16"
-            />
-          </div>
+          <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
         </FormRow>
         <div className="mb-3">
           <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
@@ -2962,32 +2851,11 @@ function CaravanForm({
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">구조변경</span>
           </label>
           {data.hasStructureMod && (
-            <div className="mt-2 flex gap-2">
-              <input
-                type="text"
-                inputMode="numeric"
-                value={data.structureModDate.split('.')[0] || ''}
-                onChange={(e) => {
-                  const yearVal = onlyNumbers(e.target.value);
-                  const monthVal = data.structureModDate.split('.')[1] || '';
-                  setData({ ...data, structureModDate: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-                }}
-                placeholder="년"
-                className="form-input w-24"
-              />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={data.structureModDate.split('.')[1] || ''}
-                onChange={(e) => {
-                  const yearVal = data.structureModDate.split('.')[0] || '';
-                  const monthVal = onlyNumbers(e.target.value);
-                  setData({ ...data, structureModDate: monthVal ? `${yearVal}.${monthVal}` : yearVal });
-                }}
-                placeholder="월"
-                className="form-input w-16"
-              />
-            </div>
+            <YearMonthInput
+              value={data.structureModDate}
+              onChange={(v) => setData({ ...data, structureModDate: v })}
+              className="mt-2"
+            />
           )}
         </div>
         <FormRow label="취침인원">
