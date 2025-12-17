@@ -348,31 +348,18 @@ export default function SpecPage() {
     }, 4500);
   };
 
-  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
+  // iOS 18+ Safari 배경색 수정 (body 배경색으로 상단/하단 바 색상 결정)
   useEffect(() => {
     const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
-    const headerColor = isDarkMode ? '#1c1f26' : '#ffffff'; // 헤더와 동일한 색상
 
-    // HTML/Body 배경색 설정
-    document.documentElement.style.backgroundColor = bgColor;
-    document.body.style.backgroundColor = bgColor;
-
-    // iOS Safari 상단/하단 바 색상 (theme-color) 동적 변경
-    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (!themeColorMeta) {
-      themeColorMeta = document.createElement('meta');
-      themeColorMeta.setAttribute('name', 'theme-color');
-      document.head.appendChild(themeColorMeta);
-    }
-    themeColorMeta.setAttribute('content', headerColor);
+    // !important로 body 배경색 설정 (iOS 18+ Safari 대응)
+    document.body.style.setProperty('background-color', bgColor, 'important');
+    document.documentElement.style.setProperty('background-color', bgColor, 'important');
 
     return () => {
       // 페이지 떠날 때 원래 레이아웃 색상으로 복원
-      document.documentElement.style.backgroundColor = '#111111';
-      document.body.style.backgroundColor = '#111111';
-      if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', '#111111');
-      }
+      document.body.style.setProperty('background-color', '#111111', 'important');
+      document.documentElement.style.setProperty('background-color', '#111111', 'important');
     };
   }, [isDarkMode]);
 
