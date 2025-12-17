@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.7
+            v1.8
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -3064,12 +3064,14 @@ function CaravanForm({
         <FormRow label="내부 너비">
           <InputWithUnit unit="mm" type="text" inputMode="numeric" value={data.intWidth} onChange={(e) => setData({ ...data, intWidth: onlyNumbers(e.target.value) })} placeholder="없으면 비워두세요" />
         </FormRow>
-        <FormRow label="공차 중량">
-          <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="1450" />
-        </FormRow>
-        <FormRow label="최대 허용 중량">
-          <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="1800" />
-        </FormRow>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="공차 중량">
+            <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.curbWeight} onChange={(e) => setData({ ...data, curbWeight: onlyNumbers(e.target.value) })} placeholder="1450" />
+          </FormRow>
+          <FormRow label="최대 허용 중량">
+            <InputWithUnit unit="kg" type="text" inputMode="numeric" value={data.maxWeight} onChange={(e) => setData({ ...data, maxWeight: onlyNumbers(e.target.value) })} placeholder="1800" />
+          </FormRow>
+        </div>
       </>
     );
   }
