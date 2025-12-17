@@ -1268,7 +1268,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.8
+            v1.9
           </span>
 
           {/* 우측: 액션 버튼들 */}
@@ -1639,7 +1639,7 @@ export default function SpecPage() {
               </div>
             </div>
           ) : (
-            <div ref={formContainerRef} className="p-5">
+            <div ref={formContainerRef} className={`p-5 ${step === 1 ? 'min-h-[580px]' : step === 2 ? 'min-h-[500px]' : 'min-h-[420px]'}`}>
               {mainTab === 'camper' ? (
                 <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
               ) : (
