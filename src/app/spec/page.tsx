@@ -445,27 +445,15 @@ export default function SpecPage() {
 
   // 다크모드 토글 함수
   const toggleDarkMode = () => {
-    // 트랜지션 비활성화
-    document.documentElement.classList.add('no-transitions');
-
     const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
 
     // localStorage + 쿠키 둘 다 저장 (SSR에서 쿠키 읽기 위함)
     const themeValue = newDarkMode ? 'dark' : 'light';
     localStorage.setItem('theme', themeValue);
     document.cookie = `theme=${themeValue};path=/;max-age=31536000;SameSite=Lax`;
 
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    // 다음 프레임에서 트랜지션 다시 활성화
-    requestAnimationFrame(() => {
-      document.documentElement.classList.remove('no-transitions');
-    });
+    // 새로고침하여 SSR에서 쿠키 읽고 theme-color 적용
+    window.location.reload();
   };
 
   // 알림 가져오기 (showLoading: 초기 로드 시만 스피너 표시)
@@ -1309,7 +1297,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.19
+            v1.20
           </span>
 
           {/* 우측: 액션 버튼들 */}
