@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -20,7 +21,6 @@ import {
   TagIcon,
   MagnifyingGlassIcon,
   ArrowPathIcon,
-  PhotoIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ChevronDownIcon,
@@ -32,62 +32,7 @@ import {
 } from '@/components/animate-ui/tabs';
 import type { Notification } from '@/lib/supabase';
 import VehicleCard from '@/components/spec/VehicleCard';
-import type { VehicleItem, StatusLabel } from '@/components/spec/VehicleCard';
-
-// 필드명 한글 변환 (알림 표시용)
-const fieldLabels: Record<string, string> = {
-  vehicleNumber: '차량번호',
-  baseVehicle: '베이스차량',
-  manufacturer: '제조사',
-  modelName: '모델명',
-  yearMonth: '연식',
-  registrationDate: '최초등록일',
-  mileage: '주행거리',
-  price: '가격',
-  cashReceipt: '현금영수증',
-  vehicleCategory: '차종',
-  vehicleType: '차종',
-  license: '면허',
-  structureChange: '구조변경',
-  length: '길이',
-  width: '너비',
-  height: '높이',
-  displacement: '배기량',
-  fuelEconomy: '연비',
-  seatCapacity: '승차정원',
-  fuel: '연료',
-  transmission: '변속기',
-  garageProof: '차고지증명',
-  extLength: '외부길이',
-  intLength: '내부길이',
-  extHeight: '외부높이',
-  intHeight: '내부높이',
-  extWidth: '외부너비',
-  intWidth: '내부너비',
-  curbWeight: '공차중량',
-  maxWeight: '최대중량',
-  batteryCapacity: '배터리',
-  batteryType: '배터리종류',
-  solar: '태양광',
-  solarCapacity: '태양광',
-  inverter: '인버터',
-  inverterCapacity: '인버터',
-  saleType: '구분',
-  hasAC: '에어컨',
-  hasHeating: '난방',
-  hasRefrigerator: '냉장고',
-  hasTV: 'TV',
-  hasBathroom: '화장실',
-  etcOptions: '기타옵션',
-  exterior: '외장',
-  interior: '내장',
-  convenience: '편의',
-  sleepCapacity: '취침인원',
-  year: '연식',
-  firstReg: '최초등록',
-  hasStructureMod: '구조변경',
-  structureModDate: '구조변경일',
-};
+import type { StatusLabel } from '@/components/spec/VehicleCard';
 
 // 스텝별 필드 분류
 const stepFields = {
@@ -521,17 +466,7 @@ export default function SpecPage() {
   }, [fetchNotifications]);
 
   // 알림 드롭다운 외부 클릭 감지
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    };
-    if (showNotifications) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
+  useClickOutside(notificationRef, () => setShowNotifications(false), showNotifications);
 
   // 검색어 입력 시 전체 탭으로 이동
   useEffect(() => {
@@ -593,35 +528,13 @@ export default function SpecPage() {
   };
 
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
-  useEffect(() => {
-    const handleClickOutside = () => setContextMenu({ show: false, x: 0, y: 0, item: null });
-    if (contextMenu.show) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [contextMenu.show]);
+  useClickOutside(null, () => setContextMenu({ show: false, x: 0, y: 0, item: null }), contextMenu.show, 'click');
 
   // 판매완료 컨텍스트 메뉴 닫기 (외부 클릭 시)
-  useEffect(() => {
-    const handleClickOutside = () => setSoldContextMenu({ show: false, x: 0, y: 0, item: null });
-    if (soldContextMenu.show) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [soldContextMenu.show]);
+  useClickOutside(null, () => setSoldContextMenu({ show: false, x: 0, y: 0, item: null }), soldContextMenu.show, 'click');
 
   // 사용자 드롭다운 닫기 (외부 클릭 시)
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target as Node)) {
-        setShowUserDropdown(false);
-      }
-    };
-    if (showUserDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showUserDropdown]);
+  useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
 
   // 롱프레스 핸들러 (모바일)
   const handleTouchStart = useCallback((e: React.TouchEvent, item: VehicleListItem) => {
@@ -1329,7 +1242,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.5
+            v2.6
           </span>
 
           {/* 우측: 액션 버튼들 */}
