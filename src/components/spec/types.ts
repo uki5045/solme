@@ -7,6 +7,24 @@ export type VehicleStatus = 'intake' | 'productization' | 'advertising' | 'sold'
 export type ActiveStatus = Exclude<VehicleStatus, 'sold'>;
 export type StatusTabType = ActiveStatus | 'all';
 
+export interface VehicleListItem {
+  id: number;
+  vehicleNumber: string;
+  vehicleType: 'camper' | 'caravan';
+  modelName: string;
+  manufacturer: string;
+  updatedAt: string;
+  status: VehicleStatus;
+  isIncomplete: boolean;
+  saleType: string;
+}
+
+export interface ToastState {
+  show: boolean;
+  message: string;
+  type: 'success' | 'error' | 'warning';
+}
+
 export interface CamperData {
   vehicleNumber: string;
   baseVehicle: string;

@@ -38,3 +38,58 @@ export const getChangedSteps = (fields: string[]): string[] => {
   });
   return Array.from(steps);
 };
+
+// 숫자 포맷 (천단위 콤마)
+export const formatNumber = (value: string): string => {
+  if (!value) return '';
+  const num = value.toString().replace(/[^\d.]/g, '');
+  const parts = num.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+};
+
+// 상대 시간 포맷 (방금 전, N분 전, N시간 전 등)
+export const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+
+  if (diffSec < 60) return '방금 전';
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 7) return `${diffDay}일 전`;
+
+  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+};
+
+// 연식 파싱
+export const parseYear = (value: string): { label: string; value: string } => {
+  if (!value) return { label: '연식', value: '-' };
+  const trimmed = value.trim();
+  if (trimmed.includes('.')) {
+    const [year, month] = trimmed.split('.');
+    return { label: '제작연월', value: `${year} 년 ${parseInt(month)} 월` };
+  }
+  return { label: '연식', value: `${trimmed} 년식` };
+};
+
+// 최초등록일 파싱
+export const parseFirstReg = (value: string): string => {
+  if (!value) return '-';
+  const trimmed = value.trim();
+  if (trimmed.includes('.')) {
+    const [year, month] = trimmed.split('.');
+    return `${year} 년 ${parseInt(month)} 월`;
+  }
+  return `${trimmed} 년`;
+};
+
+// 차량번호 형식 검증 (00가0000 또는 000가0000)
+export const isValidVehicleNumber = (num: string): boolean => {
+  const pattern = /^\d{2,3}[가-힣]\d{4}$/;
+  return pattern.test(num.trim());
+};

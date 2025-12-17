@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { useVehicleList } from '@/hooks/useVehicleList';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -32,36 +33,14 @@ import {
   TabsTrigger,
 } from '@/components/animate-ui/tabs';
 import VehicleCard from '@/components/spec/VehicleCard';
-import type { StatusLabel } from '@/components/spec/VehicleCard';
 
 // 분리된 파일에서 import
-import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, StatusTabType } from '@/components/spec/types';
-import { initialCamperData, initialCaravanData } from '@/components/spec/constants';
-import { normalizeOptionText, getChangedSteps } from '@/components/spec/utils';
+import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, StatusTabType, VehicleListItem } from '@/components/spec/types';
+import { initialCamperData, initialCaravanData, STATUS_LABELS } from '@/components/spec/constants';
+import { getChangedSteps, formatNumber, formatRelativeTime, parseYear, parseFirstReg, isValidVehicleNumber } from '@/components/spec/utils';
 import { ResultCard, ResultRow, OptionCard, OptionRow } from '@/components/spec/ResultComponents';
 import CamperForm from '@/components/spec/CamperForm';
 import CaravanForm from '@/components/spec/CaravanForm';
-
-
-interface VehicleListItem {
-  id: number;
-  vehicleNumber: string;
-  vehicleType: 'camper' | 'caravan';
-  modelName: string;
-  manufacturer: string;
-  updatedAt: string;
-  status: VehicleStatus;
-  isIncomplete: boolean;
-  saleType: string;
-}
-
-// 상태 라벨 (컴포넌트 외부 상수 - 리렌더링 방지)
-const STATUS_LABELS: Record<VehicleStatus, StatusLabel> = {
-  intake: { label: '입고', color: 'border border-gray-300 bg-gray-50 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:shadow-gray-900/30' },
-  productization: { label: '상품화', color: 'border border-amber-300 bg-amber-50 text-amber-700 shadow-sm shadow-amber-200/50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:shadow-amber-500/20' },
-  advertising: { label: '광고', color: 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20' },
-  sold: { label: '판매완료', color: 'border border-gray-400 bg-gray-100 text-gray-500 shadow-sm dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400' },
-};
 
 export default function SpecPage() {
   const { data: session } = useSession();
@@ -77,15 +56,18 @@ export default function SpecPage() {
   const [saveConfirmModal, setSaveConfirmModal] = useState<{ show: boolean; vehicleNumber: string; callback: (() => void) | null }>({ show: false, vehicleNumber: '', callback: null });
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'warning' }>({ show: false, message: '', type: 'success' });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [vehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
-  const [listLoading, setListLoading] = useState(false);
-  // 미리보기 전용 상태 (카드 클릭 시 사용)
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
   const [statusTab, setStatusTab] = useState<StatusTabType>('all');
   const [statusIndex, setStatusIndex] = useState(0);
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
+
+  // 토스트 표시 함수
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4500);
+  }, []);
 
   // 커스텀 훅
   const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -100,6 +82,14 @@ export default function SpecPage() {
     clearAllNotifications,
     refetch: refetchNotifications,
   } = useNotifications();
+  const {
+    vehicleList,
+    listLoading,
+    updateVehicleStatus,
+    checkDuplicate,
+    saveToDatabase,
+    deleteVehicle,
+  } = useVehicleList({ showToast, refetchNotifications });
   // TODO: 알림 클릭 시 해당 차량 카드 하이라이트 기능 구현 예정
   const [highlightedVehicle, _setHighlightedVehicle] = useState<string | null>(null);
   void _setHighlightedVehicle; // ESLint 경고 방지 (추후 알림 기능에서 사용)
@@ -119,13 +109,6 @@ export default function SpecPage() {
   const caravanResultRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const [isMobileView, setIsMobileView] = useState(false);
-
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: '', type: 'success' });
-    }, 4500);
-  }, []);
 
   // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
   useEffect(() => {
@@ -166,56 +149,9 @@ export default function SpecPage() {
     }
   }, [searchQuery, statusTab]);
 
-  // 차량 목록 조회
-  const fetchVehicleList = async () => {
-    setListLoading(true);
-    try {
-      const response = await fetch('/api/specs/list');
-      const result = await response.json();
-      if (response.ok) {
-        setVehicleList(result.data || []);
-      }
-    } catch (e) {
-      console.error('목록 조회 오류:', e);
-    } finally {
-      setListLoading(false);
-    }
-  };
-
-  // 초기 로드 시 목록 조회
-  useEffect(() => {
-    fetchVehicleList();
-  }, []);
-
   // 상태 변경 요청 (모달 표시)
   const requestStatusChange = (vehicleNumber: string, newStatus: VehicleStatus) => {
     setStatusChangeModal({ show: true, vehicleNumber, newStatus });
-  };
-
-  // 상태 변경 함수
-  const updateVehicleStatus = async (vehicleNumber: string, newStatus: VehicleStatus) => {
-    try {
-      const response = await fetch('/api/specs/status', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vehicleNumber, status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        showToast(result.error || '상태 변경에 실패했습니다.', 'error');
-        return false;
-      }
-
-      // 목록 및 알림 새로고침
-      fetchVehicleList();
-      refetchNotifications();
-      showToast('상태를 변경했습니다.', 'success');
-      return true;
-    } catch {
-      showToast('상태 변경 중 오류가 발생했습니다.', 'error');
-      return false;
-    }
   };
 
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
@@ -334,53 +270,6 @@ export default function SpecPage() {
     }
   };
 
-  const formatNumber = (value: string): string => {
-    if (!value) return '';
-    const num = value.toString().replace(/[^\d.]/g, '');
-    const parts = num.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.join('.');
-  };
-
-  // 상대 시간 포맷 (방금 전, N분 전, N시간 전 등)
-  const formatRelativeTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) return '방금 전';
-    if (diffMin < 60) return `${diffMin}분 전`;
-    if (diffHour < 24) return `${diffHour}시간 전`;
-    if (diffDay < 7) return `${diffDay}일 전`;
-
-    // 일주일 이상이면 날짜 표시
-    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-  };
-
-  const parseYear = (value: string): { label: string; value: string } => {
-    if (!value) return { label: '연식', value: '-' };
-    const trimmed = value.trim();
-    if (trimmed.includes('.')) {
-      const [year, month] = trimmed.split('.');
-      return { label: '제작연월', value: `${year} 년 ${parseInt(month)} 월` };
-    }
-    return { label: '연식', value: `${trimmed} 년식` };
-  };
-
-  const parseFirstReg = (value: string): string => {
-    if (!value) return '-';
-    const trimmed = value.trim();
-    if (trimmed.includes('.')) {
-      const [year, month] = trimmed.split('.');
-      return `${year} 년 ${parseInt(month)} 월`;
-    }
-    return `${trimmed} 년`;
-  };
-
   const formatOptions = (text: string): React.ReactNode => {
     if (!text || !text.trim()) return '-';
     const items = text.split(/\s{2,}|\r?\n/).filter((item) => item.trim());
@@ -454,64 +343,6 @@ export default function SpecPage() {
     showToast('초기화되었습니다.', 'success');
   };
 
-  // 중복 확인 함수
-  const checkDuplicate = useCallback(async (vehicleNumber: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
-      return response.ok; // 200이면 존재함
-    } catch {
-      return false;
-    }
-  }, []);
-
-  // 실제 저장 함수 (중복 확인 없이)
-  const saveToDatabase = useCallback(async (type: MainTab): Promise<boolean> => {
-    const rawData = type === 'camper' ? camperData : caravanData;
-    const vehicleNumber = rawData.vehicleNumber.trim();
-    if (!vehicleNumber) return false;
-
-    // 옵션 필드 줄바꿈 → 두 칸 띄어쓰기 변환
-    const data = {
-      ...rawData,
-      exterior: normalizeOptionText(rawData.exterior),
-      interior: normalizeOptionText(rawData.interior),
-      convenience: normalizeOptionText(rawData.convenience),
-    };
-
-    try {
-      const response = await fetch('/api/specs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vehicleNumber,
-          vehicleType: type,
-          data,
-        }),
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        showToast(result.error || '저장에 실패했습니다.', 'error');
-        return false;
-      }
-
-      // 저장 성공 시 로컬 상태도 정규화된 값으로 업데이트
-      if (type === 'camper') {
-        setCamperData(data as CamperData);
-      } else {
-        setCaravanData(data as CaravanData);
-      }
-
-      // 저장 성공 시 목록 및 알림 새로고침
-      fetchVehicleList();
-      refetchNotifications();
-      return true;
-    } catch {
-      showToast('저장 중 오류가 발생했습니다.', 'error');
-      return false;
-    }
-  }, [camperData, caravanData, refetchNotifications, showToast]);
-
   // 중복 확인 후 저장 (모달 표시)
   const saveWithDuplicateCheck = useCallback(async (type: MainTab, onSuccess: () => void) => {
     const data = type === 'camper' ? camperData : caravanData;
@@ -521,21 +352,19 @@ export default function SpecPage() {
     const isDuplicate = await checkDuplicate(vehicleNumber);
 
     if (isDuplicate) {
-      // 중복이면 모달 표시
       setOverwriteModal({
         show: true,
         callback: async () => {
-          const success = await saveToDatabase(type);
+          const success = await saveToDatabase(type, data);
           if (success) onSuccess();
         },
       });
     } else {
-      // 중복 아니면 신규 저장 확인 모달 표시
       setSaveConfirmModal({
         show: true,
         vehicleNumber,
         callback: async () => {
-          const success = await saveToDatabase(type);
+          const success = await saveToDatabase(type, data);
           if (success) onSuccess();
         },
       });
@@ -548,32 +377,10 @@ export default function SpecPage() {
   };
 
   const confirmDelete = async () => {
-    try {
-      const response = await fetch(
-        `/api/specs?vehicleNumber=${encodeURIComponent(deleteModal.vehicleNumber)}`,
-        { method: 'DELETE' }
-      );
-      const result = await response.json();
-
-      if (!response.ok) {
-        showToast('삭제 실패: ' + result.error, 'error');
-        return;
-      }
-
+    const success = await deleteVehicle(deleteModal.vehicleNumber);
+    if (success) {
       setDeleteModal({ show: false, vehicleNumber: '' });
-      showToast('삭제되었습니다.', 'success');
-      // 삭제 성공 시 목록 새로고침
-      fetchVehicleList();
-    } catch (e) {
-      console.error('삭제 오류:', e);
-      showToast('삭제 중 오류가 발생했습니다.', 'error');
     }
-  };
-
-  // 차량번호 형식 검증 (00가0000 또는 000가0000)
-  const isValidVehicleNumber = (num: string): boolean => {
-    const pattern = /^\d{2,3}[가-힣]\d{4}$/;
-    return pattern.test(num.trim());
   };
 
   const goNext = async () => {
