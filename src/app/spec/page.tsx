@@ -1106,15 +1106,11 @@ export default function SpecPage() {
       />
 
       <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-40">
-        {/* iOS Safari 상단 영역 덮개 - 헤더와 같은 색상 */}
-        <div
-          className="absolute inset-x-0 bottom-full h-[100px] bg-white dark:bg-[#1c1f26]"
-          style={{ transform: 'translateZ(0)' }}
-        />
-        {/* Safe area padding */}
-        <div className="h-[env(safe-area-inset-top)] bg-white dark:bg-[#1c1f26]" />
+      {/* iOS Safari 상단 고정 영역 - 헤더와 같은 색상 */}
+      <div className="fixed inset-x-0 top-0 z-50 h-[env(safe-area-inset-top)] bg-white dark:bg-[#1c1f26]" />
+
+      {/* 헤더 - 스크롤과 함께 움직임 */}
+      <header className="relative z-40 pt-[env(safe-area-inset-top)]">
         {/* 토스트 모드 헤더 - 데스크톱만 (모바일은 하단 toast 사용) */}
         <AnimatePresence mode="wait">
           {toast.show && (
@@ -1296,7 +1292,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.0
+            v2.1
           </span>
 
           {/* 우측: 액션 버튼들 */}
