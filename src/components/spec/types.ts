@@ -1,0 +1,71 @@
+// 차량 옵션표 관련 타입 정의
+
+export type MainTab = 'camper' | 'caravan';
+export type FormStep = 1 | 2 | 3;
+
+export type VehicleStatus = 'intake' | 'productization' | 'advertising' | 'sold';
+export type ActiveStatus = Exclude<VehicleStatus, 'sold'>;
+export type StatusTabType = ActiveStatus | 'all';
+
+export interface CamperData {
+  vehicleNumber: string;
+  baseVehicle: string;
+  manufacturer: string;
+  modelName: string;
+  vehicleType: string;
+  year: string;
+  firstReg: string;
+  hasStructureMod: boolean;
+  structureModDate: string;
+  mileage: string;
+  saleType: string;
+  garageProof: string;
+  license: string;
+  length: string;
+  width: string;
+  height: string;
+  displacement: string;
+  fuel: string;
+  transmission: string;
+  fuelEconomy: string;
+  seatCapacity: string;
+  cashReceipt: string;
+  batteryType: string;
+  batteryCapacity: string;
+  solar: string;
+  inverter: string;
+  exterior: string;
+  interior: string;
+  convenience: string;
+}
+
+export interface CaravanData {
+  vehicleNumber: string;
+  manufacturer: string;
+  modelName: string;
+  vehicleType: string;
+  year: string;
+  firstReg: string;
+  hasStructureMod: boolean;
+  structureModDate: string;
+  garageProof: string;
+  sleepCapacity: string;
+  saleType: string;
+  cashReceipt: string;
+  extLength: string;
+  intLength: string;
+  extWidth: string;
+  intWidth: string;
+  extHeight: string;
+  intHeight: string;
+  curbWeight: string;
+  maxWeight: string;
+  batteryType: string;
+  batteryCapacity: string;
+  solar: string;
+  inverter: string;
+  exterior: string;
+  interior: string;
+  convenience: string;
+}
+
