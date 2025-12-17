@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 export default function GlobalError({
   error,
   reset,
@@ -7,6 +9,11 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // 에러 로깅 (Sentry 등 외부 서비스 연동 가능)
+    console.error('Global error:', error);
+  }, [error]);
+
   return (
     <html lang="ko">
       <body className="bg-black">

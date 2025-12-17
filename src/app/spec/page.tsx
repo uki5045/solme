@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useDarkMode } from '@/hooks/useDarkMode';
 import { signOut, useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,7 +31,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/animate-ui/tabs';
-import type { Notification } from '@/lib/supabase';
 import VehicleCard from '@/components/spec/VehicleCard';
 import type { StatusLabel } from '@/components/spec/VehicleCard';
 
@@ -84,15 +85,21 @@ export default function SpecPage() {
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
   const [statusTab, setStatusTab] = useState<StatusTabType>('all');
   const [statusIndex, setStatusIndex] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
 
-  // 알림 관련 상태
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  // 커스텀 훅
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const {
+    notifications,
+    unreadCount,
+    showNotifications,
+    setShowNotifications,
+    notificationsLoading,
+    notificationRef,
+    markAllAsRead,
+    clearAllNotifications,
+    refetch: refetchNotifications,
+  } = useNotifications();
   // TODO: 알림 클릭 시 해당 차량 카드 하이라이트 기능 구현 예정
   const [highlightedVehicle, _setHighlightedVehicle] = useState<string | null>(null);
   void _setHighlightedVehicle; // ESLint 경고 방지 (추후 알림 기능에서 사용)
@@ -120,33 +127,6 @@ export default function SpecPage() {
     }, 4500);
   }, []);
 
-  // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
-  useEffect(() => {
-    const bgColor = isDarkMode ? '#121418' : '#f3f4f6';
-
-    // HTML/Body 배경색 설정
-    document.documentElement.style.backgroundColor = bgColor;
-    document.body.style.backgroundColor = bgColor;
-
-    // iOS Safari 상단/하단 바 색상 (theme-color) 동적 변경
-    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (!themeColorMeta) {
-      themeColorMeta = document.createElement('meta');
-      themeColorMeta.setAttribute('name', 'theme-color');
-      document.head.appendChild(themeColorMeta);
-    }
-    themeColorMeta.setAttribute('content', bgColor);
-
-    return () => {
-      // 페이지 떠날 때 원래 레이아웃 색상으로 복원
-      document.documentElement.style.backgroundColor = '#111111';
-      document.body.style.backgroundColor = '#111111';
-      if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', '#111111');
-      }
-    };
-  }, [isDarkMode]);
-
   // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
   useEffect(() => {
     if (!leftSectionRef.current) return;
@@ -165,61 +145,6 @@ export default function SpecPage() {
     setStatusIndex(statuses.indexOf(statusTab));
   }, [statusTab]);
 
-  // 다크모드 감지 및 토글
-  useEffect(() => {
-    // localStorage에서 저장된 테마 확인
-    const savedTheme = localStorage.getItem('theme');
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    if (savedTheme === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else if (savedTheme === 'light') {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    } else {
-      // 저장된 테마 없으면 시스템 설정 따름
-      setIsDarkMode(mediaQuery.matches);
-      if (mediaQuery.matches) {
-        document.documentElement.classList.add('dark');
-      }
-    }
-
-    const handler = (e: MediaQueryListEvent) => {
-      // 저장된 테마가 없을 때만 시스템 설정 따름
-      if (!localStorage.getItem('theme')) {
-        setIsDarkMode(e.matches);
-        if (e.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }
-    };
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  // 다크모드 토글 함수
-  const toggleDarkMode = () => {
-    // 트랜지션 비활성화
-    document.documentElement.classList.add('no-transitions');
-
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    // 다음 프레임에서 트랜지션 다시 활성화
-    requestAnimationFrame(() => {
-      document.documentElement.classList.remove('no-transitions');
-    });
-  };
-
   // ESC 키로 모달 닫기
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -233,59 +158,6 @@ export default function SpecPage() {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [showResult]);
-
-  // 알림 가져오기 (showLoading: 초기 로드 시만 스피너 표시)
-  const fetchNotifications = useCallback(async (showLoading = false) => {
-    if (showLoading) setNotificationsLoading(true);
-    try {
-      const response = await fetch('/api/notifications?limit=20');
-      if (response.ok) {
-        const result = await response.json();
-        setNotifications(result.data || []);
-        setUnreadCount(result.unreadCount || 0);
-      }
-    } catch (err) {
-      console.error('알림 로드 실패:', err);
-    } finally {
-      if (showLoading) setNotificationsLoading(false);
-    }
-  }, []);
-
-  // 알림 읽음 처리
-  const markAllAsRead = async () => {
-    try {
-      await fetch('/api/notifications', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAllRead: true }),
-      });
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('읽음 처리 실패:', err);
-    }
-  };
-
-  // 알림 삭제
-  const clearAllNotifications = async () => {
-    try {
-      await fetch('/api/notifications?deleteAll=true', { method: 'DELETE' });
-      setNotifications([]);
-      setUnreadCount(0);
-    } catch (err) {
-      console.error('알림 삭제 실패:', err);
-    }
-  };
-
-  // 초기 알림 로드 & 30초마다 폴링
-  useEffect(() => {
-    fetchNotifications(true); // 초기 로드만 스피너 표시
-    const interval = setInterval(() => fetchNotifications(false), 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
-
-  // 알림 드롭다운 외부 클릭 감지
-  useClickOutside(notificationRef, () => setShowNotifications(false), showNotifications);
 
   // 검색어 입력 시 전체 탭으로 이동
   useEffect(() => {
@@ -337,7 +209,7 @@ export default function SpecPage() {
 
       // 목록 및 알림 새로고침
       fetchVehicleList();
-      fetchNotifications(false);
+      refetchNotifications();
       showToast('상태를 변경했습니다.', 'success');
       return true;
     } catch {
@@ -632,13 +504,13 @@ export default function SpecPage() {
 
       // 저장 성공 시 목록 및 알림 새로고침
       fetchVehicleList();
-      fetchNotifications(false);
+      refetchNotifications();
       return true;
     } catch {
       showToast('저장 중 오류가 발생했습니다.', 'error');
       return false;
     }
-  }, [camperData, caravanData, fetchNotifications, showToast]);
+  }, [camperData, caravanData, refetchNotifications, showToast]);
 
   // 중복 확인 후 저장 (모달 표시)
   const saveWithDuplicateCheck = useCallback(async (type: MainTab, onSuccess: () => void) => {
