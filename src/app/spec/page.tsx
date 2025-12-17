@@ -350,14 +350,15 @@ export default function SpecPage() {
 
   // Safari 배경색 및 theme-color 동적 수정 (다크모드 대응)
   useEffect(() => {
-    const pageBgColor = isDarkMode ? '#121418' : '#f3f4f6';
+    // 헤더 배경색과 동일하게 설정 (상태바 색상 통일)
     const headerBgColor = isDarkMode ? '#1c1f26' : '#ffffff';
+    const bodyBgColor = isDarkMode ? '#121418' : '#f3f4f6';
 
-    // HTML/Body 배경색 설정 (페이지 배경)
-    document.documentElement.style.backgroundColor = pageBgColor;
-    document.body.style.backgroundColor = pageBgColor;
+    // HTML/Body 배경색 설정
+    document.documentElement.style.backgroundColor = bodyBgColor;
+    document.body.style.backgroundColor = bodyBgColor;
 
-    // iOS Safari 상단/하단 바 색상 (theme-color) - 헤더 색상과 일치
+    // iOS Safari 상단/하단 바 색상 (theme-color) - 헤더 배경색과 동일하게
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (!themeColorMeta) {
       themeColorMeta = document.createElement('meta');
@@ -1290,7 +1291,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.12
+            v1.15
           </span>
 
           {/* 우측: 액션 버튼들 */}
