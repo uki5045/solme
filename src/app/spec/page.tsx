@@ -955,6 +955,8 @@ export default function SpecPage() {
 
     if (step < 3) {
       setStep((s) => (s + 1) as FormStep);
+      // 모바일에서 다음 스텝으로 이동 시 폼 상단으로 스크롤
+      leftSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       // Step 3에서 저장 버튼 클릭 시 바로 저장 처리
       const data = mainTab === 'camper' ? camperData : caravanData;
@@ -983,6 +985,8 @@ export default function SpecPage() {
   const goPrev = () => {
     if (step > 1) {
       setStep((s) => (s - 1) as FormStep);
+      // 모바일에서 이전 스텝으로 이동 시 폼 상단으로 스크롤
+      leftSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -1639,7 +1643,7 @@ export default function SpecPage() {
               </div>
             </div>
           ) : (
-            <div ref={formContainerRef} className={`p-5 ${step === 1 ? 'min-h-[580px]' : step === 2 ? 'min-h-[500px]' : 'min-h-[420px]'}`}>
+            <div ref={formContainerRef} className="p-5">
               {mainTab === 'camper' ? (
                 <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
               ) : (
