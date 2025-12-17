@@ -448,6 +448,20 @@ export default function SpecPage() {
     });
   };
 
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showResult) {
+          setShowResult(false);
+          setPreviewData(null);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showResult]);
+
   // 알림 가져오기 (showLoading: 초기 로드 시만 스피너 표시)
   const fetchNotifications = useCallback(async (showLoading = false) => {
     if (showLoading) setNotificationsLoading(true);
@@ -1292,7 +1306,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v2.1
+            v2.2
           </span>
 
           {/* 우측: 액션 버튼들 */}
