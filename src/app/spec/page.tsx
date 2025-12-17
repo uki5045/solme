@@ -33,7 +33,6 @@ import VehicleContextMenu from '@/components/spec/VehicleContextMenu';
 export default function SpecPage() {
   const { data: session } = useSession();
   const [mainTab, setMainTab] = useState<MainTab>('camper');
-  const [tabLoading, setTabLoading] = useState(false);
   const [step, setStep] = useState<FormStep>(1);
   const [showResult, setShowResult] = useState(false);
   const [camperData, setCamperData] = useState<CamperData>(initialCamperData);
@@ -440,14 +439,9 @@ export default function SpecPage() {
 
   const handleMainTabChange = (tab: MainTab) => {
     if (tab === mainTab) return;
-    setTabLoading(true);
     setFieldErrors({});
-    // 짧은 지연 후 탭 전환
-    setTimeout(() => {
-      setMainTab(tab);
-      setStep(1);
-      setTabLoading(false);
-    }, 150);
+    setMainTab(tab);
+    setStep(1);
   };
 
   // 실제 PNG 다운로드 로직
@@ -608,16 +602,7 @@ export default function SpecPage() {
         </div>
 
         {/* 폼 콘텐츠 */}
-        <div className="relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-          {/* 로딩 오버레이 */}
-          {tabLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-[2px] dark:bg-[#1c1f26]/80">
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
-              </div>
-            </div>
-          )}
+        <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
           <div ref={formContainerRef} className="p-5">
             {mainTab === 'camper' ? (
               <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
