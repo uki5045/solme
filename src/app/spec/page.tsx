@@ -356,22 +356,21 @@ export default function SpecPage() {
     document.documentElement.style.backgroundColor = bgColor;
     document.body.style.backgroundColor = bgColor;
 
-    // iOS Safari 상단/하단 바 색상 (theme-color) 동적 변경
-    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (!themeColorMeta) {
-      themeColorMeta = document.createElement('meta');
-      themeColorMeta.setAttribute('name', 'theme-color');
-      document.head.appendChild(themeColorMeta);
-    }
+    // 기존 theme-color meta 태그 모두 제거 (media query 포함된 것들)
+    const existingThemeColors = document.querySelectorAll('meta[name="theme-color"]');
+    existingThemeColors.forEach((meta) => meta.remove());
+
+    // 새 theme-color 태그 생성 (media query 없이 단일 태그)
+    const themeColorMeta = document.createElement('meta');
+    themeColorMeta.setAttribute('name', 'theme-color');
     themeColorMeta.setAttribute('content', bgColor);
+    document.head.appendChild(themeColorMeta);
 
     return () => {
       // 페이지 떠날 때 원래 레이아웃 색상으로 복원
       document.documentElement.style.backgroundColor = '#111111';
       document.body.style.backgroundColor = '#111111';
-      if (themeColorMeta) {
-        themeColorMeta.setAttribute('content', '#111111');
-      }
+      themeColorMeta.setAttribute('content', '#111111');
     };
   }, [isDarkMode]);
 
@@ -1289,7 +1288,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.11
+            v1.12
           </span>
 
           {/* 우측: 액션 버튼들 */}
