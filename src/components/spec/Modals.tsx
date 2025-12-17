@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ExclamationTriangleIcon,
   CheckIcon,
-  XMarkIcon,
+  TrashIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/16/solid';
-import type { VehicleStatus } from './types';
+import type { VehicleStatus, MainTab } from './types';
 import { STATUS_CHANGE_LABELS } from './constants';
 
 // 공통 모달 백드롭
@@ -51,12 +52,12 @@ export function DeleteModal({ show, vehicleNumber, onClose, onConfirm }: DeleteM
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                <XMarkIcon className="size-6 text-red-600 dark:text-red-400" />
+                <TrashIcon className="size-6 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">삭제 확인</h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">데이터 삭제</h3>
               <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
                 차량번호 <span className="font-semibold text-red-600 dark:text-red-400">{vehicleNumber}</span>
-                <br />데이터를 <span className="font-semibold text-red-600 dark:text-red-400">삭제</span>하시겠습니까?
+                <br />데이터를 삭제하시겠습니까?
               </p>
             </div>
             <div className="flex gap-3">
@@ -83,11 +84,12 @@ export function DeleteModal({ show, vehicleNumber, onClose, onConfirm }: DeleteM
 // 초기화 확인 모달
 interface ResetModalProps {
   show: boolean;
+  vehicleType: MainTab;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-export function ResetModal({ show, onClose, onConfirm }: ResetModalProps) {
+export function ResetModal({ show, vehicleType, onClose, onConfirm }: ResetModalProps) {
   return (
     <AnimatePresence>
       {show && (
@@ -95,11 +97,12 @@ export function ResetModal({ show, onClose, onConfirm }: ResetModalProps) {
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                <ExclamationTriangleIcon className="size-6 text-red-600 dark:text-red-400" />
+                <ArrowPathIcon className="size-6 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">초기화</h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">입력 초기화</h3>
               <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                입력한 내용을 모두 <span className="font-semibold text-red-600 dark:text-red-400">초기화</span>하시겠습니까?
+                <span className="font-semibold text-red-500 dark:text-red-400">{vehicleType === 'camper' ? '캠핑카' : '카라반'}</span> 입력 내용을
+                <br />모두 지우시겠습니까?
               </p>
             </div>
             <div className="flex gap-3">

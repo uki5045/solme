@@ -14,13 +14,6 @@ import {
   XMarkIcon,
   ExclamationTriangleIcon,
   CheckIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  TagIcon,
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-  CheckCircleIcon,
-  ChevronLeftIcon,
 } from '@heroicons/react/16/solid';
 import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/tabs';
 import VehicleCard from '@/components/spec/VehicleCard';
@@ -33,6 +26,9 @@ import { formatNumber, parseYear, parseFirstReg, isValidVehicleNumber } from '@/
 import { ResultCard, ResultRow, OptionCard, OptionRow } from '@/components/spec/ResultComponents';
 import CamperForm from '@/components/spec/CamperForm';
 import CaravanForm from '@/components/spec/CaravanForm';
+import { DeleteModal, ResetModal, OverwriteModal, SaveConfirmModal, StatusChangeModal } from '@/components/spec/Modals';
+import SoldVehiclesView from '@/components/spec/SoldVehiclesView';
+import VehicleContextMenu from '@/components/spec/VehicleContextMenu';
 
 export default function SpecPage() {
   const { data: session } = useSession();
@@ -87,10 +83,8 @@ export default function SpecPage() {
   void _setHighlightedVehicle; // ESLint 경고 방지 (추후 알림 기능에서 사용)
   const [searchQuery, setSearchQuery] = useState('');
   const [showSoldView, setShowSoldView] = useState(false);
-  const [soldSearchQuery, setSoldSearchQuery] = useState('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
-  const [soldContextMenu, setSoldContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,9 +142,6 @@ export default function SpecPage() {
 
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
   useClickOutside(null, () => setContextMenu({ show: false, x: 0, y: 0, item: null }), contextMenu.show, 'click');
-
-  // 판매완료 컨텍스트 메뉴 닫기 (외부 클릭 시)
-  useClickOutside(null, () => setSoldContextMenu({ show: false, x: 0, y: 0, item: null }), soldContextMenu.show, 'click');
 
   // 사용자 드롭다운 닫기 (외부 클릭 시)
   useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
@@ -819,87 +810,14 @@ export default function SpecPage() {
             </div>
           </div>
 
-          {/* 컨텍스트 메뉴 (우클릭) */}
-          {contextMenu.show && contextMenu.item && (
-            <div
-              className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-              style={{ left: contextMenu.x, top: contextMenu.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 상태 변경 */}
-              {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
-                const labels: Record<VehicleStatus, string> = { intake: '입고', productization: '상품화', advertising: '광고', sold: '판매완료' };
-                const isCurrentStatus = contextMenu.item?.status === status;
-                return (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      if (contextMenu.item && !isCurrentStatus) {
-                        requestStatusChange(contextMenu.item.vehicleNumber, status);
-                      }
-                      setContextMenu({ show: false, x: 0, y: 0, item: null });
-                    }}
-                    disabled={isCurrentStatus}
-                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
-                      isCurrentStatus
-                        ? 'cursor-default text-gray-500 dark:text-gray-500'
-                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]'
-                    }`}
-                  >
-                    {isCurrentStatus && (
-                      <CheckIcon className="size-4 text-accent-500" />
-                    )}
-                    <span className={isCurrentStatus ? '' : 'ml-6'}>{labels[status]}</span>
-                  </button>
-                );
-              })}
-
-              {/* 구분선 */}
-              <div className="my-1.5 border-t border-gray-100 dark:border-[#454c5c]" />
-
-              {/* 수정 */}
-              <button
-                onClick={() => {
-                  if (contextMenu.item) {
-                    loadVehicleToForm(contextMenu.item.vehicleNumber, contextMenu.item.vehicleType);
-                  }
-                  setContextMenu({ show: false, x: 0, y: 0, item: null });
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
-              >
-                <PencilSquareIcon className="size-4" />
-                수정
-              </button>
-
-              {/* 판매완료 */}
-              <button
-                onClick={() => {
-                  if (contextMenu.item) {
-                    requestStatusChange(contextMenu.item.vehicleNumber, 'sold');
-                  }
-                  setContextMenu({ show: false, x: 0, y: 0, item: null });
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
-              >
-                <TagIcon className="size-4" />
-                판매완료
-              </button>
-
-              {/* 삭제 */}
-              <button
-                onClick={() => {
-                  if (contextMenu.item) {
-                    openDeleteModal(contextMenu.item.vehicleNumber);
-                  }
-                  setContextMenu({ show: false, x: 0, y: 0, item: null });
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
-              >
-                <TrashIcon className="size-4" />
-                삭제
-              </button>
-            </div>
-          )}
+          {/* 컨텍스트 메뉴 */}
+          <VehicleContextMenu
+            contextMenu={contextMenu}
+            onClose={() => setContextMenu({ show: false, x: 0, y: 0, item: null })}
+            onStatusChange={requestStatusChange}
+            onEdit={loadVehicleToForm}
+            onDelete={openDeleteModal}
+          />
         </div>
       </div>
 
@@ -1140,401 +1058,61 @@ export default function SpecPage() {
         })()}
       </AnimatePresence>
 
-      {/* 삭제 확인 모달 */}
-      <AnimatePresence>
-        {deleteModal.show && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-            onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <TrashIcon className="size-6 text-red-600 dark:text-red-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">데이터 삭제</h3>
-                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  차량번호 <span className="font-semibold text-red-600 dark:text-red-400">{deleteModal.vehicleNumber}</span>
-                  <br />데이터를 삭제하시겠습니까?
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteModal({ show: false, vehicleNumber: '' })}
-                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-red-500 to-red-600 py-3 text-base font-semibold text-white shadow-sm shadow-red-500/15 transition-all duration-200 hover:from-red-400 hover:to-red-500 hover:shadow hover:shadow-red-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-red-500/30 dark:hover:shadow-lg dark:hover:shadow-red-500/40"
-                >
-                  삭제
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* 모달 컴포넌트들 */}
+      <DeleteModal
+        show={deleteModal.show}
+        vehicleNumber={deleteModal.vehicleNumber}
+        onClose={() => setDeleteModal({ show: false, vehicleNumber: '' })}
+        onConfirm={confirmDelete}
+      />
+      <ResetModal
+        show={resetModal}
+        vehicleType={mainTab}
+        onClose={() => setResetModal(false)}
+        onConfirm={confirmReset}
+      />
+      <OverwriteModal
+        show={overwriteModal.show}
+        onClose={() => setOverwriteModal({ show: false, callback: null })}
+        onConfirm={() => {
+          if (overwriteModal.callback) {
+            overwriteModal.callback();
+          }
+          setOverwriteModal({ show: false, callback: null });
+        }}
+      />
+      <SaveConfirmModal
+        show={saveConfirmModal.show}
+        vehicleNumber={saveConfirmModal.vehicleNumber}
+        onClose={() => setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null })}
+        onConfirm={() => {
+          if (saveConfirmModal.callback) {
+            saveConfirmModal.callback();
+          }
+          setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null });
+        }}
+      />
+      <StatusChangeModal
+        show={statusChangeModal.show}
+        vehicleNumber={statusChangeModal.vehicleNumber}
+        newStatus={statusChangeModal.newStatus}
+        onClose={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+        onConfirm={async () => {
+          const { vehicleNumber, newStatus } = statusChangeModal;
+          setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
+          if (newStatus) {
+            await updateVehicleStatus(vehicleNumber, newStatus);
+          }
+        }}
+      />
 
-      {/* 초기화 확인 모달 */}
-      <AnimatePresence>
-        {resetModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-            onClick={() => setResetModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                  <ArrowPathIcon className="size-6 text-red-600 dark:text-red-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">입력 초기화</h3>
-                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  <span className="font-semibold text-red-500 dark:text-red-400">{mainTab === 'camper' ? '캠핑카' : '카라반'}</span> 입력 내용을
-                  <br />모두 지우시겠습니까?
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setResetModal(false)}
-                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={confirmReset}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-red-500 to-red-600 py-3 text-base font-semibold text-white shadow-sm shadow-red-500/15 transition-all duration-200 hover:from-red-400 hover:to-red-500 hover:shadow hover:shadow-red-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-red-500/30 dark:hover:shadow-lg dark:hover:shadow-red-500/40"
-                >
-                  초기화
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 덮어쓰기 확인 모달 */}
-      <AnimatePresence>
-        {overwriteModal.show && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-            onClick={() => setOverwriteModal({ show: false, callback: null })}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                  <ExclamationTriangleIcon className="size-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">중복 차량번호</h3>
-                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  이미 저장된 차량번호입니다.
-                  <br />기존 데이터를 <span className="font-semibold text-amber-600 dark:text-amber-400">덮어쓰시겠습니까?</span>
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setOverwriteModal({ show: false, callback: null })}
-                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={() => {
-                    if (overwriteModal.callback) {
-                      overwriteModal.callback();
-                    }
-                    setOverwriteModal({ show: false, callback: null });
-                  }}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-amber-500 to-amber-600 py-3 text-base font-semibold text-white shadow-sm shadow-amber-500/15 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow hover:shadow-amber-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-amber-500/30 dark:hover:shadow-lg dark:hover:shadow-amber-500/40"
-                >
-                  덮어쓰기
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 신규 저장 확인 모달 */}
-      <AnimatePresence>
-        {saveConfirmModal.show && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-            onClick={() => setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null })}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                  <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">저장 확인</h3>
-                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{saveConfirmModal.vehicleNumber}</span>
-                  <br />데이터를 저장하시겠습니까?
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null })}
-                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={() => {
-                    if (saveConfirmModal.callback) {
-                      saveConfirmModal.callback();
-                    }
-                    setSaveConfirmModal({ show: false, vehicleNumber: '', callback: null });
-                  }}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-sm shadow-accent-500/15 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow hover:shadow-accent-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-accent-500/30 dark:hover:shadow-lg dark:hover:shadow-accent-500/40"
-                >
-                  저장
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 상태 변경 확인 모달 */}
-      <AnimatePresence>
-        {statusChangeModal.show && statusChangeModal.newStatus && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-            onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-[#1c1f26]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                  <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">상태 변경</h3>
-                <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                  차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{statusChangeModal.vehicleNumber}</span>
-                  <br />
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">
-                    {{ intake: '입고', productization: '상품화', advertising: '광고', sold: '판매완료' }[statusChangeModal.newStatus!]}
-                  </span> 상태로 변경하시겠습니까?
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
-                  className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={async () => {
-                    const { vehicleNumber, newStatus } = statusChangeModal;
-                    setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
-                    if (newStatus) {
-                      await updateVehicleStatus(vehicleNumber, newStatus);
-                    }
-                  }}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
-                >
-                  변경
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 판매완료 뷰 모달 */}
-      {showSoldView && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]">
-
-            {/* 헤더 */}
-            <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90">
-              <div className="flex h-14 items-center justify-between px-4">
-                <button
-                  onClick={() => setShowSoldView(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                >
-                  <ChevronLeftIcon className="size-5" />
-                </button>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
-                <div className="w-9" />
-              </div>
-            </div>
-
-            {/* 검색바 */}
-            <div className="p-4 pb-2">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  value={soldSearchQuery}
-                  onChange={(e) => setSoldSearchQuery(e.target.value)}
-                  placeholder="차량번호, 모델명으로 검색"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-[#363b47] dark:bg-[#1c1f26] dark:text-white dark:placeholder-gray-500 dark:focus:border-accent-400"
-                />
-              </div>
-            </div>
-
-            {/* 카드 목록 */}
-            <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-              {(() => {
-                const soldList = vehicleList
-                  .filter(v => v.status === 'sold')
-                  .filter(v => {
-                    if (!soldSearchQuery.trim()) return true;
-                    const q = soldSearchQuery.toLowerCase();
-                    return v.vehicleNumber.toLowerCase().includes(q) ||
-                           v.modelName?.toLowerCase().includes(q) ||
-                           v.manufacturer?.toLowerCase().includes(q);
-                  });
-
-                if (soldList.length === 0) {
-                  return (
-                    <div className="flex flex-col items-center justify-center py-16">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-                        <CheckCircleIcon className="size-8 text-gray-400 dark:text-gray-500" />
-                      </div>
-                      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                        {soldSearchQuery.trim() ? `"${soldSearchQuery}" 검색 결과가 없습니다` : '판매완료된 차량이 없습니다'}
-                      </p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-3 pt-2">
-                    {soldList.map((item) => (
-                      <div
-                        key={item.id}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setSoldContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
-                        }}
-                        className="spec-card--sold"
-                      >
-                        {/* 판매완료 배지 */}
-                        <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/25">
-                          SOLD
-                        </div>
-
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40' : 'bg-emerald-500 shadow-emerald-500/40'}`}>
-                              {item.saleType === '위탁' ? '위' : '매'}
-                            </span>
-                            <div>
-                              <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
-                              <span className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-400'}`}>
-                                {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</p>
-                          {item.manufacturer && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{item.manufacturer}</p>
-                          )}
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            {new Date(item.updatedAt).toLocaleDateString('ko-KR')} 판매완료
-                          </span>
-                          <button
-                            onClick={() => {
-                              setShowSoldView(false);
-                              setTimeout(() => {
-                                requestStatusChange(item.vehicleNumber, 'intake');
-                              }, 100);
-                            }}
-                            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:shadow-accent-500/30"
-                          >
-                            <ArrowPathIcon className="size-3.5" />
-                            재등록
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* 판매완료 컨텍스트 메뉴 */}
-            {soldContextMenu.show && soldContextMenu.item && (
-              <div
-                className="fixed z-[60] min-w-[160px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-                style={{ left: soldContextMenu.x, top: soldContextMenu.y }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => {
-                    const vehicleNumber = soldContextMenu.item?.vehicleNumber;
-                    setSoldContextMenu({ show: false, x: 0, y: 0, item: null });
-                    setShowSoldView(false);
-                    if (vehicleNumber) {
-                      setTimeout(() => {
-                        requestStatusChange(vehicleNumber, 'intake');
-                      }, 100);
-                    }
-                  }}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
-                >
-                  <ArrowPathIcon className="size-4" />
-                  재등록 (입고)
-                </button>
-              </div>
-            )}
-        </div>
-      )}
+      {/* 판매완료 뷰 */}
+      <SoldVehiclesView
+        show={showSoldView}
+        onClose={() => setShowSoldView(false)}
+        vehicleList={vehicleList}
+        onRequestStatusChange={requestStatusChange}
+      />
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
       <AnimatePresence mode="wait">
