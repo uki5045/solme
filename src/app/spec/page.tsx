@@ -1294,7 +1294,7 @@ export default function SpecPage() {
 
           {/* 중앙: 버전 표시 */}
           <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">
-            v1.17
+            v1.18
           </span>
 
           {/* 우측: 액션 버튼들 */}
