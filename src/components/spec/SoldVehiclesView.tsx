@@ -118,12 +118,12 @@ export default function SoldVehiclesView({
                   <div className="flex shrink-0 items-center gap-2.5">
                     <span
                       className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${
-                        item.vehicleType === 'camper'
-                          ? 'bg-blue-500 shadow-blue-500/40'
-                          : 'bg-violet-500 shadow-violet-500/40'
+                        item.saleType === '위탁'
+                          ? 'bg-rose-500 shadow-rose-500/40'
+                          : 'bg-emerald-500 shadow-emerald-500/40'
                       }`}
                     >
-                      {item.vehicleType === 'camper' ? '캠' : '카'}
+                      {item.saleType === '위탁' ? '위' : '매'}
                     </span>
                     <div>
                       <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">
@@ -131,12 +131,12 @@ export default function SoldVehiclesView({
                       </span>
                       <span
                         className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-medium ${
-                          item.saleType === '위탁'
-                            ? 'border border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                            : 'border border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          item.vehicleType === 'camper'
+                            ? 'border border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                         }`}
                       >
-                        {item.saleType === '위탁' ? '위탁' : '매입'}
+                        {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
                       </span>
                     </div>
                   </div>

@@ -21,7 +21,7 @@ import SpecHeader from '@/components/spec/SpecHeader';
 
 // 분리된 파일에서 import
 import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, StatusTabType, VehicleListItem } from '@/components/spec/types';
-import { initialCamperData, initialCaravanData, STATUS_LABELS } from '@/components/spec/constants';
+import { initialCamperData, initialCaravanData } from '@/components/spec/constants';
 import { formatNumber, parseYear, parseFirstReg, isValidVehicleNumber } from '@/components/spec/utils';
 import { ResultCard, ResultRow, OptionCard, OptionRow } from '@/components/spec/ResultComponents';
 import CamperForm from '@/components/spec/CamperForm';
@@ -793,8 +793,6 @@ export default function SpecPage() {
                       <VehicleCard
                         key={item.id}
                         item={item}
-                        statusTab={statusTab}
-                        statusLabels={STATUS_LABELS}
                         highlightedVehicle={highlightedVehicle}
                         onLoad={loadVehicleFromCard}
                         onContextMenu={handleContextMenu}

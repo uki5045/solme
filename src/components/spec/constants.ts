@@ -86,19 +86,8 @@ export const initialCaravanData: CaravanData = {
   convenience: '',
 };
 
-// 상태 라벨
-import type { StatusLabel } from '@/components/spec/VehicleCard';
-import type { VehicleStatus } from './types';
-
-export const STATUS_LABELS: Record<VehicleStatus, StatusLabel> = {
-  intake: { label: '입고', color: 'border border-gray-300 bg-gray-50 text-gray-600 shadow-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:shadow-gray-900/30' },
-  productization: { label: '상품화', color: 'border border-amber-300 bg-amber-50 text-amber-700 shadow-sm shadow-amber-200/50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-400 dark:shadow-amber-500/20' },
-  advertising: { label: '광고', color: 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20' },
-  sold: { label: '판매완료', color: 'border border-gray-400 bg-gray-100 text-gray-500 shadow-sm dark:border-gray-500 dark:bg-gray-700 dark:text-gray-400' },
-};
-
 // 상태 탭 라벨
-import type { StatusTabType } from './types';
+import type { StatusTabType, VehicleStatus } from './types';
 export const STATUS_TAB_LABELS: Record<StatusTabType, string> = {
   all: '전체',
   intake: '입고',
