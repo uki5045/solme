@@ -364,7 +364,7 @@ export default function SpecPage() {
   };
 
   // 실제 PNG 다운로드 로직
-  const performDownloadPNG = async (type: MainTab) => {
+  const performDownloadPNG = async (type: MainTab): Promise<void> => {
     const container = type === 'camper' ? camperResultRef.current : caravanResultRef.current;
     if (!container) {
       showToast('컨테이너를 찾을 수 없습니다.', 'error');
@@ -396,39 +396,48 @@ export default function SpecPage() {
       // 5. 원복
       container.style.width = originalWidth;
 
-      const img = new window.Image();
-      img.onload = () => {
-        const padding = 40;
-        const size = Math.max(img.width, img.height) + padding * 2;
+      // 6. 이미지 로드 및 다운로드 완료 대기
+      await new Promise<void>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const padding = 40;
+          const size = Math.max(img.width, img.height) + padding * 2;
 
-        const squareCanvas = document.createElement('canvas');
-        squareCanvas.width = size;
-        squareCanvas.height = size;
-        const ctx = squareCanvas.getContext('2d');
+          const squareCanvas = document.createElement('canvas');
+          squareCanvas.width = size;
+          squareCanvas.height = size;
+          const ctx = squareCanvas.getContext('2d');
 
-        if (ctx) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, size, size);
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
 
-          const x = (size - img.width) / 2;
-          const y = (size - img.height) / 2;
-          ctx.drawImage(img, x, y);
+            const x = (size - img.width) / 2;
+            const y = (size - img.height) / 2;
+            ctx.drawImage(img, x, y);
 
-          squareCanvas.toBlob((finalBlob) => {
-            if (finalBlob) {
-              const url = URL.createObjectURL(finalBlob);
-              const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `${modelName || '옵션표'}_옵션표.png`;
-              link.click();
-              URL.revokeObjectURL(url);
-            }
-          }, 'image/png');
-        }
-      };
-      img.src = dataUrl;
-      showToast('저장 및 다운로드 완료', 'success');
+            squareCanvas.toBlob((finalBlob) => {
+              if (finalBlob) {
+                const url = URL.createObjectURL(finalBlob);
+                const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${modelName || '옵션표'}_옵션표.png`;
+                link.click();
+                URL.revokeObjectURL(url);
+                showToast('다운로드 완료', 'success');
+                resolve();
+              } else {
+                reject(new Error('Blob 생성 실패'));
+              }
+            }, 'image/png');
+          } else {
+            reject(new Error('Canvas context 생성 실패'));
+          }
+        };
+        img.onerror = () => reject(new Error('이미지 로드 실패'));
+        img.src = dataUrl;
+      });
     } catch (e) {
       console.error(e);
       showToast('PNG 생성 실패', 'error');
@@ -437,8 +446,8 @@ export default function SpecPage() {
 
   // PNG 다운로드 (저장 없이 다운로드만)
   const downloadPNG = async (type: MainTab) => {
-    setShowResult(false);
     await performDownloadPNG(type);
+    setShowResult(false);  // 다운로드 완료 후 모달 닫기
   };
 
   return (
