@@ -73,11 +73,11 @@ const VehicleCard = memo(function VehicleCard({
     >
       {/* 차량번호 + 배지 (같은 줄) */}
       <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
             {item.saleType === '위탁' ? '위' : '매'}
           </span>
-          <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+          <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
         </div>
         <div className="flex items-center gap-1.5">
           {statusTab === 'all' && statusLabels[item.status] && (

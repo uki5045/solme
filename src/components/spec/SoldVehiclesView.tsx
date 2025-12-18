@@ -115,7 +115,7 @@ export default function SoldVehiclesView({
                 </div>
 
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex shrink-0 items-center gap-2.5">
                     <span
                       className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${
                         item.saleType === '위탁'
@@ -126,7 +126,7 @@ export default function SoldVehiclesView({
                       {item.saleType === '위탁' ? '위' : '매'}
                     </span>
                     <div>
-                      <span className="text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">
+                      <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">
                         {item.vehicleNumber}
                       </span>
                       <span
