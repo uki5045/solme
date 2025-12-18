@@ -5,16 +5,10 @@ import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useVehicleList } from '@/hooks/useVehicleList';
+import { useLongPress } from '@/hooks/useLongPress';
 import { useSession } from 'next-auth/react';
 import { domToPng } from 'modern-screenshot';
 import { motion, AnimatePresence } from 'motion/react';
-import {
-  InformationCircleIcon,
-  ChatBubbleBottomCenterTextIcon,
-  XMarkIcon,
-  ExclamationTriangleIcon,
-  CheckIcon,
-} from '@heroicons/react/16/solid';
 import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/tabs';
 import VehicleCard from '@/components/spec/VehicleCard';
 import SpecHeader from '@/components/spec/SpecHeader';
@@ -22,13 +16,14 @@ import SpecHeader from '@/components/spec/SpecHeader';
 // 분리된 파일에서 import
 import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, StatusTabType, VehicleListItem } from '@/components/spec/types';
 import { initialCamperData, initialCaravanData } from '@/components/spec/constants';
-import { formatNumber, parseYear, parseFirstReg, isValidVehicleNumber } from '@/components/spec/utils';
-import { ResultCard, ResultRow, OptionCard, OptionRow } from '@/components/spec/ResultComponents';
+import { isValidVehicleNumber } from '@/components/spec/utils';
 import CamperForm from '@/components/spec/CamperForm';
 import CaravanForm from '@/components/spec/CaravanForm';
 import { DeleteModal, ResetModal, OverwriteModal, SaveConfirmModal, StatusChangeModal } from '@/components/spec/Modals';
 import SoldVehiclesView from '@/components/spec/SoldVehiclesView';
 import VehicleContextMenu from '@/components/spec/VehicleContextMenu';
+import ResultPreviewModal from '@/components/spec/ResultPreviewModal';
+import Toast from '@/components/spec/Toast';
 
 export default function SpecPage() {
   const { data: session } = useSession();
@@ -87,8 +82,6 @@ export default function SpecPage() {
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
   const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const longPressTouchRef = useRef<{ x: number; y: number; item: VehicleListItem } | null>(null);
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const statusTabListRef = useRef<HTMLDivElement>(null);
   const camperResultRef = useRef<HTMLDivElement>(null);
@@ -147,41 +140,7 @@ export default function SpecPage() {
   useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
 
   // 롱프레스 핸들러 (모바일)
-  const handleTouchStart = useCallback((e: React.TouchEvent, item: VehicleListItem) => {
-    const touch = e.touches[0];
-    longPressTouchRef.current = { x: touch.clientX, y: touch.clientY, item };
-    longPressTimerRef.current = setTimeout(() => {
-      if (longPressTouchRef.current) {
-        setContextMenu({
-          show: true,
-          x: longPressTouchRef.current.x,
-          y: longPressTouchRef.current.y,
-          item: longPressTouchRef.current.item,
-        });
-      }
-    }, 500);
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (longPressTimerRef.current && longPressTouchRef.current) {
-      const touch = e.touches[0];
-      const deltaX = Math.abs(touch.clientX - longPressTouchRef.current.x);
-      const deltaY = Math.abs(touch.clientY - longPressTouchRef.current.y);
-      if (deltaX > 10 || deltaY > 10) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-        longPressTouchRef.current = null;
-      }
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    longPressTouchRef.current = null;
-  }, []);
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useLongPress<VehicleListItem>(setContextMenu);
 
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
@@ -253,53 +212,7 @@ export default function SpecPage() {
     }
   };
 
-  const formatOptions = (text: string): React.ReactNode => {
-    if (!text || !text.trim()) return '-';
-    const items = text.split(/\s{2,}|\r?\n/).filter((item) => item.trim());
-    if (items.length === 0) return '-';
-    return (
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((item, index) => (
-          <span
-            key={index}
-            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm text-gray-700"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  // 전기 옵션 포맷 (칩 스타일)
-  const formatElectric = (items: { label: string; value: string; unit: string }[]): React.ReactNode => {
-    const validItems = items.filter((item) => item.value);
-    if (validItems.length === 0) return '-';
-    return (
-      <div className="flex flex-wrap gap-1.5">
-        {validItems.map((item, index) => {
-          // 숫자와 소수점만 포함된 경우에만 포맷 적용
-          const isNumberOnly = /^[\d.]+$/.test(item.value.trim());
-          const displayValue = isNumberOnly ? formatNumber(item.value) : item.value;
-          return (
-            <span
-              key={index}
-              className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm"
-            >
-              <span className="text-gray-700">{item.label} {displayValue} {item.unit}</span>
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // 결과 테이블 너비 계산 (정사각형에 가깝게)
-  const getResultWidth = (): number => {
-    // 고정 너비 800px (내부 grid-cols-2 레이아웃에 맞춤)
-    return 800;
-  };
-
+  
   // 모바일 뷰 감지
   useEffect(() => {
     const checkMobile = () => {
@@ -820,241 +733,21 @@ export default function SpecPage() {
       </div>
 
       {/* 결과 모달 */}
-      <AnimatePresence>
-        {showResult && (() => {
-          // 미리보기 데이터가 있으면 사용, 없으면 현재 폼 데이터 사용
-          const displayType = previewData?.type || mainTab;
-          const displayCamperData = (previewData?.type === 'camper' ? previewData.data : camperData) as CamperData;
-          const displayCaravanData = (previewData?.type === 'caravan' ? previewData.data : caravanData) as CaravanData;
-          const displayYearData = displayType === 'camper' ? parseYear(displayCamperData.year) : parseYear(displayCaravanData.year);
-
-          return (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 pb-20 lg:p-5 lg:pb-5"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowResult(false);
-                setPreviewData(null);
-              }
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1c1f26] lg:max-h-[95vh]"
-            >
-              <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
-                <button
-                  onClick={() => downloadPNG(displayType)}
-                  className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
-                >
-                  다운로드
-                </button>
-                <button
-                  onClick={() => {
-                    setShowResult(false);
-                    setPreviewData(null);
-                  }}
-                  className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  닫기
-                </button>
-              </div>
-              <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#121418]">
-                {/* 다운로드용 기존 표 (숨김) */}
-                <div className={isMobileView ? 'absolute -left-[9999px]' : ''}>
-                {displayType === 'camper' ? (
-                  <div ref={camperResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
-                    <div className="grid grid-cols-2 gap-5 mb-5">
-                      <ResultCard title="차량 정보" icon={InformationCircleIcon}>
-                        <ResultRow label="베이스 차량" value={displayCamperData.baseVehicle || '-'} />
-                        <ResultRow label="제조사" value={displayCamperData.manufacturer || '-'} />
-                        <ResultRow label="모델명" value={displayCamperData.modelName || '-'} />
-                        <ResultRow label="차종" value={displayCamperData.vehicleType || '-'} />
-                        <ResultRow
-                          label={displayYearData.label}
-                          value={displayCamperData.hasStructureMod && displayCamperData.structureModDate
-                            ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})`
-                            : displayYearData.value}
-                        />
-                        <ResultRow label="최초등록일" value={parseFirstReg(displayCamperData.firstReg)} />
-                        <ResultRow
-                          label="주행거리"
-                          value={displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}
-                        />
-                        <ResultRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
-                        <ResultRow label="필요 면허" value={displayCamperData.license || '-'} />
-                      </ResultCard>
-                      <ResultCard title="제원" icon={ChatBubbleBottomCenterTextIcon}>
-                        <ResultRow label="길이" value={displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'} />
-                        <ResultRow label="너비" value={displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'} />
-                        <ResultRow label="높이" value={displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'} />
-                        <ResultRow label="배기량" value={displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'} />
-                        <ResultRow label="연료" value={displayCamperData.fuel || '-'} />
-                        <ResultRow label="변속기" value={displayCamperData.transmission || '-'} />
-                        <ResultRow label="연비" value={displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'} />
-                        <ResultRow label="승차정원" value={displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'} />
-                        <ResultRow label="현금 영수증" value={displayCamperData.cashReceipt || '-'} />
-                      </ResultCard>
-                    </div>
-                    <OptionCard>
-                      <OptionRow label="전 기">
-                        {formatElectric([
-                          { label: displayCamperData.batteryType || '배터리', value: displayCamperData.batteryCapacity, unit: 'Ah' },
-                          { label: '태양광', value: displayCamperData.solar, unit: 'W' },
-                          { label: '인버터', value: displayCamperData.inverter, unit: 'Kw' },
-                        ])}
-                      </OptionRow>
-                      <OptionRow label="외 관">{formatOptions(displayCamperData.exterior)}</OptionRow>
-                      <OptionRow label="내 장">{formatOptions(displayCamperData.interior)}</OptionRow>
-                      <OptionRow label="편 의">{formatOptions(displayCamperData.convenience)}</OptionRow>
-                    </OptionCard>
-                  </div>
-                ) : (
-                  <div ref={caravanResultRef} style={{ width: getResultWidth() }} className="bg-white p-6 font-sans">
-                    <div className="grid grid-cols-2 gap-5 mb-5">
-                      <ResultCard title="차량 정보" icon={InformationCircleIcon}>
-                        <ResultRow label="제조사" value={displayCaravanData.manufacturer || '-'} />
-                        <ResultRow label="모델명" value={displayCaravanData.modelName || '-'} />
-                        <ResultRow label="차종" value={displayCaravanData.vehicleType || '-'} />
-                        <ResultRow
-                          label={displayYearData.label}
-                          value={displayCaravanData.hasStructureMod && displayCaravanData.structureModDate
-                            ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})`
-                            : displayYearData.value}
-                        />
-                        <ResultRow label="최초등록일" value={parseFirstReg(displayCaravanData.firstReg)} />
-                        <ResultRow label="차고지 증명" value={displayCaravanData.garageProof || '-'} />
-                        <ResultRow label="취침인원" value={displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'} />
-                        <ResultRow label="현금 영수증" value={displayCaravanData.cashReceipt || '-'} />
-                      </ResultCard>
-                      <ResultCard title="제원" icon={ChatBubbleBottomCenterTextIcon}>
-                        <ResultRow label="외부 길이" value={displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'} />
-                        <ResultRow label="내부 길이" value={displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'} />
-                        <ResultRow label="외부 너비" value={displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'} />
-                        <ResultRow label="내부 너비" value={displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'} />
-                        <ResultRow label="외부 높이" value={displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'} />
-                        <ResultRow label="내부 높이" value={displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'} />
-                        <ResultRow label="공차 중량" value={displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'} />
-                        <ResultRow label="최대 허용 중량" value={displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'} />
-                      </ResultCard>
-                    </div>
-                    <OptionCard>
-                      <OptionRow label="전 기">
-                        {formatElectric([
-                          { label: displayCaravanData.batteryType || '배터리', value: displayCaravanData.batteryCapacity, unit: 'Ah' },
-                          { label: '태양광', value: displayCaravanData.solar, unit: 'W' },
-                          { label: '인버터', value: displayCaravanData.inverter, unit: 'Kw' },
-                        ])}
-                      </OptionRow>
-                      <OptionRow label="외 관">{formatOptions(displayCaravanData.exterior)}</OptionRow>
-                      <OptionRow label="내 장">{formatOptions(displayCaravanData.interior)}</OptionRow>
-                      <OptionRow label="편 의">{formatOptions(displayCaravanData.convenience)}</OptionRow>
-                    </OptionCard>
-                  </div>
-                )}
-                </div>
-
-                {/* 모바일용 리스트 뷰 */}
-                {isMobileView && (
-                  <div className="space-y-4">
-                    {displayType === 'camper' ? (
-                      <>
-                        {/* 차량 정보 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">차량 정보</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">베이스 차량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.baseVehicle || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.manufacturer || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.modelName || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.vehicleType || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.hasStructureMod && displayCamperData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCamperData.structureModDate)})` : displayYearData.value}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-800 dark:text-gray-100">{parseFirstReg(displayCamperData.firstReg)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">주행거리</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.garageProof || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">필요 면허</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.license || '-'}</span></div>
-                          </div>
-                        </div>
-                        {/* 제원 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">제원</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.length ? `${formatNumber(displayCamperData.length)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.width ? `${formatNumber(displayCamperData.width)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.height ? `${formatNumber(displayCamperData.height)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">배기량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.displacement ? `${formatNumber(displayCamperData.displacement)} cc` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">연료</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.fuel || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">변속기</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.transmission || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">연비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">승차정원</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCamperData.cashReceipt || '-'}</span></div>
-                          </div>
-                        </div>
-                        {/* 옵션 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">옵션</h3>
-                          <div className="space-y-3 text-sm">
-                            <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCamperData.batteryType || '배터리', value: displayCamperData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCamperData.solar, unit: 'W' }, { label: '인버터', value: displayCamperData.inverter, unit: 'Kw' }])}</div></div>
-                            <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCamperData.exterior)}</div></div>
-                            <div><span className="text-gray-500">내장</span><div className="mt-1">{formatOptions(displayCamperData.interior)}</div></div>
-                            <div><span className="text-gray-500">편의</span><div className="mt-1">{formatOptions(displayCamperData.convenience)}</div></div>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {/* 카라반 차량 정보 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">차량 정보</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">제조사</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.manufacturer || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">모델명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.modelName || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차종</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.vehicleType || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">{displayYearData.label}</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.hasStructureMod && displayCaravanData.structureModDate ? `${displayYearData.value}(${parseFirstReg(displayCaravanData.structureModDate)})` : displayYearData.value}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최초등록일</span><span className="font-medium text-gray-800 dark:text-gray-100">{parseFirstReg(displayCaravanData.firstReg)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">차고지 증명</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.garageProof || '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">취침인원</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.sleepCapacity ? `${displayCaravanData.sleepCapacity} 인` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">현금 영수증</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.cashReceipt || '-'}</span></div>
-                          </div>
-                        </div>
-                        {/* 카라반 제원 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">제원</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-500">외부 길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extLength ? `${formatNumber(displayCaravanData.extLength)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 길이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intLength ? `${formatNumber(displayCaravanData.intLength)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">외부 너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extWidth ? `${formatNumber(displayCaravanData.extWidth)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 너비</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intWidth ? `${formatNumber(displayCaravanData.intWidth)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">외부 높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.extHeight ? `${formatNumber(displayCaravanData.extHeight)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">내부 높이</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.intHeight ? `${formatNumber(displayCaravanData.intHeight)} mm` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">공차 중량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.curbWeight ? `${formatNumber(displayCaravanData.curbWeight)} kg` : '-'}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">최대 허용 중량</span><span className="font-medium text-gray-800 dark:text-gray-100">{displayCaravanData.maxWeight ? `${formatNumber(displayCaravanData.maxWeight)} kg` : '-'}</span></div>
-                          </div>
-                        </div>
-                        {/* 카라반 옵션 */}
-                        <div className="rounded-xl bg-white p-4 dark:bg-[#1c1f26]">
-                          <h3 className="mb-3 text-sm font-bold text-gray-800 dark:text-gray-100">옵션</h3>
-                          <div className="space-y-3 text-sm">
-                            <div><span className="text-gray-500">전기</span><div className="mt-1">{formatElectric([{ label: displayCaravanData.batteryType || '배터리', value: displayCaravanData.batteryCapacity, unit: 'Ah' }, { label: '태양광', value: displayCaravanData.solar, unit: 'W' }, { label: '인버터', value: displayCaravanData.inverter, unit: 'Kw' }])}</div></div>
-                            <div><span className="text-gray-500">외관</span><div className="mt-1">{formatOptions(displayCaravanData.exterior)}</div></div>
-                            <div><span className="text-gray-500">내장</span><div className="mt-1">{formatOptions(displayCaravanData.interior)}</div></div>
-                            <div><span className="text-gray-500">편의</span><div className="mt-1">{formatOptions(displayCaravanData.convenience)}</div></div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-          );
-        })()}
-      </AnimatePresence>
+      <ResultPreviewModal
+        show={showResult}
+        previewData={previewData}
+        mainTab={mainTab}
+        camperData={camperData}
+        caravanData={caravanData}
+        isMobileView={isMobileView}
+        camperResultRef={camperResultRef}
+        caravanResultRef={caravanResultRef}
+        onClose={() => {
+          setShowResult(false);
+          setPreviewData(null);
+        }}
+        onDownload={downloadPNG}
+      />
 
       {/* 모달 컴포넌트들 */}
       <DeleteModal
@@ -1113,54 +806,7 @@ export default function SpecPage() {
       />
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
-      <AnimatePresence mode="wait">
-        {toast.show && (
-          <motion.div
-            initial={{ opacity: 0, y: -30, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{
-              type: 'spring',
-              stiffness: 350,
-              damping: 25,
-              mass: 0.8
-            }}
-            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top)+1rem)] z-50 -translate-x-1/2 lg:hidden"
-          >
-            <div className={`
-              flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-lg
-              ${toast.type === 'success'
-                ? 'bg-gray-900 text-white shadow-gray-900/30 dark:bg-gray-100 dark:text-gray-900 dark:shadow-white/20'
-                : toast.type === 'error'
-                ? 'bg-red-600 text-white shadow-red-600/40'
-                : 'bg-amber-500 text-white shadow-amber-500/40'
-              }
-            `}>
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 15 }}
-                className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                  toast.type === 'success'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-white/20 text-white'
-                }`}
-              >
-                {toast.type === 'success' && (
-                  <CheckIcon className="size-3" />
-                )}
-                {toast.type === 'error' && (
-                  <XMarkIcon className="size-3" />
-                )}
-                {toast.type === 'warning' && (
-                  <ExclamationTriangleIcon className="size-3" />
-                )}
-              </motion.div>
-              {toast.message}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Toast show={toast.show} message={toast.message} type={toast.type} />
 
     </div>
     </>
