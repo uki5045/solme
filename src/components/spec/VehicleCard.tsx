@@ -74,8 +74,8 @@ const VehicleCard = memo(function VehicleCard({
       {/* 차량번호 + 배지 (같은 줄) */}
       <div className="mb-2 flex items-center justify-between">
         <div className="flex shrink-0 items-center gap-2">
-          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
-            {item.saleType === '위탁' ? '위' : '매'}
+          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.vehicleType === 'camper' ? 'bg-blue-500 shadow-blue-500/40 dark:shadow-blue-500/50' : 'bg-violet-500 shadow-violet-500/40 dark:shadow-violet-500/50'}`}>
+            {item.vehicleType === 'camper' ? '캠' : '카'}
           </span>
           <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
         </div>
@@ -85,8 +85,8 @@ const VehicleCard = memo(function VehicleCard({
               {statusLabels[item.status].label}
             </span>
           )}
-          <span className={`rounded-md px-2 py-0.5 text-xs font-medium shadow-sm ${item.vehicleType === 'camper' ? 'border border-blue-300 bg-blue-50 text-blue-700 shadow-blue-200/50 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:shadow-blue-500/20' : 'border border-violet-300 bg-violet-50 text-violet-700 shadow-violet-200/50 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-400 dark:shadow-violet-500/20'}`}>
-            {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+          <span className={`rounded-md px-2 py-0.5 text-xs font-medium shadow-sm ${item.saleType === '위탁' ? 'border border-rose-300 bg-rose-50 text-rose-700 shadow-rose-200/50 dark:border-rose-600 dark:bg-rose-900/30 dark:text-rose-400 dark:shadow-rose-500/20' : 'border border-emerald-300 bg-emerald-50 text-emerald-700 shadow-emerald-200/50 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 dark:shadow-emerald-500/20'}`}>
+            {item.saleType === '위탁' ? '위탁' : '매입'}
           </span>
         </div>
       </div>
