@@ -363,8 +363,47 @@ export default function SpecPage() {
     }, 150);
   };
 
-  // 실제 PNG 다운로드 로직
-  const performDownloadPNG = async (type: MainTab): Promise<void> => {
+  // 캡처 후 이미지 처리 및 다운로드 (백그라운드)
+  const processAndDownload = (dataUrl: string, modelName: string) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const padding = 40;
+      const size = Math.max(img.width, img.height) + padding * 2;
+
+      const squareCanvas = document.createElement('canvas');
+      squareCanvas.width = size;
+      squareCanvas.height = size;
+      const ctx = squareCanvas.getContext('2d');
+
+      if (ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+
+        const x = (size - img.width) / 2;
+        const y = (size - img.height) / 2;
+        ctx.drawImage(img, x, y);
+
+        squareCanvas.toBlob((finalBlob) => {
+          if (finalBlob) {
+            const url = URL.createObjectURL(finalBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${modelName || '옵션표'}_옵션표.png`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('다운로드 완료', 'success');
+          } else {
+            showToast('다운로드 실패', 'error');
+          }
+        }, 'image/png');
+      }
+    };
+    img.onerror = () => showToast('이미지 처리 실패', 'error');
+    img.src = dataUrl;
+  };
+
+  // PNG 다운로드 (캡처 후 바로 모달 닫고 백그라운드 처리)
+  const downloadPNG = async (type: MainTab) => {
     const container = type === 'camper' ? camperResultRef.current : caravanResultRef.current;
     if (!container) {
       showToast('컨테이너를 찾을 수 없습니다.', 'error');
@@ -373,18 +412,17 @@ export default function SpecPage() {
 
     try {
       const originalWidth = container.style.width;
+      const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
 
-      // 1. 높이 측정
+      // 1. 높이 측정 및 너비 조정
       const height = container.scrollHeight;
-
-      // 2. 정사각형에 가깝게 너비 계산 (높이의 95%, 최소 800px)
       const targetWidth = Math.max(Math.round(height * 0.95), 800);
       container.style.width = `${targetWidth}px`;
 
-      // 3. 리플로우 대기
+      // 2. 리플로우 대기
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      // 4. 전체 크기 명시적 지정하여 캡처
+      // 3. 캡처
       const dataUrl = await domToPng(container, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -393,61 +431,18 @@ export default function SpecPage() {
         height: container.scrollHeight,
       });
 
-      // 5. 원복
+      // 4. 원복
       container.style.width = originalWidth;
 
-      // 6. 이미지 로드 및 다운로드 완료 대기
-      await new Promise<void>((resolve, reject) => {
-        const img = new window.Image();
-        img.onload = () => {
-          const padding = 40;
-          const size = Math.max(img.width, img.height) + padding * 2;
+      // 5. 모달 즉시 닫기
+      setShowResult(false);
 
-          const squareCanvas = document.createElement('canvas');
-          squareCanvas.width = size;
-          squareCanvas.height = size;
-          const ctx = squareCanvas.getContext('2d');
-
-          if (ctx) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-
-            const x = (size - img.width) / 2;
-            const y = (size - img.height) / 2;
-            ctx.drawImage(img, x, y);
-
-            squareCanvas.toBlob((finalBlob) => {
-              if (finalBlob) {
-                const url = URL.createObjectURL(finalBlob);
-                const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${modelName || '옵션표'}_옵션표.png`;
-                link.click();
-                URL.revokeObjectURL(url);
-                showToast('다운로드 완료', 'success');
-                resolve();
-              } else {
-                reject(new Error('Blob 생성 실패'));
-              }
-            }, 'image/png');
-          } else {
-            reject(new Error('Canvas context 생성 실패'));
-          }
-        };
-        img.onerror = () => reject(new Error('이미지 로드 실패'));
-        img.src = dataUrl;
-      });
+      // 6. 백그라운드에서 이미지 처리 및 다운로드
+      processAndDownload(dataUrl, modelName);
     } catch (e) {
       console.error(e);
       showToast('PNG 생성 실패', 'error');
     }
-  };
-
-  // PNG 다운로드 (저장 없이 다운로드만)
-  const downloadPNG = async (type: MainTab) => {
-    await performDownloadPNG(type);
-    setShowResult(false);  // 다운로드 완료 후 모달 닫기
   };
 
   return (
