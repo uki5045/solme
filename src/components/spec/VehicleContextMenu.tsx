@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useLayoutEffect, useState } from 'react';
 import {
   CheckIcon,
   PencilSquareIcon,
@@ -30,6 +31,44 @@ const STATUS_LABELS: Record<VehicleStatus, string> = {
   sold: '판매완료',
 };
 
+// 화면 경계를 고려한 위치 계산
+function useAdjustedPosition(x: number, y: number, show: boolean) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x, y });
+
+  useLayoutEffect(() => {
+    if (!show || !menuRef.current) return;
+
+    const menu = menuRef.current;
+    const rect = menu.getBoundingClientRect();
+    const padding = 8; // 화면 가장자리 여백
+
+    let adjustedX = x;
+    let adjustedY = y;
+
+    // 오른쪽 경계 체크
+    if (x + rect.width > window.innerWidth - padding) {
+      adjustedX = window.innerWidth - rect.width - padding;
+    }
+    // 왼쪽 경계 체크
+    if (adjustedX < padding) {
+      adjustedX = padding;
+    }
+    // 하단 경계 체크
+    if (y + rect.height > window.innerHeight - padding) {
+      adjustedY = window.innerHeight - rect.height - padding;
+    }
+    // 상단 경계 체크
+    if (adjustedY < padding) {
+      adjustedY = padding;
+    }
+
+    setPosition({ x: adjustedX, y: adjustedY });
+  }, [x, y, show]);
+
+  return { menuRef, position };
+}
+
 export default function VehicleContextMenu({
   contextMenu,
   onClose,
@@ -37,14 +76,21 @@ export default function VehicleContextMenu({
   onEdit,
   onDelete,
 }: VehicleContextMenuProps) {
+  const { menuRef, position } = useAdjustedPosition(
+    contextMenu.x,
+    contextMenu.y,
+    contextMenu.show
+  );
+
   if (!contextMenu.show || !contextMenu.item) return null;
 
   const { item } = contextMenu;
 
   return (
     <div
+      ref={menuRef}
       className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-      style={{ left: contextMenu.x, top: contextMenu.y }}
+      style={{ left: position.x, top: position.y }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* 상태 변경 */}

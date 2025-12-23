@@ -949,3 +949,17 @@ textarea.form-input {
 .animate-spec-fade-in {
   animation: spec-fade-in 0.3s ease-out;
 }
+
+/* Long Press Rainbow Glow Animation (Apple Intelligence Style) */
+@keyframes rainbow-glow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.animate-rainbow-glow {
+  animation: rainbow-glow 2s linear infinite;
+}

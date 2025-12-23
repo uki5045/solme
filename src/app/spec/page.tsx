@@ -1,27 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { useVehicleList } from '@/hooks/useVehicleList';
 import { useLongPress } from '@/hooks/useLongPress';
+import { useUIState } from '@/hooks/useUIState';
+import { useImageExport } from '@/hooks/useImageExport';
 import { useSession } from 'next-auth/react';
-import { domToPng } from 'modern-screenshot';
-import { motion, AnimatePresence } from 'motion/react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/tabs';
-import VehicleCard from '@/components/spec/VehicleCard';
 import SpecHeader from '@/components/spec/SpecHeader';
+import VehicleListSection from '@/components/spec/VehicleListSection';
+import FormSection from '@/components/spec/FormSection';
+import LongPressGlow from '@/components/spec/LongPressGlow';
 
 // 분리된 파일에서 import
-import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, StatusTabType, VehicleListItem } from '@/components/spec/types';
+import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, VehicleListItem } from '@/components/spec/types';
 import { initialCamperData, initialCaravanData } from '@/components/spec/constants';
 import { isValidVehicleNumber } from '@/components/spec/utils';
-import CamperForm from '@/components/spec/CamperForm';
-import CaravanForm from '@/components/spec/CaravanForm';
 import { DeleteModal, ResetModal, OverwriteModal, SaveConfirmModal, StatusChangeModal } from '@/components/spec/Modals';
 import SoldVehiclesView from '@/components/spec/SoldVehiclesView';
-import VehicleContextMenu from '@/components/spec/VehicleContextMenu';
 import ResultPreviewModal from '@/components/spec/ResultPreviewModal';
 import Toast from '@/components/spec/Toast';
 
@@ -42,15 +40,34 @@ export default function SpecPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
   const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
-  const [statusTab, setStatusTab] = useState<StatusTabType>('all');
-  const [statusIndex, setStatusIndex] = useState(0);
-  const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
+
+  // UI 상태 훅 (상태탭, 검색, 모바일뷰, 컨텍스트메뉴, 드롭다운, 판매완료뷰)
+  const {
+    statusTab, setStatusTab, statusIndex,
+    searchQuery, setSearchQuery,
+    isMobileView, mobileView, setMobileView,
+    contextMenu, setContextMenu, closeContextMenu,
+    showUserDropdown, setShowUserDropdown, userDropdownRef,
+    showSoldView, setShowSoldView,
+  } = useUIState();
 
   // 토스트 표시 함수
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4500);
   }, []);
+
+  // 이미지 내보내기 훅
+  const { camperResultRef, caravanResultRef, downloadPNG: downloadPNGBase } = useImageExport({
+    showToast,
+    onComplete: () => setShowResult(false),
+  });
+
+  // downloadPNG 래퍼 (modelName 자동 주입)
+  const downloadPNG = useCallback((type: MainTab) => {
+    const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
+    return downloadPNGBase(type, modelName);
+  }, [downloadPNGBase, camperData.modelName, caravanData.modelName]);
 
   // 커스텀 훅
   const { isDarkMode, toggleDarkMode } = useDarkMode();
@@ -73,21 +90,31 @@ export default function SpecPage() {
     saveToDatabase,
     deleteVehicle,
   } = useVehicleList({ showToast, refetchNotifications });
-  // TODO: 알림 클릭 시 해당 차량 카드 하이라이트 기능 구현 예정
-  const [highlightedVehicle, _setHighlightedVehicle] = useState<string | null>(null);
-  void _setHighlightedVehicle; // ESLint 경고 방지 (추후 알림 기능에서 사용)
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSoldView, setShowSoldView] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const userDropdownRef = useRef<HTMLDivElement>(null);
-  const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; item: VehicleListItem | null }>({ show: false, x: 0, y: 0, item: null });
+  // 알림 클릭 시 해당 차량 카드 하이라이트 (현재 미사용, 추후 활성화)
+  const highlightedVehicle: string | null = null;
   const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const statusTabListRef = useRef<HTMLDivElement>(null);
-  const camperResultRef = useRef<HTMLDivElement>(null);
-  const caravanResultRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
-  const [isMobileView, setIsMobileView] = useState(false);
+
+  // 차량 리스트 필터링 (메모이제이션)
+  const filteredVehicleList = useMemo(() => {
+    return vehicleList
+      // sold 상태는 판매완료 뷰에서만 표시
+      .filter((item) => item.status !== 'sold')
+      // 전체 탭이면 상태 필터 무시
+      .filter((item) => statusTab === 'all' ? true : item.status === statusTab)
+      .filter((item) => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        // 차량번호, 모델명, 제조사로 검색
+        return (
+          item.vehicleNumber.toLowerCase().includes(query) ||
+          (item.modelName && item.modelName.toLowerCase().includes(query)) ||
+          (item.manufacturer && item.manufacturer.toLowerCase().includes(query))
+        );
+      });
+  }, [vehicleList, statusTab, searchQuery]);
 
   // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
   useEffect(() => {
@@ -100,12 +127,6 @@ export default function SpecPage() {
     observer.observe(leftSectionRef.current);
     return () => observer.disconnect();
   }, []);
-
-  // 상태 탭 인덱스 계산
-  useEffect(() => {
-    const statuses: StatusTabType[] = ['all', 'intake', 'productization', 'advertising'];
-    setStatusIndex(statuses.indexOf(statusTab));
-  }, [statusTab]);
 
   // ESC 키로 모달 닫기
   useEffect(() => {
@@ -121,26 +142,19 @@ export default function SpecPage() {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [showResult]);
 
-  // 검색어 입력 시 전체 탭으로 이동
-  useEffect(() => {
-    if (searchQuery.trim() && statusTab !== 'all') {
-      setStatusTab('all');
-    }
-  }, [searchQuery, statusTab]);
-
   // 상태 변경 요청 (모달 표시)
   const requestStatusChange = (vehicleNumber: string, newStatus: VehicleStatus) => {
     setStatusChangeModal({ show: true, vehicleNumber, newStatus });
   };
 
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
-  useClickOutside(null, () => setContextMenu({ show: false, x: 0, y: 0, item: null }), contextMenu.show, 'click');
+  useClickOutside(null, closeContextMenu, contextMenu.show, 'click');
 
   // 사용자 드롭다운 닫기 (외부 클릭 시)
   useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
 
   // 롱프레스 핸들러 (모바일)
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useLongPress<VehicleListItem>(setContextMenu);
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, isPressing } = useLongPress<VehicleListItem>(setContextMenu);
 
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
@@ -177,7 +191,7 @@ export default function SpecPage() {
   // 컨텍스트 메뉴 열기 핸들러 (VehicleCard용)
   const handleContextMenu = useCallback((e: React.MouseEvent, item: VehicleListItem) => {
     setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
-  }, []);
+  }, [setContextMenu]);
 
   // 컨텍스트 메뉴에서 수정 클릭 시 바로 폼에 데이터 로드 (모달 없이)
   const loadVehicleToForm = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
@@ -211,18 +225,6 @@ export default function SpecPage() {
       showToast('데이터 로드 중 오류가 발생했습니다.', 'error');
     }
   };
-
-  
-  // 모바일 뷰 감지
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const openResetModal = () => {
     setResetModal(true);
@@ -363,88 +365,6 @@ export default function SpecPage() {
     }, 150);
   };
 
-  // 캡처 후 이미지 처리 및 다운로드 (백그라운드)
-  const processAndDownload = (dataUrl: string, modelName: string) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const padding = 40;
-      const size = Math.max(img.width, img.height) + padding * 2;
-
-      const squareCanvas = document.createElement('canvas');
-      squareCanvas.width = size;
-      squareCanvas.height = size;
-      const ctx = squareCanvas.getContext('2d');
-
-      if (ctx) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, size, size);
-
-        const x = (size - img.width) / 2;
-        const y = (size - img.height) / 2;
-        ctx.drawImage(img, x, y);
-
-        squareCanvas.toBlob((finalBlob) => {
-          if (finalBlob) {
-            const url = URL.createObjectURL(finalBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${modelName || '옵션표'}_옵션표.png`;
-            link.click();
-            URL.revokeObjectURL(url);
-            showToast('다운로드 완료', 'success');
-          } else {
-            showToast('다운로드 실패', 'error');
-          }
-        }, 'image/png');
-      }
-    };
-    img.onerror = () => showToast('이미지 처리 실패', 'error');
-    img.src = dataUrl;
-  };
-
-  // PNG 다운로드 (캡처 후 바로 모달 닫고 백그라운드 처리)
-  const downloadPNG = async (type: MainTab) => {
-    const container = type === 'camper' ? camperResultRef.current : caravanResultRef.current;
-    if (!container) {
-      showToast('컨테이너를 찾을 수 없습니다.', 'error');
-      return;
-    }
-
-    try {
-      const originalWidth = container.style.width;
-      const modelName = type === 'camper' ? camperData.modelName : caravanData.modelName;
-
-      // 1. 높이 측정 및 너비 조정
-      const height = container.scrollHeight;
-      const targetWidth = Math.max(Math.round(height * 0.95), 800);
-      container.style.width = `${targetWidth}px`;
-
-      // 2. 리플로우 대기
-      await new Promise(resolve => setTimeout(resolve, 150));
-
-      // 3. 캡처
-      const dataUrl = await domToPng(container, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        fetch: { bypassingCache: true },
-        width: container.scrollWidth,
-        height: container.scrollHeight,
-      });
-
-      // 4. 원복
-      container.style.width = originalWidth;
-
-      // 5. 모달 즉시 닫기
-      setShowResult(false);
-
-      // 6. 백그라운드에서 이미지 처리 및 다운로드
-      processAndDownload(dataUrl, modelName);
-    } catch (e) {
-      console.error(e);
-      showToast('PNG 생성 실패', 'error');
-    }
-  };
-
   return (
     <>
       {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 */}
@@ -485,255 +405,54 @@ export default function SpecPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pb-5 pt-4 lg:flex-row lg:items-start lg:gap-6 lg:pt-5">
 
         {/* 좌측: 폼 영역 */}
-        <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:max-w-[440px] ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
-
-        {/* 애니메이션 메인 탭 */}
-        <Tabs
-          defaultValue="camper"
-          value={mainTab}
-          onValueChange={(value) => handleMainTabChange(value as MainTab)}
-          className="mb-3"
-        >
-          <TabsList
-            className="grid w-full grid-cols-2 !border-0 !bg-white shadow-sm dark:!bg-[#1c1f26]"
-            indicatorClassName="bg-gradient-to-b from-accent-500 to-accent-600 shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-500/30"
-          >
-            <TabsTrigger
-              value="camper"
-              className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
-            >
-              캠핑카
-            </TabsTrigger>
-            <TabsTrigger
-              value="caravan"
-              className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
-            >
-              카라반
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* 차량 검색 (데스크탑에서만 표시) */}
-        <div className="mb-3 hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1c1f26] lg:block">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="차량번호, 모델명, 제조사로 검색"
-            className="form-input"
-          />
-        </div>
-
-        {/* 폼 콘텐츠 */}
-        <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-          {tabLoading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
-              </div>
-            </div>
-          ) : (
-            <div ref={formContainerRef} className="p-5">
-              {mainTab === 'camper' ? (
-                <CamperForm step={step} data={camperData} setData={setCamperData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
-              ) : (
-                <CaravanForm step={step} data={caravanData} setData={setCaravanData} errors={step === 1 ? fieldErrors : {}} clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined} />
-              )}
-            </div>
-          )}
-
-          {/* 하단 버튼 - 항상 하단에 고정 */}
-          <div className="mt-auto flex gap-3 border-t border-gray-100 p-5 dark:border-gray-800">
-            {step === 1 ? (
-              <button
-                onClick={openResetModal}
-                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-              >
-                초기화
-              </button>
-            ) : (
-              <button
-                onClick={goPrev}
-                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-              >
-                이전
-              </button>
-            )}
-            <button
-              onClick={goNext}
-              className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
-            >
-              {step === 3 ? '저장' : '다음'}
-            </button>
-          </div>
-        </div>
-        </div>
-        {/* 좌측 폼 영역 끝 */}
+        <FormSection
+          leftSectionRef={leftSectionRef}
+          formContainerRef={formContainerRef}
+          mobileView={mobileView}
+          mainTab={mainTab}
+          onMainTabChange={handleMainTabChange}
+          tabLoading={tabLoading}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          step={step}
+          camperData={camperData}
+          setCamperData={setCamperData}
+          caravanData={caravanData}
+          setCaravanData={setCaravanData}
+          fieldErrors={fieldErrors}
+          setFieldErrors={setFieldErrors}
+          onReset={openResetModal}
+          onPrev={goPrev}
+          onNext={goNext}
+        />
 
         {/* 우측: 차량 카드 리스트 (상태별 탭) */}
-        <div
-          className={`relative flex-1 flex-col ${mobileView === 'form' ? 'hidden lg:flex' : 'flex'}`}
-          style={{ height: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
-        >
-          {/* 미리보기 로딩 오버레이 */}
-          {previewLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm dark:bg-[#121418]/80">
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
-              </div>
-            </div>
-          )}
-          {/* 상태 탭 헤더 */}
-          <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-1.5 shadow-sm dark:bg-[#1c1f26]">
-            {/* 인디케이터 - 애니메이션 없음 */}
-            <div
-              className="absolute top-1.5 bottom-1.5 rounded-xl"
-              style={{
-                width: 'calc(25% - 3px)',
-                left: 6,
-                transform: `translateX(${statusIndex * 100}%)`,
-                background: isDarkMode
-                  ? statusTab === 'all' ? 'linear-gradient(to bottom, #6b7280, #4b5563)'
-                  : statusTab === 'intake' ? 'linear-gradient(to bottom, #3b82f6, #2563eb)'
-                  : statusTab === 'productization' ? 'linear-gradient(to bottom, #f59e0b, #d97706)'
-                  : 'linear-gradient(to bottom, #22c55e, #16a34a)'
-                  : statusTab === 'all' ? 'linear-gradient(to bottom, #6b7280, #4b5563)'
-                  : statusTab === 'intake' ? 'linear-gradient(to bottom, #3b82f6, #2563eb)'
-                  : statusTab === 'productization' ? 'linear-gradient(to bottom, #f59e0b, #d97706)'
-                  : 'linear-gradient(to bottom, #22c55e, #16a34a)',
-                boxShadow: isDarkMode
-                  ? statusTab === 'all' ? '0 2px 8px rgba(107, 114, 128, 0.3)'
-                  : statusTab === 'intake' ? '0 2px 8px rgba(59, 130, 246, 0.35)'
-                  : statusTab === 'productization' ? '0 2px 8px rgba(245, 158, 11, 0.35)'
-                  : '0 2px 8px rgba(34, 197, 94, 0.35)'
-                  : statusTab === 'all' ? '0 2px 6px rgba(107, 114, 128, 0.15)'
-                  : statusTab === 'intake' ? '0 2px 6px rgba(59, 130, 246, 0.2)'
-                  : statusTab === 'productization' ? '0 2px 6px rgba(245, 158, 11, 0.2)'
-                  : '0 2px 6px rgba(34, 197, 94, 0.2)',
-              }}
-            />
-            {(['all', 'intake', 'productization', 'advertising'] as StatusTabType[]).map((status) => {
-              const count = status === 'all' ? vehicleList.length : vehicleList.filter(v => v.status === status).length;
-              const labels: Record<StatusTabType, string> = { all: '전체', intake: '입고', productization: '상품화', advertising: '광고' };
-              const isActive = statusTab === status;
-              return (
-                <button
-                  key={status}
-                  data-status={status}
-                  onClick={() => { setSearchQuery(''); setStatusTab(status); }}
-                  className={`relative z-10 flex flex-row items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-gray-400 dark:text-gray-500'
-                  }`}
-                >
-                  <span className="whitespace-nowrap">{labels[status]}</span>
-                  <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 text-xs font-medium ${
-                    isActive
-                      ? 'bg-white/25 text-white'
-                      : 'bg-gray-200/60 text-gray-400 dark:bg-gray-700/50 dark:text-gray-500'
-                  }`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 차량 검색 (모바일에서만 표시) */}
-          <div className="mb-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1c1f26] lg:hidden">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="차량번호, 모델명, 제조사로 검색"
-              className="form-input"
-            />
-          </div>
-
-          {/* 카드 리스트 영역 */}
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-            {/* 로딩 오버레이 - 깜빡임 방지 */}
-            <AnimatePresence>
-              {listLoading && vehicleList.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[2px] dark:bg-[#1c1f26]/60"
-                >
-                  <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg dark:bg-[#262a33]">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent-200 border-t-accent-500" />
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">업데이트 중...</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div className="flex-1 overflow-y-auto p-4">
-              {listLoading && vehicleList.length === 0 ? (
-                <div className="py-8 text-center text-sm text-gray-400">로딩 중...</div>
-              ) : (() => {
-                const filteredList = vehicleList
-                  // sold 상태는 판매완료 뷰에서만 표시
-                  .filter((item) => item.status !== 'sold')
-                  // 전체 탭이면 상태 필터 무시
-                  .filter((item) => statusTab === 'all' ? true : item.status === statusTab)
-                  .filter((item) => {
-                    if (!searchQuery.trim()) return true;
-                    const query = searchQuery.toLowerCase();
-                    // 차량번호, 모델명, 제조사로 검색
-                    return (
-                      item.vehicleNumber.toLowerCase().includes(query) ||
-                      (item.modelName && item.modelName.toLowerCase().includes(query)) ||
-                      (item.manufacturer && item.manufacturer.toLowerCase().includes(query))
-                    );
-                  });
-
-                if (filteredList.length === 0) {
-                  const labels: Record<StatusTabType, string> = { all: '전체', intake: '입고', productization: '상품화', advertising: '광고' };
-                  return (
-                    <div className="py-8 text-center text-sm text-gray-400">
-                      {searchQuery.trim()
-                        ? `"${searchQuery}" 검색 결과가 없습니다`
-                        : statusTab === 'all' ? '등록된 차량이 없습니다' : `${labels[statusTab]} 상태의 차량이 없습니다`
-                      }
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                    {filteredList.map((item) => (
-                      <VehicleCard
-                        key={item.id}
-                        item={item}
-                        highlightedVehicle={highlightedVehicle}
-                        onLoad={loadVehicleFromCard}
-                        onContextMenu={handleContextMenu}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        contextMenuOpen={contextMenu.show}
-                      />
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* 컨텍스트 메뉴 */}
-          <VehicleContextMenu
-            contextMenu={contextMenu}
-            onClose={() => setContextMenu({ show: false, x: 0, y: 0, item: null })}
-            onStatusChange={requestStatusChange}
-            onEdit={loadVehicleToForm}
-            onDelete={openDeleteModal}
-          />
-        </div>
+        <VehicleListSection
+          mobileView={mobileView}
+          leftSectionHeight={leftSectionHeight}
+          previewLoading={previewLoading}
+          listLoading={listLoading}
+          statusTabListRef={statusTabListRef}
+          statusTab={statusTab}
+          statusIndex={statusIndex}
+          setStatusTab={setStatusTab}
+          isDarkMode={isDarkMode}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          vehicleList={vehicleList}
+          filteredVehicleList={filteredVehicleList}
+          highlightedVehicle={highlightedVehicle}
+          onLoadFromCard={loadVehicleFromCard}
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          contextMenu={contextMenu}
+          onContextMenuClose={() => setContextMenu({ show: false, x: 0, y: 0, item: null })}
+          onStatusChange={requestStatusChange}
+          onEdit={loadVehicleToForm}
+          onDelete={openDeleteModal}
+        />
       </div>
 
       {/* 결과 모달 */}
@@ -811,6 +530,9 @@ export default function SpecPage() {
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
       <Toast show={toast.show} message={toast.message} type={toast.type} />
+
+      {/* 롱프레스 글로우 효과 (Apple Intelligence 스타일) */}
+      <LongPressGlow isActive={isPressing} />
 
     </div>
     </>

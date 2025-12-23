@@ -102,3 +102,28 @@ export const STATUS_CHANGE_LABELS: Record<VehicleStatus, string> = {
   advertising: '광고',
   sold: '판매완료',
 };
+
+// 상태 탭 순서
+export const STATUS_TABS: StatusTabType[] = ['all', 'intake', 'productization', 'advertising'];
+
+// 상태 탭 인디케이터 스타일 (그라데이션)
+const STATUS_GRADIENTS: Record<StatusTabType, string> = {
+  all: 'linear-gradient(to bottom, #6b7280, #4b5563)',
+  intake: 'linear-gradient(to bottom, #3b82f6, #2563eb)',
+  productization: 'linear-gradient(to bottom, #f59e0b, #d97706)',
+  advertising: 'linear-gradient(to bottom, #22c55e, #16a34a)',
+};
+
+// 상태 탭 인디케이터 스타일 (그림자)
+const STATUS_SHADOWS: Record<StatusTabType, { dark: string; light: string }> = {
+  all: { dark: '0 2px 8px rgba(107, 114, 128, 0.3)', light: '0 2px 6px rgba(107, 114, 128, 0.15)' },
+  intake: { dark: '0 2px 8px rgba(59, 130, 246, 0.35)', light: '0 2px 6px rgba(59, 130, 246, 0.2)' },
+  productization: { dark: '0 2px 8px rgba(245, 158, 11, 0.35)', light: '0 2px 6px rgba(245, 158, 11, 0.2)' },
+  advertising: { dark: '0 2px 8px rgba(34, 197, 94, 0.35)', light: '0 2px 6px rgba(34, 197, 94, 0.2)' },
+};
+
+// 상태 탭 인디케이터 스타일 가져오기
+export const getStatusTabStyle = (statusTab: StatusTabType, isDarkMode: boolean) => ({
+  background: STATUS_GRADIENTS[statusTab],
+  boxShadow: isDarkMode ? STATUS_SHADOWS[statusTab].dark : STATUS_SHADOWS[statusTab].light,
+});
