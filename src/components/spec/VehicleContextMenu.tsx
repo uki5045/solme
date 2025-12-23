@@ -33,13 +33,6 @@ const STATUS_LABELS: Record<VehicleStatus, string> = {
   sold: '판매완료',
 };
 
-const STATUS_COLORS: Record<VehicleStatus, string> = {
-  intake: 'bg-blue-500',
-  productization: 'bg-amber-500',
-  advertising: 'bg-emerald-500',
-  sold: 'bg-gray-500',
-};
-
 export default function VehicleContextMenu({
   contextMenu,
   onClose,
@@ -69,7 +62,7 @@ export default function VehicleContextMenu({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-50 bg-black/50"
             onClick={onClose}
           />
 
@@ -108,43 +101,38 @@ export default function VehicleContextMenu({
               </button>
             </div>
 
-            {/* 상태 변경 버튼들 */}
+            {/* 버튼들 */}
             <div className="p-4">
-              <div className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">상태 변경</div>
-              <div className="grid grid-cols-3 gap-2">
-                {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
-                  const isCurrentStatus = item.status === status;
-                  return (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        if (!isCurrentStatus) {
-                          onStatusChange(item.vehicleNumber, status);
-                        }
-                        onClose();
-                      }}
-                      disabled={isCurrentStatus}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl py-3 transition-all ${
-                        isCurrentStatus
-                          ? 'bg-accent-50 ring-2 ring-accent-500 dark:bg-accent-500/10'
-                          : 'bg-gray-50 active:scale-95 dark:bg-gray-800/50'
-                      }`}
-                    >
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${STATUS_COLORS[status]}`}>
-                        {isCurrentStatus && <CheckIcon className="size-4 text-white" />}
-                      </span>
-                      <span className={`text-xs font-medium ${isCurrentStatus ? 'text-accent-600 dark:text-accent-400' : 'text-gray-600 dark:text-gray-300'}`}>
+              <div className="flex flex-col gap-2">
+                {/* 상태 변경 버튼들 */}
+                <div className="flex gap-2">
+                  {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
+                    const isCurrentStatus = item.status === status;
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          if (!isCurrentStatus) {
+                            onStatusChange(item.vehicleNumber, status);
+                          }
+                          onClose();
+                        }}
+                        disabled={isCurrentStatus}
+                        className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 font-medium transition-all ${
+                          isCurrentStatus
+                            ? 'bg-accent-100 text-accent-600 ring-2 ring-accent-500 dark:bg-accent-500/20 dark:text-accent-400'
+                            : 'bg-gray-100 text-gray-700 active:scale-[0.98] dark:bg-gray-800 dark:text-gray-200'
+                        }`}
+                      >
+                        {isCurrentStatus && <CheckIcon className="size-5" />}
                         {STATUS_LABELS[status]}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
-            {/* 액션 버튼들 */}
-            <div className="border-t border-gray-100 p-4 dark:border-gray-800">
-              <div className="flex gap-2">
+                {/* 액션 버튼들 */}
+                <div className="flex gap-2">
                 {/* 수정 */}
                 <button
                   onClick={() => {
@@ -180,6 +168,7 @@ export default function VehicleContextMenu({
                   <TrashIcon className="size-5" />
                   삭제
                 </button>
+                </div>
               </div>
             </div>
           </motion.div>
