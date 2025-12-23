@@ -20,16 +20,12 @@ export default function LongPressGlow({ isActive }: LongPressGlowProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="pointer-events-none fixed z-[100]"
+          className="pointer-events-none fixed inset-0 z-[100]"
           style={{
-            top: 'env(safe-area-inset-top, 0px)',
-            right: 'env(safe-area-inset-right, 0px)',
-            bottom: 'env(safe-area-inset-bottom, 0px)',
-            left: 'env(safe-area-inset-left, 0px)',
             boxShadow: `
-              inset 0 0 40px rgba(0, 113, 227, 0.5),
-              inset 0 0 80px rgba(0, 113, 227, 0.3),
-              inset 0 0 120px rgba(0, 113, 227, 0.15)
+              inset 0 0 20px rgba(0, 113, 227, 0.6),
+              inset 0 0 40px rgba(0, 113, 227, 0.3),
+              inset 0 0 60px rgba(0, 113, 227, 0.1)
             `,
           }}
           aria-hidden="true"
