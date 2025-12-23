@@ -12,7 +12,6 @@ import { useSession } from 'next-auth/react';
 import SpecHeader from '@/components/spec/SpecHeader';
 import VehicleListSection from '@/components/spec/VehicleListSection';
 import FormSection from '@/components/spec/FormSection';
-import LongPressGlow from '@/components/spec/LongPressGlow';
 
 // 분리된 파일에서 import
 import type { CamperData, CaravanData, MainTab, FormStep, VehicleStatus, VehicleListItem } from '@/components/spec/types';
@@ -154,7 +153,7 @@ export default function SpecPage() {
   useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
 
   // 롱프레스 핸들러 (모바일)
-  const { handleTouchStart, handleTouchMove, handleTouchEnd, isPressing } = useLongPress<VehicleListItem>(setContextMenu);
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useLongPress<VehicleListItem>(setContextMenu);
 
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
@@ -530,9 +529,6 @@ export default function SpecPage() {
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
       <Toast show={toast.show} message={toast.message} type={toast.type} />
-
-      {/* 롱프레스 글로우 효과 (Apple Intelligence 스타일) */}
-      <LongPressGlow isActive={isPressing} />
 
     </div>
     </>
