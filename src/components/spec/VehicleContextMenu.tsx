@@ -176,13 +176,7 @@ export default function VehicleContextMenu({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed z-50 bg-black/50 lg:hidden"
-              style={{
-                top: 'calc(-1 * env(safe-area-inset-top, 0px) - 50px)',
-                left: 0,
-                right: 0,
-                bottom: 'calc(-1 * env(safe-area-inset-bottom, 0px) - 50px)',
-              }}
+              className="fixed -inset-20 z-50 bg-black/50 lg:hidden"
               onClick={onClose}
             />
 

@@ -214,13 +214,36 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* iOS Safari Address Bar & Status Bar */
-html {
-  background-color: #111111;
+/* iOS Safari Safe Area Utilities */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
-
-html:not(.dark) {
-  background-color: #f3f4f6;
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left);
+}
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right);
+}
+@utility mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+@utility top-safe {
+  top: env(safe-area-inset-top);
+}
+@utility bottom-safe {
+  bottom: env(safe-area-inset-bottom);
+}
+@utility min-h-screen-safe {
+  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+@utility h-screen-safe {
+  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 /* 스크롤바 스타일 - 기본 다크 모드 */

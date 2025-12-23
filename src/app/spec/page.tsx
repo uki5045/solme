@@ -366,9 +366,9 @@ export default function SpecPage() {
 
   return (
     <>
-      {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 */}
+      {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 (상태바/주소창 영역 확장) */}
       <div
-        className="fixed inset-0 -z-10 bg-gray-100 dark:bg-[#121418]"
+        className="fixed -inset-20 -z-10 bg-gray-100 dark:bg-[#121418]"
         aria-hidden="true"
       />
 
