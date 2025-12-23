@@ -20,12 +20,17 @@ export default function LongPressGlow({ isActive }: LongPressGlowProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="pointer-events-none fixed inset-0 z-[100]"
+          className="pointer-events-none fixed z-[100]"
           style={{
+            // safe area 밖까지 확장하여 상태표시줄/주소창 뒤로 글로우 표시
+            top: 'calc(-1 * env(safe-area-inset-top, 50px) - 50px)',
+            right: 'calc(-1 * env(safe-area-inset-right, 0px))',
+            bottom: 'calc(-1 * env(safe-area-inset-bottom, 50px) - 50px)',
+            left: 'calc(-1 * env(safe-area-inset-left, 0px))',
             boxShadow: `
-              inset 0 0 20px rgba(0, 113, 227, 0.6),
-              inset 0 0 40px rgba(0, 113, 227, 0.3),
-              inset 0 0 60px rgba(0, 113, 227, 0.1)
+              inset 0 0 60px rgba(0, 113, 227, 0.5),
+              inset 0 0 100px rgba(0, 113, 227, 0.25),
+              inset 0 0 140px rgba(0, 113, 227, 0.1)
             `,
           }}
           aria-hidden="true"
