@@ -1,6 +1,6 @@
 'use client';
 
-import { RefObject } from 'react';
+import { RefObject, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   InformationCircleIcon,
@@ -79,6 +79,16 @@ export default function ResultPreviewModal({
   onClose,
   onDownload,
 }: ResultPreviewModalProps) {
+  // 모달 스크롤 방지 (html + body)
+  useEffect(() => {
+    if (show) {
+      document.documentElement.classList.add('modal-open');
+      return () => {
+        document.documentElement.classList.remove('modal-open');
+      };
+    }
+  }, [show]);
+
   if (!show) return null;
 
   const displayType = previewData?.type || mainTab;
@@ -92,7 +102,7 @@ export default function ResultPreviewModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 pb-20 lg:p-5 lg:pb-5"
+        className="fixed -inset-20 z-50 flex items-center justify-center bg-black/70 p-4 pb-20 lg:p-5 lg:pb-5"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             onClose();

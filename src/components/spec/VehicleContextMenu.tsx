@@ -81,14 +81,14 @@ export default function VehicleContextMenu({
     contextMenu.show
   );
 
-  // 모바일에서만 스크롤 방지
+  // 모바일에서만 스크롤 방지 (html + body)
   useEffect(() => {
     if (contextMenu.show) {
       const isMobile = window.innerWidth < 1024;
       if (isMobile) {
-        document.body.style.overflow = 'hidden';
+        document.documentElement.classList.add('modal-open');
         return () => {
-          document.body.style.overflow = '';
+          document.documentElement.classList.remove('modal-open');
         };
       }
     }

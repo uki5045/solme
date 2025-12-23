@@ -246,6 +246,15 @@
   height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
+/* Modal/Overlay Open State - html + body 동시 스크롤 방지 */
+html.modal-open,
+html.modal-open body {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
 /* 스크롤바 스타일 - 기본 다크 모드 */
 ::-webkit-scrollbar {
   width: 6px;

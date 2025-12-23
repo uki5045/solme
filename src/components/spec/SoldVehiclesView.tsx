@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
@@ -34,6 +34,16 @@ export default function SoldVehiclesView({
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
   useClickOutside(null, () => setContextMenu({ show: false, x: 0, y: 0, item: null }), contextMenu.show, 'click');
 
+  // 스크롤 방지 (html + body)
+  useEffect(() => {
+    if (show) {
+      document.documentElement.classList.add('modal-open');
+      return () => {
+        document.documentElement.classList.remove('modal-open');
+      };
+    }
+  }, [show]);
+
   if (!show) return null;
 
   const soldList = vehicleList
@@ -56,7 +66,7 @@ export default function SoldVehiclesView({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]">
+    <div className="fixed -inset-20 z-50 flex flex-col bg-gray-100 pt-20 dark:bg-[#0f1115]">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90">
         <div className="flex h-14 items-center justify-between px-4">

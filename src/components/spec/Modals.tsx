@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ExclamationTriangleIcon,
@@ -10,18 +11,34 @@ import {
 import type { VehicleStatus, MainTab } from './types';
 import { STATUS_CHANGE_LABELS } from './constants';
 
-// 공통 모달 백드롭
-const ModalBackdrop = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
-    onClick={onClose}
-  >
-    {children}
-  </motion.div>
-);
+// 모달 스크롤 방지 훅
+function useModalScrollLock(show: boolean) {
+  useEffect(() => {
+    if (show) {
+      document.documentElement.classList.add('modal-open');
+      return () => {
+        document.documentElement.classList.remove('modal-open');
+      };
+    }
+  }, [show]);
+}
+
+// 공통 모달 백드롭 (iOS Safari 상태바/주소창 영역까지 확장)
+const ModalBackdrop = ({ children, onClose, show }: { children: React.ReactNode; onClose: () => void; show: boolean }) => {
+  useModalScrollLock(show);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed -inset-20 z-50 flex items-center justify-center bg-black/60 p-5"
+      onClick={onClose}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 // 공통 모달 컨테이너
 const ModalContainer = ({ children, onClick }: { children: React.ReactNode; onClick?: (e: React.MouseEvent) => void }) => (
@@ -48,7 +65,7 @@ export function DeleteModal({ show, vehicleNumber, onClose, onConfirm }: DeleteM
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop onClose={onClose} show={show}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
@@ -93,7 +110,7 @@ export function ResetModal({ show, vehicleType, onClose, onConfirm }: ResetModal
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop onClose={onClose} show={show}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
@@ -137,7 +154,7 @@ export function OverwriteModal({ show, onClose, onConfirm }: OverwriteModalProps
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop onClose={onClose} show={show}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
@@ -182,7 +199,7 @@ export function SaveConfirmModal({ show, vehicleNumber, onClose, onConfirm }: Sa
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop onClose={onClose} show={show}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -228,7 +245,7 @@ export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onC
   return (
     <AnimatePresence>
       {show && newStatus && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop onClose={onClose} show={show}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
