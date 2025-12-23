@@ -89,21 +89,18 @@ export default function ResultPreviewModal({
 
   return (
     <AnimatePresence>
-      {/* absolute 기반 중앙 정렬 (오버레이 없음) */}
-      <div
-        className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      {/* 카드형 팝업 (absolute, 전체화면 덮지 않음) */}
+      <div className="pointer-events-none absolute left-0 right-0 top-16 z-50 flex justify-center px-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-          className="pointer-events-auto flex max-h-[80vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-[#1c1f26] dark:ring-white/10"
+          className="pointer-events-auto flex max-h-[75vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-[#1c1f26] dark:ring-white/10"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 헤더 버튼 */}
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
+          <div className="flex shrink-0 items-center justify-between gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
             <div className="flex gap-2.5">
               <button
                 onClick={() => onDownload(displayType)}

@@ -59,49 +59,50 @@ export default function SoldVehiclesView({
 
   return (
     <AnimatePresence>
-      {/* absolute 기반 오버레이 (full-screen 패널 형태) */}
-      <motion.div
-        initial={{ opacity: 0, x: '100%' }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 380 }}
-        className="absolute inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]"
-      >
-        {/* 헤더 */}
-        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl dark:border-[#2a2f3a] dark:bg-[#1c1f26]/90">
-          <div className="flex h-14 items-center justify-between px-4">
-            <button
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-            >
-              <ChevronLeftIcon className="size-5" />
-            </button>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
-            <button
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-            >
-              <XMarkIcon className="size-5" />
-            </button>
+      {/* absolute 기반 슬라이드-인 패널 (전체 화면 덮지 않음) */}
+      <div className="pointer-events-none absolute right-0 top-0 z-50 flex h-full max-h-screen w-full max-w-md justify-end p-4 pt-20">
+        <motion.div
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 100 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 380 }}
+          className="pointer-events-auto flex h-fit max-h-[calc(100%-2rem)] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-[#1c1f26] dark:ring-white/10"
+        >
+          {/* 헤더 */}
+          <div className="shrink-0 border-b border-gray-200 bg-white dark:border-[#2a2f3a] dark:bg-[#1c1f26]">
+            <div className="flex h-14 items-center justify-between px-4">
+              <button
+                onClick={onClose}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                <ChevronLeftIcon className="size-5" />
+              </button>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
+              <button
+                onClick={onClose}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                <XMarkIcon className="size-5" />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* 검색바 */}
-        <div className="p-4 pb-2">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="차량번호, 모델명으로 검색"
-              className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-[#363b47] dark:bg-[#1c1f26] dark:text-white dark:placeholder-gray-500 dark:focus:border-accent-400"
-            />
+          {/* 검색바 */}
+          <div className="shrink-0 p-4 pb-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="차량번호, 모델명으로 검색"
+                className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-[#363b47] dark:bg-[#1c1f26] dark:text-white dark:placeholder-gray-500 dark:focus:border-accent-400"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* 카드 목록 */}
-        <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          {/* 카드 목록 */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
           {soldList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
@@ -186,29 +187,30 @@ export default function SoldVehiclesView({
           )}
         </div>
 
-        {/* 컨텍스트 메뉴 (absolute 기반) */}
-        {contextMenu.show && contextMenu.item && (
-          <div
-            className="absolute z-[60] min-w-[160px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-            style={{ left: contextMenu.x, top: contextMenu.y }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => {
-                const vehicleNumber = contextMenu.item?.vehicleNumber;
-                setContextMenu({ show: false, x: 0, y: 0, item: null });
-                if (vehicleNumber) {
-                  handleReregister(vehicleNumber);
-                }
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
+          {/* 컨텍스트 메뉴 (패널 내부 absolute) */}
+          {contextMenu.show && contextMenu.item && (
+            <div
+              className="absolute z-[60] min-w-[160px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+              style={{ left: Math.min(contextMenu.x, 200), top: contextMenu.y }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <ArrowPathIcon className="size-4" />
-              재등록 (입고)
-            </button>
-          </div>
-        )}
-      </motion.div>
+              <button
+                onClick={() => {
+                  const vehicleNumber = contextMenu.item?.vehicleNumber;
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                  if (vehicleNumber) {
+                    handleReregister(vehicleNumber);
+                  }
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
+              >
+                <ArrowPathIcon className="size-4" />
+                재등록 (입고)
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 }

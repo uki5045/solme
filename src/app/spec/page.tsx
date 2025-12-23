@@ -95,6 +95,7 @@ export default function SpecPage() {
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const statusTabListRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
 
   // 차량 리스트 필터링 (메모이제이션)
   const filteredVehicleList = useMemo(() => {
@@ -365,18 +366,10 @@ export default function SpecPage() {
   };
 
   return (
-    <>
-      {/* iOS PWA Safe Area 배경 - 시스템 테마 자동 적응 (상태바/주소창 영역 확장) */}
-      <div
-        className="fixed -inset-20 -z-10 bg-gray-100 dark:bg-[#121418]"
-        aria-hidden="true"
-      />
-
-      <div className="min-h-dvh bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100">
-      {/* iOS Safari 상단 고정 영역 - 헤더와 같은 색상 */}
-      <div className="fixed inset-x-0 top-0 z-50 h-[env(safe-area-inset-top)] bg-white dark:bg-[#1c1f26]" />
-
-
+    <div
+      ref={pageContainerRef}
+      className="spec-page-container relative overflow-visible bg-gray-100 font-sans text-gray-700 dark:bg-[#121418] dark:text-gray-100"
+    >
       {/* 헤더 */}
       <SpecHeader
         toast={toast}
@@ -455,7 +448,9 @@ export default function SpecPage() {
         />
       </div>
 
-      {/* 결과 모달 */}
+      {/* ===== 팝업/모달 영역 (스크롤 컨테이너 외부, relative 컨테이너 내부) ===== */}
+
+      {/* 결과 미리보기 모달 (카드형 팝업) */}
       <ResultPreviewModal
         show={showResult}
         previewData={previewData}
@@ -472,7 +467,7 @@ export default function SpecPage() {
         onDownload={downloadPNG}
       />
 
-      {/* 모달 컴포넌트들 */}
+      {/* 확인 모달들 (카드형 팝업) */}
       <DeleteModal
         show={deleteModal.show}
         vehicleNumber={deleteModal.vehicleNumber}
@@ -520,7 +515,7 @@ export default function SpecPage() {
         }}
       />
 
-      {/* 판매완료 뷰 */}
+      {/* 판매완료 뷰 (슬라이드 패널 - 바텀시트 형태) */}
       <SoldVehiclesView
         show={showSoldView}
         onClose={() => setShowSoldView(false)}
@@ -530,9 +525,6 @@ export default function SpecPage() {
 
       {/* Toast 알림 - 모바일 전용 (PC는 헤더에 통합) */}
       <Toast show={toast.show} message={toast.message} type={toast.type} />
-
     </div>
-    </>
   );
 }
-
