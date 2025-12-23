@@ -224,7 +224,7 @@ export default function SpecHeader({
           </div>
 
           {/* 중앙: 버전 표시 */}
-          <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">v3.0</span>
+          <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">v3.0.1</span>
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center gap-1 lg:gap-1.5">
