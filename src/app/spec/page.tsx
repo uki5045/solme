@@ -153,7 +153,7 @@ export default function SpecPage() {
   useClickOutside(userDropdownRef, () => setShowUserDropdown(false), showUserDropdown);
 
   // 롱프레스 핸들러 (모바일)
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useLongPress<VehicleListItem>(setContextMenu);
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, pressingItemId } = useLongPress<VehicleListItem>(setContextMenu);
 
 
   // 카드 클릭 시 미리보기 모달만 표시 (폼에 데이터 넣지 않음)
@@ -446,6 +446,7 @@ export default function SpecPage() {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          pressingItemId={pressingItemId}
           contextMenu={contextMenu}
           onContextMenuClose={() => setContextMenu({ show: false, x: 0, y: 0, item: null })}
           onStatusChange={requestStatusChange}

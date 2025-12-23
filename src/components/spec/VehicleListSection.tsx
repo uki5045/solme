@@ -44,6 +44,7 @@ interface VehicleListSectionProps {
   onTouchStart: (e: React.TouchEvent, item: VehicleListItem) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: () => void;
+  pressingItemId: number | null;
 
   // 컨텍스트 메뉴
   contextMenu: ContextMenuState;
@@ -73,6 +74,7 @@ export default function VehicleListSection({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
+  pressingItemId,
   contextMenu,
   onContextMenuClose,
   onStatusChange,
@@ -186,6 +188,7 @@ export default function VehicleListSection({
                   onTouchMove={onTouchMove}
                   onTouchEnd={onTouchEnd}
                   contextMenuOpen={contextMenu.show}
+                  isPressing={pressingItemId === item.id}
                 />
               ))}
             </div>
