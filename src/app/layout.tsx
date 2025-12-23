@@ -73,7 +73,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-gray-100 antialiased dark:bg-[#111111]">
+      <body className="bg-[#111111] antialiased">
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

@@ -35,7 +35,6 @@ const VehicleCard = memo(function VehicleCard({
   onTouchMove,
   onTouchEnd,
   contextMenuOpen,
-  isPressing = false,
 }: VehicleCardProps) {
   return (
     <div
@@ -62,7 +61,7 @@ const VehicleCard = memo(function VehicleCard({
       }}
       className={`spec-card ${
         highlightedVehicle === item.vehicleNumber ? 'spec-card--highlighted' : ''
-      } ${isPressing ? 'spec-card--pressing' : ''}`}
+      }`}
     >
       {/* 차량번호 + 배지 (같은 줄) */}
       <div className="mb-2 flex items-center justify-between">

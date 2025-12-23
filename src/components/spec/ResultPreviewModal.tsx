@@ -1,11 +1,10 @@
 'use client';
 
-import { RefObject } from 'react';
+import { RefObject, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   InformationCircleIcon,
   ChatBubbleBottomCenterTextIcon,
-  XMarkIcon,
 } from '@heroicons/react/16/solid';
 import type { CamperData, CaravanData, MainTab } from './types';
 import { formatNumber, parseYear, parseFirstReg } from './utils';
@@ -89,37 +88,36 @@ export default function ResultPreviewModal({
 
   return (
     <AnimatePresence>
-      {/* 카드형 팝업 (absolute, 전체화면 덮지 않음) */}
-      <div className="pointer-events-none absolute left-0 right-0 top-16 z-50 flex justify-center px-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 pb-20 lg:p-5 lg:pb-5"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
+        }}
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-          className="pointer-events-auto flex max-h-[75vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-[#1c1f26] dark:ring-white/10"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1c1f26] lg:max-h-[95vh]"
         >
           {/* 헤더 버튼 */}
-          <div className="flex shrink-0 items-center justify-between gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
-            <div className="flex gap-2.5">
-              <button
-                onClick={() => onDownload(displayType)}
-                className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
-              >
-                다운로드
-              </button>
-              <button
-                onClick={onClose}
-                className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                닫기
-              </button>
-            </div>
+          <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
+            <button
+              onClick={() => onDownload(displayType)}
+              className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
+            >
+              다운로드
+            </button>
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+              className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-              <XMarkIcon className="size-5" />
+              닫기
             </button>
           </div>
 
@@ -292,7 +290,7 @@ export default function ResultPreviewModal({
             )}
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </AnimatePresence>
   );
 }

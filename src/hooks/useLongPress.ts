@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface LongPressItem {
   id: number;
@@ -35,16 +35,9 @@ export function useLongPress<T extends LongPressItem>(
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressTouchRef = useRef<{ x: number; y: number; item: T } | null>(null);
 
-  // 시각적 피드백용 상태
-  const [pressingItemId, setPressingItemId] = useState<number | null>(null);
-
   const handleTouchStart = useCallback((e: React.TouchEvent, item: T) => {
     const touch = e.touches[0];
     longPressTouchRef.current = { x: touch.clientX, y: touch.clientY, item };
-
-    // 누르기 시작 시 시각적 피드백
-    setPressingItemId(item.id);
-
     longPressTimerRef.current = setTimeout(() => {
       if (longPressTouchRef.current) {
         setContextMenu({
@@ -53,8 +46,6 @@ export function useLongPress<T extends LongPressItem>(
           y: longPressTouchRef.current.y,
           item: longPressTouchRef.current.item,
         });
-        // 컨텍스트 메뉴가 열리면 누르기 상태 해제
-        setPressingItemId(null);
       }
     }, delay);
   }, [setContextMenu, delay]);
@@ -68,7 +59,6 @@ export function useLongPress<T extends LongPressItem>(
         clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
         longPressTouchRef.current = null;
-        setPressingItemId(null);
       }
     }
   }, [moveThreshold]);
@@ -79,13 +69,11 @@ export function useLongPress<T extends LongPressItem>(
       longPressTimerRef.current = null;
     }
     longPressTouchRef.current = null;
-    setPressingItemId(null);
   }, []);
 
   return {
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd,
-    pressingItemId,
   };
 }
