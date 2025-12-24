@@ -71,18 +71,26 @@ function TabsList({ children, className, indicatorClassName, ...props }: TabsLis
   const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (!listRef.current) return;
+    const updateIndicator = () => {
+      if (!listRef.current) return;
 
-    const activeButton = listRef.current.querySelector(
-      `[data-value="${activeValue}"]`
-    ) as HTMLElement;
+      const activeButton = listRef.current.querySelector(
+        `[data-value="${activeValue}"]`
+      ) as HTMLElement;
 
-    if (activeButton) {
-      setIndicatorStyle({
-        x: activeButton.offsetLeft,
-        width: activeButton.offsetWidth,
-      });
-    }
+      if (activeButton) {
+        setIndicatorStyle({
+          x: activeButton.offsetLeft,
+          width: activeButton.offsetWidth,
+        });
+      }
+    };
+
+    updateIndicator();
+
+    // 리사이즈 시 인디케이터 위치 재계산
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
   }, [activeValue]);
 
   return (

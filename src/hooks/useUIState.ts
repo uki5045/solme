@@ -51,7 +51,7 @@ export function useUIState(): UseUIStateReturn {
 
   // 반응형
   const [isMobileView, setIsMobileView] = useState(false);
-  const [mobileView, setMobileView] = useState<'form' | 'list'>('form');
+  const [mobileView, setMobileView] = useState<'form' | 'list'>('list');
 
   // 컨텍스트 메뉴
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
