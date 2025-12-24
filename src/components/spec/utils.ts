@@ -110,6 +110,9 @@ export const formatPrice = (value: string): string => {
   }
 
   if (rest > 0) {
+    // 억이 있으면 띄어쓰기 추가
+    if (eok > 0) result += ' ';
+
     if (rest % 1000 === 0) {
       // 정확히 천 단위면 한글로
       result += `${rest / 1000}천만원`;
@@ -117,9 +120,6 @@ export const formatPrice = (value: string): string => {
       // 그 외는 쉼표 포맷
       result += `${rest.toLocaleString()}만원`;
     }
-  } else if (eok > 0) {
-    // 억 단위만 있을 때
-    result += '';
   }
 
   // 억만 있고 나머지가 0일 때
