@@ -65,7 +65,7 @@ export function DeleteModal({ show, vehicleNumber, onClose, onConfirm }: DeleteM
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
@@ -110,7 +110,7 @@ export function ResetModal({ show, vehicleType, onClose, onConfirm }: ResetModal
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
@@ -154,7 +154,7 @@ export function OverwriteModal({ show, onClose, onConfirm }: OverwriteModalProps
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
@@ -199,7 +199,7 @@ export function SaveConfirmModal({ show, vehicleNumber, onClose, onConfirm }: Sa
   return (
     <AnimatePresence>
       {show && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -245,7 +245,7 @@ export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onC
   return (
     <AnimatePresence>
       {show && newStatus && (
-        <ModalBackdrop onClose={onClose}>
+        <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">

@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useLayoutEffect, useState } from 'react';
+import { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   CheckIcon,
   PencilSquareIcon,
@@ -81,12 +82,17 @@ export default function VehicleContextMenu({
     contextMenu.y,
     contextMenu.show
   );
+  const [mounted, setMounted] = useState(false);
 
-  if (!contextMenu.show || !contextMenu.item) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !contextMenu.show || !contextMenu.item) return null;
 
   const { item } = contextMenu;
 
-  return (
+  return createPortal(
     <div
       ref={menuRef}
       className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
@@ -156,6 +162,7 @@ export default function VehicleContextMenu({
         <TrashIcon className="size-4" />
         삭제
       </button>
-    </div>
+    </div>,
+    document.body
   );
 }
