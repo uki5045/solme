@@ -122,45 +122,6 @@ export default function FormSection({
 
       {/* 폼 콘텐츠 */}
       <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-        {/* 스텝 인디케이터 */}
-        <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-          {[1, 2, 3].map((s) => (
-            <div key={s} className="flex flex-1 items-center gap-2">
-              <div
-                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                  s < step
-                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                    : s === step
-                    ? 'bg-accent-500 text-white shadow-sm shadow-accent-500/30'
-                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
-                }`}
-              >
-                {s < step ? (
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                ) : (
-                  s
-                )}
-              </div>
-              <span
-                className={`text-xs font-medium transition-colors ${
-                  s === step ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
-                }`}
-              >
-                {s === 1 ? '기본정보' : s === 2 ? '제원' : '옵션'}
-              </span>
-              {s < 3 && (
-                <div
-                  className={`h-0.5 flex-1 rounded-full transition-colors ${
-                    s < step ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-700'
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
         {tabLoading ? (
           <div className="flex min-h-[200px] items-center justify-center">
             <div className="flex flex-col items-center gap-2">
