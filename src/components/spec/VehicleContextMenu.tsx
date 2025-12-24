@@ -118,7 +118,7 @@ export default function VehicleContextMenu({
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]'
             }`}
           >
-            {isCurrentStatus && <CheckIcon className="size-4 text-accent-500" />}
+            {isCurrentStatus && <CheckIcon className="size-4 text-accent-600 dark:text-emerald-400" />}
             <span className={isCurrentStatus ? '' : 'ml-6'}>{STATUS_LABELS[status]}</span>
           </button>
         );
