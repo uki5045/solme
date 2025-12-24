@@ -135,12 +135,12 @@ export default function SpecHeader({
           {/* 좌측: 모바일 - 뷰 전환 탭 / 데스크톱 - 사용자 정보 */}
           <div className="flex items-center">
             {/* 모바일: 뷰 전환 탭 */}
-            <div className="flex items-center gap-0.5 rounded-xl bg-gray-100 p-1 lg:hidden dark:bg-gray-800">
+            <div className="flex items-center gap-0.5 rounded-xl bg-white p-1 shadow-sm lg:hidden dark:bg-[#1c1f26]">
               <button
                 onClick={() => { setMobileView('form'); setShowSoldView(false); }}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   mobileView === 'form' && !showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-gradient-to-b from-accent-500 to-accent-600 text-white shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-accent-500/30'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
@@ -150,7 +150,7 @@ export default function SpecHeader({
                 onClick={() => { setMobileView('list'); setShowSoldView(false); }}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   mobileView === 'list' && !showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-gradient-to-b from-accent-500 to-accent-600 text-white shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-accent-500/30'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function SpecHeader({
                 onClick={() => setShowSoldView(true)}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-gradient-to-b from-accent-500 to-accent-600 text-white shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-accent-500/30'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
