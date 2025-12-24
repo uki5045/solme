@@ -135,12 +135,12 @@ export default function SpecHeader({
           {/* 좌측: 모바일 - 뷰 전환 탭 / 데스크톱 - 사용자 정보 */}
           <div className="flex items-center">
             {/* 모바일: 뷰 전환 탭 */}
-            <div className="flex items-center gap-0.5 rounded-xl bg-gray-100 p-1 lg:hidden dark:bg-gray-800">
+            <div className="flex items-center gap-0.5 rounded-xl bg-gray-200 p-1 lg:hidden dark:bg-gray-800">
               <button
                 onClick={() => { setMobileView('form'); setShowSoldView(false); }}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   mobileView === 'form' && !showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-white text-gray-700 shadow-sm dark:bg-gray-700 dark:text-white'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
@@ -150,7 +150,7 @@ export default function SpecHeader({
                 onClick={() => { setMobileView('list'); setShowSoldView(false); }}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   mobileView === 'list' && !showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-white text-gray-700 shadow-sm dark:bg-gray-700 dark:text-white'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function SpecHeader({
                 onClick={() => setShowSoldView(true)}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
                   showSoldView
-                    ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-white'
+                    ? 'bg-white text-gray-700 shadow-sm dark:bg-gray-700 dark:text-white'
                     : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
