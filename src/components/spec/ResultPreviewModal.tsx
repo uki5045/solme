@@ -33,7 +33,7 @@ const formatOptions = (text: string): React.ReactNode => {
       {items.map((item, index) => (
         <span
           key={index}
-          className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm text-gray-700"
+          className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
         >
           {item}
         </span>
@@ -54,9 +54,9 @@ const formatElectric = (items: { label: string; value: string; unit: string }[])
         return (
           <span
             key={index}
-            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm"
+            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm dark:bg-gray-700"
           >
-            <span className="text-gray-700">{item.label} {displayValue} {item.unit}</span>
+            <span className="text-gray-700 dark:text-gray-200">{item.label} {displayValue} {item.unit}</span>
           </span>
         );
       })}
