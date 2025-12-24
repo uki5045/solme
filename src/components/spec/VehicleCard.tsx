@@ -86,7 +86,7 @@ const VehicleCard = memo(function VehicleCard({
             <span>{item.modelName || '모델명 없음'}</span>
           </div>
           {item.price && (
-            <div className="mt-1 text-sm font-semibold text-accent-600 dark:text-accent-400">
+            <div className="mt-1 text-sm font-semibold text-accent-600 dark:text-accent-300">
               {formatPrice(item.price)}
             </div>
           )}

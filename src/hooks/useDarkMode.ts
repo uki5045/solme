@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 interface UseDarkModeReturn {
   isDarkMode: boolean;
+  mounted: boolean;
   toggleDarkMode: () => void;
 }
 
@@ -16,16 +17,6 @@ interface UseDarkModeOptions {
   defaultBgColor?: string;
 }
 
-// 초기 다크모드 상태 계산 (SSR 안전)
-function getInitialDarkMode(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') return true;
-  if (savedTheme === 'light') return false;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
 export function useDarkMode(options: UseDarkModeOptions = {}): UseDarkModeReturn {
   const {
     darkBgColor = '#121418',
@@ -33,7 +24,20 @@ export function useDarkMode(options: UseDarkModeOptions = {}): UseDarkModeReturn
     defaultBgColor = '#111111',
   } = options;
 
-  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
+  const [mounted, setMounted] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // 클라이언트에서만 실제 값으로 초기화
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    let initialDark = false;
+    if (savedTheme === 'dark') initialDark = true;
+    else if (savedTheme === 'light') initialDark = false;
+    else initialDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    setIsDarkMode(initialDark);
+    setMounted(true);
+  }, []);
 
   // 초기 DOM 동기화 + 시스템 설정 변경 감지
   useEffect(() => {
