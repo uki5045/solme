@@ -135,7 +135,7 @@ export default function SpecHeader({
           {/* 좌측: 모바일 - 뷰 전환 탭 / 데스크톱 - 사용자 정보 */}
           <div className="flex items-center">
             {/* 모바일: 뷰 전환 탭 */}
-            <div className="flex items-center gap-0.5 rounded-xl bg-gray-100 p-1 lg:hidden dark:bg-gray-700/50">
+            <div className="flex items-center gap-0.5 rounded-xl bg-gray-100 p-1 lg:hidden dark:bg-[#2a2f3a]">
               <button
                 onClick={() => { setMobileView('form'); setShowSoldView(false); }}
                 className={`rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-all ${
