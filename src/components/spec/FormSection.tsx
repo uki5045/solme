@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/tabs';
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid';
 import CamperForm from './CamperForm';
 import CaravanForm from './CaravanForm';
 import type { CamperData, CaravanData, MainTab, FormStep } from './types';
@@ -33,7 +33,6 @@ interface FormSectionProps {
   setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 
   // 버튼 핸들러
-  onReset: () => void;
   onPrev: () => void;
   onNext: () => void;
 }
@@ -54,7 +53,6 @@ export default function FormSection({
   setCaravanData,
   fieldErrors,
   setFieldErrors,
-  onReset,
   onPrev,
   onNext,
 }: FormSectionProps) {
@@ -83,54 +81,86 @@ export default function FormSection({
 
   return (
     <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:max-w-[440px] ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
-      {/* 애니메이션 메인 탭 */}
-      <Tabs
-        defaultValue="camper"
-        value={mainTab}
-        onValueChange={(value) => onMainTabChange(value as MainTab)}
-        className="mb-3"
-      >
-        <TabsList
-          className="grid w-full grid-cols-2 !border-0 !bg-white shadow-sm dark:!bg-[#1c1f26]"
-          indicatorClassName="bg-gradient-to-b from-accent-500 to-accent-600 shadow-sm shadow-accent-500/25 dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-500/30"
-        >
-          <TabsTrigger
-            value="camper"
-            className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
-          >
-            캠핑카
-          </TabsTrigger>
-          <TabsTrigger
-            value="caravan"
-            className="rounded-lg py-3 text-base font-semibold text-gray-500 data-[state=active]:text-white dark:text-gray-400 dark:data-[state=active]:text-white"
-          >
-            카라반
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {/* 차량 검색 (데스크탑에서만 표시) */}
-      <div className="mb-3 hidden rounded-2xl bg-white p-4 shadow-sm dark:bg-[#1c1f26] lg:block">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="차량번호, 모델명, 제조사로 검색"
-          className="form-input"
-        />
+      {/* 검색창 */}
+      <div className="mb-3 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26]">
+        <div className="relative">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="차량번호, 모델명, 제조사로 검색"
+            className="form-input !pl-11"
+          />
+        </div>
       </div>
 
       {/* 폼 콘텐츠 */}
       <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
-        {tabLoading ? (
-          <div className="flex min-h-[200px] items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-200 border-t-accent-500"></div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">불러오는 중...</span>
+        <div ref={formContainerRef} className="p-5">
+            {/* 캠핑카/카라반 세그먼트 컨트롤 */}
+            <div className="mb-3">
+              <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">종류</label>
+              <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
+              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                <input
+                  type="radio"
+                  name="vehicleTypeSelect"
+                  value="camper"
+                  checked={mainTab === 'camper'}
+                  onChange={() => onMainTabChange('camper')}
+                  className="sr-only"
+                />
+                <span className="relative z-10">캠핑카</span>
+              </label>
+              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                <input
+                  type="radio"
+                  name="vehicleTypeSelect"
+                  value="caravan"
+                  checked={mainTab === 'caravan'}
+                  onChange={() => onMainTabChange('caravan')}
+                  className="sr-only"
+                />
+                <span className="relative z-10">카라반</span>
+              </label>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div ref={formContainerRef} className="p-5">
+
+            {/* 매입/위탁 세그먼트 컨트롤 */}
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">구분</label>
+              <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
+              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                <input
+                  type="radio"
+                  name="saleTypeSelect"
+                  value="매입"
+                  checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '매입'}
+                  onChange={() => {
+                    setCamperData(prev => ({ ...prev, saleType: '매입' }));
+                    setCaravanData(prev => ({ ...prev, saleType: '매입' }));
+                  }}
+                  className="sr-only"
+                />
+                <span className="relative z-10">매입</span>
+              </label>
+              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                <input
+                  type="radio"
+                  name="saleTypeSelect"
+                  value="위탁"
+                  checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '위탁'}
+                  onChange={() => {
+                    setCamperData(prev => ({ ...prev, saleType: '위탁' }));
+                    setCaravanData(prev => ({ ...prev, saleType: '위탁' }));
+                  }}
+                  className="sr-only"
+                />
+                <span className="relative z-10">위탁</span>
+              </label>
+              </div>
+            </div>
             {mainTab === 'camper' ? (
               <CamperForm
                 step={step}
@@ -148,19 +178,11 @@ export default function FormSection({
                 clearError={step === 1 ? (key) => setFieldErrors(prev => { const next = {...prev}; delete next[key]; return next; }) : undefined}
               />
             )}
-          </div>
-        )}
+        </div>
 
         {/* 하단 버튼 - 항상 하단에 고정 */}
         <div className="mt-auto flex gap-3 border-t border-gray-100 p-5 dark:border-gray-800">
-          {step === 1 ? (
-            <button
-              onClick={onReset}
-              className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
-            >
-              초기화
-            </button>
-          ) : (
+          {step > 1 && (
             <button
               onClick={onPrev}
               className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"

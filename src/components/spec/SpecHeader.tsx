@@ -3,6 +3,7 @@
 import { RefObject } from 'react';
 import Image from 'next/image';
 import { signOut } from 'next-auth/react';
+import { version } from '../../../package.json';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   XMarkIcon,
@@ -192,7 +193,7 @@ export default function SpecHeader({
                       {session?.user?.name || session?.user?.email?.split('@')[0]}
                     </span>
                     <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500">
-                      v3.0.4
+                      v{version}
                     </span>
                   </div>
                   {session?.user?.name && (
@@ -227,9 +228,6 @@ export default function SpecHeader({
               </AnimatePresence>
             </div>
           </div>
-
-          {/* 중앙: 빈 공간 (밸런스용) */}
-          <div className="hidden lg:block" />
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center gap-1 lg:gap-1.5">

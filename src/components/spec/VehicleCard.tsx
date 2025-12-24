@@ -10,6 +10,7 @@ interface VehicleItem {
   modelName: string;
   manufacturer: string;
   price: string;
+  year: string;
   updatedAt: string;
   status: 'intake' | 'productization' | 'advertising' | 'sold';
   isIncomplete: boolean;
@@ -38,6 +39,9 @@ const VehicleCard = memo(function VehicleCard({
   onTouchEnd,
   contextMenuOpen,
 }: VehicleCardProps) {
+  // 연식 표시 포맷 (연도만 표시)
+  const yearDisplay = item.year ? item.year.split('.')[0] + '년식' : '';
+
   return (
     <div
       role="button"
@@ -63,10 +67,10 @@ const VehicleCard = memo(function VehicleCard({
       }}
       className={`spec-card ${
         highlightedVehicle === item.vehicleNumber ? 'spec-card--highlighted' : ''
-      }`}
+      } ${item.isIncomplete ? 'ring-2 ring-amber-400 dark:ring-amber-500' : ''}`}
     >
-      {/* 차량번호 + 배지 (같은 줄) */}
-      <div className="mb-2 flex items-center justify-between">
+      {/* Row 1: [구분][차량번호] [타입] */}
+      <div className="mb-1.5 flex items-center justify-between">
         <div className="flex shrink-0 items-center gap-2">
           <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
             {item.saleType === '위탁' ? '위' : '매'}
@@ -78,30 +82,25 @@ const VehicleCard = memo(function VehicleCard({
         </span>
       </div>
 
-      {/* 제조사 + 모델명 + 가격 + 미입력 아이콘 */}
-      <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm text-gray-600 dark:text-gray-400">
-            {item.manufacturer && <span>{item.manufacturer} </span>}
-            <span>{item.modelName || '모델명 없음'}</span>
-          </div>
-          {item.price ? (
-            <div className="mt-1 text-sm font-semibold text-accent-600 dark:text-emerald-400">
-              {formatPrice(item.price)}
-            </div>
-          ) : (
-            <div className="mt-1 h-5" />
-          )}
+      {/* Row 2: [제조사][모델명] [연식] */}
+      <div className="mb-1 flex items-center justify-between">
+        <div className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-400">
+          {item.manufacturer && <span>{item.manufacturer} </span>}
+          <span>{item.modelName || '모델명 없음'}</span>
         </div>
-        {item.isIncomplete && (
-          <span
-            className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-bold text-white shadow-sm shadow-amber-400/50 dark:shadow-amber-400/60"
-            title="옵션 미입력"
-          >
-            !
-          </span>
+        {yearDisplay && (
+          <span className="ml-2 shrink-0 text-xs text-gray-500 dark:text-gray-500">{yearDisplay}</span>
         )}
       </div>
+
+      {/* Row 3: [가격] */}
+      {item.price ? (
+        <div className="text-sm font-semibold text-accent-600 dark:text-emerald-400">
+          {formatPrice(item.price)}
+        </div>
+      ) : (
+        <div className="h-5" />
+      )}
     </div>
   );
 });

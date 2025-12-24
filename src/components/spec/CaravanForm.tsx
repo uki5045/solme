@@ -1,7 +1,7 @@
 'use client';
 
 import type { CaravanData, FormStep } from './types';
-import { onlyNumbers, onlyDecimalPlus } from './utils';
+import { onlyNumbers, onlyDecimalPlus, formatNumber } from './utils';
 import { ErrorIcon, FormRow, FormSelect, InputWithUnit } from './FormComponents';
 import YearMonthInput from './YearMonthInput';
 
@@ -55,14 +55,16 @@ export default function CaravanForm({
           </FormRow>
         </div>
         <FormRow label="가격" hint="만원 단위">
-          <InputWithUnit unit="만원" type="text" inputMode="numeric" value={data.price} onChange={(e) => setData({ ...data, price: onlyNumbers(e.target.value) })} placeholder="4100" />
+          <InputWithUnit unit="만원" type="text" inputMode="numeric" value={formatNumber(data.price)} onChange={(e) => setData({ ...data, price: onlyNumbers(e.target.value) })} placeholder="4,100" />
         </FormRow>
-        <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
-          <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
-        </FormRow>
-        <FormRow label="최초등록일">
-          <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
-        </FormRow>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="연식" hint="월 입력 시 '제작연월'">
+            <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
+          </FormRow>
+          <FormRow label="최초등록일">
+            <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
+          </FormRow>
+        </div>
         <div className="mb-3">
           <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
             <div className="relative flex items-center justify-center">
@@ -86,28 +88,24 @@ export default function CaravanForm({
             />
           )}
         </div>
-        <FormRow label="취침인원">
-          <div className="flex gap-2">
-            <input type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" className="form-input flex-1" />
-            <FormSelect value={data.saleType} onChange={(e) => setData({ ...data, saleType: e.target.value })} className="w-24 shrink-0">
-              <option value="매입">매입</option>
-              <option value="위탁">위탁</option>
-            </FormSelect>
+        <div className="mt-4 flex flex-col gap-3">
+          <FormRow label="취침인원">
+            <InputWithUnit unit="명" type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" />
+          </FormRow>
+          <div className="grid grid-cols-2 gap-3">
+            <FormRow label="차고지 증명">
+              <FormSelect value={data.garageProof} onChange={(e) => setData({ ...data, garageProof: e.target.value })}>
+                <option value="불필요">불필요</option>
+                <option value="필요(도와드릴게요)">필요(도와드릴게요)</option>
+              </FormSelect>
+            </FormRow>
+            <FormRow label="현금 영수증">
+              <FormSelect value={data.cashReceipt} onChange={(e) => setData({ ...data, cashReceipt: e.target.value })}>
+                <option value="가능">가능</option>
+                <option value="불가능">불가능</option>
+              </FormSelect>
+            </FormRow>
           </div>
-        </FormRow>
-        <div className="grid grid-cols-2 gap-3">
-          <FormRow label="차고지 증명">
-            <FormSelect value={data.garageProof} onChange={(e) => setData({ ...data, garageProof: e.target.value })}>
-              <option value="불필요">불필요</option>
-              <option value="필요(도와드릴게요)">필요(도와드릴게요)</option>
-            </FormSelect>
-          </FormRow>
-          <FormRow label="현금 영수증">
-            <FormSelect value={data.cashReceipt} onChange={(e) => setData({ ...data, cashReceipt: e.target.value })}>
-              <option value="가능">가능</option>
-              <option value="불가능">불가능</option>
-            </FormSelect>
-          </FormRow>
         </div>
       </>
     );

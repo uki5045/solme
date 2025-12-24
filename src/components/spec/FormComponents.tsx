@@ -25,7 +25,7 @@ export function FormRow({
 }) {
   return (
     <div className="mb-4">
-      <label className="mb-2 flex items-baseline gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+      <label className="mb-2 flex items-baseline gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
         <span>
           {label}
           {required && <span className="ml-0.5 text-red-500">*</span>}

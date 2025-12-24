@@ -420,7 +420,6 @@ export default function SpecPage() {
           setCaravanData={setCaravanData}
           fieldErrors={fieldErrors}
           setFieldErrors={setFieldErrors}
-          onReset={openResetModal}
           onPrev={goPrev}
           onNext={goNext}
         />

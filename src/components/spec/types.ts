@@ -14,6 +14,7 @@ export interface VehicleListItem {
   modelName: string;
   manufacturer: string;
   price: string;
+  year: string;
   updatedAt: string;
   status: VehicleStatus;
   isIncomplete: boolean;

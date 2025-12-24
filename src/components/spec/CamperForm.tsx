@@ -1,7 +1,7 @@
 'use client';
 
 import type { CamperData, FormStep } from './types';
-import { onlyNumbers, onlyDecimal, onlyDecimalPlus } from './utils';
+import { onlyNumbers, onlyDecimal, onlyDecimalPlus, formatNumber } from './utils';
 import { ErrorIcon, FormRow, FormSelect, InputWithUnit } from './FormComponents';
 import YearMonthInput from './YearMonthInput';
 
@@ -51,15 +51,26 @@ export default function CamperForm({
             </div>
           </FormRow>
         </div>
-        <FormRow label="가격" hint="만원 단위">
-          <InputWithUnit unit="만원" type="text" inputMode="numeric" value={data.price} onChange={(e) => setData({ ...data, price: onlyNumbers(e.target.value) })} placeholder="4100" />
-        </FormRow>
-        <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
-          <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
-        </FormRow>
-        <FormRow label="최초등록일">
-          <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
-        </FormRow>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="가격" hint="만원 단위">
+            <InputWithUnit unit="만원" type="text" inputMode="numeric" value={formatNumber(data.price)} onChange={(e) => setData({ ...data, price: onlyNumbers(e.target.value) })} placeholder="4,100" />
+          </FormRow>
+          <FormRow label="주행거리" required>
+            <div className="relative">
+              <input type="text" inputMode="numeric" value={formatNumber(data.mileage)} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35,000" className={`form-input pr-12 ${errors.mileage ? 'form-input-error' : ''}`} />
+              <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 dark:text-gray-500">km</span>
+              {errors.mileage && <span className="pointer-events-none absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-500 shadow-sm shadow-red-400/30"><span className="text-xs font-bold text-white">!</span></span>}
+            </div>
+          </FormRow>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FormRow label="연식" hint="월 입력 시 '제작연월'">
+            <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
+          </FormRow>
+          <FormRow label="최초등록일">
+            <YearMonthInput value={data.firstReg} onChange={(v) => setData({ ...data, firstReg: v })} />
+          </FormRow>
+        </div>
         <div className="mb-3">
           <label className="flex w-fit cursor-pointer items-center gap-3 py-1">
             <div className="relative flex items-center justify-center">
@@ -83,19 +94,6 @@ export default function CamperForm({
             />
           )}
         </div>
-        <FormRow label="주행거리" required>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35000" className={`form-input pr-14 ${errors.mileage ? 'form-input-error' : ''}`} />
-              <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 dark:text-gray-500">Km</span>
-              {errors.mileage && <span className="pointer-events-none absolute right-12 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-500 shadow-sm shadow-red-400/30"><span className="text-xs font-bold text-white">!</span></span>}
-            </div>
-            <FormSelect value={data.saleType} onChange={(e) => setData({ ...data, saleType: e.target.value })} className="w-24 shrink-0">
-              <option value="매입">매입</option>
-              <option value="위탁">위탁</option>
-            </FormSelect>
-          </div>
-        </FormRow>
         {/* 드롭다운 2x2 그리드 */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <FormRow label="차종">
@@ -120,7 +118,7 @@ export default function CamperForm({
               <option value="2종 보통면허">2종 보통면허</option>
             </FormSelect>
           </FormRow>
-          <FormRow label="현금영수증">
+          <FormRow label="현금 영수증">
             <FormSelect value={data.cashReceipt} onChange={(e) => setData({ ...data, cashReceipt: e.target.value })}>
               <option value="가능">가능</option>
               <option value="불가능">불가능</option>

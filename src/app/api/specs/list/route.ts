@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
         modelName: d.modelName || '',
         manufacturer: d.manufacturer || '',
         price: d.price || '',
+        year: d.year || '',
         updatedAt: item.updated_at,
         status: item.status || 'intake', // DB constraint: intake, productization, advertising
         isIncomplete,

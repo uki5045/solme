@@ -95,13 +95,13 @@ export default function VehicleListSection({
       )}
 
       {/* 상태 탭 헤더 */}
-      <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-1.5 shadow-sm dark:bg-[#1c1f26]">
+      <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26]">
         {/* 인디케이터 */}
         <div
-          className="absolute top-1.5 bottom-1.5 rounded-xl"
+          className="absolute top-2 bottom-2 rounded-xl"
           style={{
-            width: 'calc(25% - 3px)',
-            left: 6,
+            width: 'calc(25% - 4px)',
+            left: 8,
             transform: `translateX(${statusIndex * 100}%)`,
             ...getStatusTabStyle(statusTab, isDarkMode),
           }}

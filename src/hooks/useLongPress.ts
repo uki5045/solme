@@ -9,6 +9,7 @@ interface LongPressItem {
   modelName: string;
   manufacturer: string;
   price: string;
+  year: string;
   updatedAt: string;
   status: 'intake' | 'productization' | 'advertising' | 'sold';
   isIncomplete: boolean;
