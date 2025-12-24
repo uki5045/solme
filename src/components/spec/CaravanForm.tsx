@@ -24,13 +24,13 @@ export default function CaravanForm({
     return (
       <>
         <div className="grid grid-cols-2 gap-3">
-          <FormRow label="차량번호">
+          <FormRow label="차량번호" required>
             <div className="relative">
               <input type="text" value={data.vehicleNumber} onChange={(e) => { setData({ ...data, vehicleNumber: e.target.value }); clearError?.('vehicleNumber'); }} placeholder="12가1234" className={`form-input ${errors.vehicleNumber ? 'form-input-error pr-10' : ''}`} />
               {errors.vehicleNumber && <ErrorIcon />}
             </div>
           </FormRow>
-          <FormRow label="제조사">
+          <FormRow label="제조사" required>
             <div className="relative">
               <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="코치맨(CM카라반)" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
               {errors.manufacturer && <ErrorIcon />}
@@ -38,7 +38,7 @@ export default function CaravanForm({
           </FormRow>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <FormRow label="모델명">
+          <FormRow label="모델명" required>
             <div className="relative">
               <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="VIP 560" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
               {errors.modelName && <ErrorIcon />}

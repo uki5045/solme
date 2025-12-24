@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/animate-ui/tabs';
 import CamperForm from './CamperForm';
 import CaravanForm from './CaravanForm';
@@ -57,6 +58,29 @@ export default function FormSection({
   onPrev,
   onNext,
 }: FormSectionProps) {
+  // Enter 키로 다음 스텝 이동 (textarea 제외)
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        // textarea나 select에서는 Enter 동작 유지
+        if (target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
+        // 검색 input에서는 무시
+        if (target.getAttribute('placeholder')?.includes('검색')) return;
+        e.preventDefault();
+        onNext();
+      }
+    },
+    [onNext]
+  );
+
+  useEffect(() => {
+    const formContainer = formContainerRef.current;
+    if (!formContainer) return;
+    formContainer.addEventListener('keydown', handleKeyDown);
+    return () => formContainer.removeEventListener('keydown', handleKeyDown);
+  }, [formContainerRef, handleKeyDown]);
+
   return (
     <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:max-w-[440px] ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
       {/* 애니메이션 메인 탭 */}
@@ -98,6 +122,45 @@ export default function FormSection({
 
       {/* 폼 콘텐츠 */}
       <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
+        {/* 스텝 인디케이터 */}
+        <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className="flex flex-1 items-center gap-2">
+              <div
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
+                  s < step
+                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                    : s === step
+                    ? 'bg-accent-500 text-white shadow-sm shadow-accent-500/30'
+                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+                }`}
+              >
+                {s < step ? (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                ) : (
+                  s
+                )}
+              </div>
+              <span
+                className={`text-xs font-medium transition-colors ${
+                  s === step ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'
+                }`}
+              >
+                {s === 1 ? '기본정보' : s === 2 ? '제원' : '옵션'}
+              </span>
+              {s < 3 && (
+                <div
+                  className={`h-0.5 flex-1 rounded-full transition-colors ${
+                    s < step ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-700'
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
         {tabLoading ? (
           <div className="flex min-h-[200px] items-center justify-center">
             <div className="flex flex-col items-center gap-2">

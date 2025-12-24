@@ -187,9 +187,14 @@ export default function SpecHeader({
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-[#1c1f26]" />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                    {session?.user?.name || session?.user?.email?.split('@')[0]}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                      {session?.user?.name || session?.user?.email?.split('@')[0]}
+                    </span>
+                    <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+                      v3.0.4
+                    </span>
+                  </div>
                   {session?.user?.name && (
                     <span className="text-xs text-gray-500 dark:text-gray-500">{session?.user?.email}</span>
                   )}
@@ -223,8 +228,8 @@ export default function SpecHeader({
             </div>
           </div>
 
-          {/* 중앙: 버전 표시 */}
-          <span className="text-[10px] font-medium tracking-wider text-gray-400 dark:text-gray-600">v3.0.4</span>
+          {/* 중앙: 빈 공간 (밸런스용) */}
+          <div className="hidden lg:block" />
 
           {/* 우측: 액션 버튼들 */}
           <div className="flex items-center gap-1 lg:gap-1.5">

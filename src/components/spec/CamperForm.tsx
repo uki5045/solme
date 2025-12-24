@@ -24,13 +24,13 @@ export default function CamperForm({
     return (
       <>
         <div className="grid grid-cols-2 gap-3">
-          <FormRow label="차량번호">
+          <FormRow label="차량번호" required>
             <div className="relative">
               <input type="text" value={data.vehicleNumber} onChange={(e) => { setData({ ...data, vehicleNumber: e.target.value }); clearError?.('vehicleNumber'); }} placeholder="12가1234" className={`form-input ${errors.vehicleNumber ? 'form-input-error pr-10' : ''}`} />
               {errors.vehicleNumber && <ErrorIcon />}
             </div>
           </FormRow>
-          <FormRow label="베이스 차량">
+          <FormRow label="베이스 차량" required>
             <div className="relative">
               <input type="text" value={data.baseVehicle} onChange={(e) => { setData({ ...data, baseVehicle: e.target.value }); clearError?.('baseVehicle'); }} placeholder="현대 포터2" className={`form-input ${errors.baseVehicle ? 'form-input-error pr-10' : ''}`} />
               {errors.baseVehicle && <ErrorIcon />}
@@ -38,13 +38,13 @@ export default function CamperForm({
           </FormRow>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <FormRow label="제조사">
+          <FormRow label="제조사" required>
             <div className="relative">
               <input type="text" value={data.manufacturer} onChange={(e) => { setData({ ...data, manufacturer: e.target.value }); clearError?.('manufacturer'); }} placeholder="제일모빌" className={`form-input ${errors.manufacturer ? 'form-input-error pr-10' : ''}`} />
               {errors.manufacturer && <ErrorIcon />}
             </div>
           </FormRow>
-          <FormRow label="모델명">
+          <FormRow label="모델명" required>
             <div className="relative">
               <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="드림스페이스" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
               {errors.modelName && <ErrorIcon />}
@@ -80,7 +80,7 @@ export default function CamperForm({
             />
           )}
         </div>
-        <FormRow label="주행거리">
+        <FormRow label="주행거리" required>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input type="text" inputMode="numeric" value={data.mileage} onChange={(e) => { setData({ ...data, mileage: onlyNumbers(e.target.value) }); clearError?.('mileage'); }} placeholder="35000" className={`form-input pr-14 ${errors.mileage ? 'form-input-error' : ''}`} />

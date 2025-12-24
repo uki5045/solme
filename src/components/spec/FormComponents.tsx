@@ -15,16 +15,21 @@ export function ErrorIcon() {
 export function FormRow({
   label,
   hint,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="mb-4">
       <label className="mb-2 flex items-baseline gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-        <span>{label}</span>
+        <span>
+          {label}
+          {required && <span className="ml-0.5 text-red-500">*</span>}
+        </span>
         {hint && (
           <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500">
             {hint}
