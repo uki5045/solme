@@ -8,6 +8,7 @@ interface LongPressItem {
   vehicleType: 'camper' | 'caravan';
   modelName: string;
   manufacturer: string;
+  price: string;
   updatedAt: string;
   status: 'intake' | 'productization' | 'advertising' | 'sold';
   isIncomplete: boolean;

@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
         vehicleType: item.vehicle_type,
         modelName: d.modelName || '',
         manufacturer: d.manufacturer || '',
+        price: d.price || '',
         updatedAt: item.updated_at,
         status: item.status || 'intake', // DB constraint: intake, productization, advertising
         isIncomplete,

@@ -93,3 +93,39 @@ export const isValidVehicleNumber = (num: string): boolean => {
   const pattern = /^\d{2,3}[가-힣]\d{4}$/;
   return pattern.test(num.trim());
 };
+
+// 가격 포맷 (만원 단위 입력 → 4,100만원, 1억2천만원 형식)
+export const formatPrice = (value: string): string => {
+  if (!value) return '';
+  const num = parseInt(value.replace(/[^\d]/g, ''), 10);
+  if (isNaN(num) || num === 0) return '';
+
+  const eok = Math.floor(num / 10000);
+  const rest = num % 10000;
+
+  let result = '';
+
+  if (eok > 0) {
+    result += `${eok}억`;
+  }
+
+  if (rest > 0) {
+    if (rest % 1000 === 0) {
+      // 정확히 천 단위면 한글로
+      result += `${rest / 1000}천만원`;
+    } else {
+      // 그 외는 쉼표 포맷
+      result += `${rest.toLocaleString()}만원`;
+    }
+  } else if (eok > 0) {
+    // 억 단위만 있을 때
+    result += '';
+  }
+
+  // 억만 있고 나머지가 0일 때
+  if (eok > 0 && rest === 0) {
+    return result;
+  }
+
+  return result;
+};

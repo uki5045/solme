@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import { formatPrice } from './utils';
 
 interface VehicleItem {
   id: number;
@@ -8,6 +9,7 @@ interface VehicleItem {
   vehicleType: 'camper' | 'caravan';
   modelName: string;
   manufacturer: string;
+  price: string;
   updatedAt: string;
   status: 'intake' | 'productization' | 'advertising' | 'sold';
   isIncomplete: boolean;
@@ -76,11 +78,11 @@ const VehicleCard = memo(function VehicleCard({
         </span>
       </div>
 
-      {/* 모델명 + 제조사 + 미입력 아이콘 */}
+      {/* 제조사 + 모델명 + 미입력 아이콘 */}
       <div className="flex items-center justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm text-gray-600 dark:text-gray-400">{item.modelName || '모델명 없음'}</div>
-          <div className="truncate text-xs text-gray-400 dark:text-gray-500">{item.manufacturer || '\u00A0'}</div>
+        <div className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-400">
+          {item.manufacturer && <span>{item.manufacturer} </span>}
+          <span>{item.modelName || '모델명 없음'}</span>
         </div>
         {item.isIncomplete && (
           <span
@@ -91,6 +93,13 @@ const VehicleCard = memo(function VehicleCard({
           </span>
         )}
       </div>
+
+      {/* 가격 */}
+      {item.price && (
+        <div className="mt-1 text-sm font-semibold text-accent-600 dark:text-accent-400">
+          {formatPrice(item.price)}
+        </div>
+      )}
     </div>
   );
 });

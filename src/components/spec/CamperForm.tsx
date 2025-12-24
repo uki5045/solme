@@ -51,6 +51,9 @@ export default function CamperForm({
             </div>
           </FormRow>
         </div>
+        <FormRow label="가격" hint="만원 단위">
+          <InputWithUnit unit="만원" type="text" inputMode="numeric" value={data.price} onChange={(e) => setData({ ...data, price: onlyNumbers(e.target.value) })} placeholder="4100" />
+        </FormRow>
         <FormRow label="연식" hint="월 입력 시 '제작연월'로 표시">
           <YearMonthInput value={data.year} onChange={(v) => setData({ ...data, year: v })} />
         </FormRow>

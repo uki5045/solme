@@ -13,6 +13,7 @@ export interface VehicleListItem {
   vehicleType: 'camper' | 'caravan';
   modelName: string;
   manufacturer: string;
+  price: string;
   updatedAt: string;
   status: VehicleStatus;
   isIncomplete: boolean;
@@ -30,6 +31,7 @@ export interface CamperData {
   baseVehicle: string;
   manufacturer: string;
   modelName: string;
+  price: string;
   vehicleType: string;
   year: string;
   firstReg: string;
@@ -61,6 +63,7 @@ export interface CaravanData {
   vehicleNumber: string;
   manufacturer: string;
   modelName: string;
+  price: string;
   vehicleType: string;
   year: string;
   firstReg: string;
