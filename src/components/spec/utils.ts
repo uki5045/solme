@@ -113,11 +113,11 @@ export const formatPrice = (value: string): string => {
     // 억이 있으면 띄어쓰기 추가
     if (eok > 0) result += ' ';
 
-    if (rest % 1000 === 0) {
-      // 정확히 천 단위면 한글로
+    if (eok > 0 && rest % 1000 === 0) {
+      // 억이 있고 정확히 천 단위면 한글로 (1억 2천만원)
       result += `${rest / 1000}천만원`;
     } else {
-      // 그 외는 쉼표 포맷
+      // 그 외는 쉼표 포맷 (4,000만원, 1억 2,500만원)
       result += `${rest.toLocaleString()}만원`;
     }
   }
