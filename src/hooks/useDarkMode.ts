@@ -106,5 +106,5 @@ export function useDarkMode(options: UseDarkModeOptions = {}): UseDarkModeReturn
     });
   }, []);
 
-  return { isDarkMode, toggleDarkMode };
+  return { isDarkMode, mounted, toggleDarkMode };
 }
