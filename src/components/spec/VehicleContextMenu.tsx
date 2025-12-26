@@ -93,12 +93,23 @@ export default function VehicleContextMenu({
   const { item } = contextMenu;
 
   return createPortal(
-    <div
-      ref={menuRef}
-      className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
-      style={{ left: position.x, top: position.y }}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <>
+      {/* 투명 오버레이 - 메뉴 외부 터치 시 닫기 */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          onClose();
+        }}
+      />
+      <div
+        ref={menuRef}
+        className="fixed z-50 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-1.5 shadow-xl dark:border-[#454c5c] dark:bg-[#262a33] dark:shadow-black/40"
+        style={{ left: position.x, top: position.y }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
       {/* 상태 변경 */}
       {(['intake', 'productization', 'advertising'] as VehicleStatus[]).map((status) => {
         const isCurrentStatus = item.status === status;
@@ -162,7 +173,8 @@ export default function VehicleContextMenu({
         <TrashIcon className="size-4" />
         삭제
       </button>
-    </div>,
+    </div>
+    </>,
     document.body
   );
 }

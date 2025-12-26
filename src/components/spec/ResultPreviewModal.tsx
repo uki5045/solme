@@ -33,7 +33,7 @@ const formatOptions = (text: string): React.ReactNode => {
       {items.map((item, index) => (
         <span
           key={index}
-          className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+          className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm text-gray-700"
         >
           {item}
         </span>
@@ -54,9 +54,9 @@ const formatElectric = (items: { label: string; value: string; unit: string }[])
         return (
           <span
             key={index}
-            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm dark:bg-gray-700"
+            className="inline-block whitespace-nowrap rounded bg-gray-100 px-2 py-0.5 text-sm"
           >
-            <span className="text-gray-700 dark:text-gray-200">{item.label} {displayValue} {item.unit}</span>
+            <span className="text-gray-700">{item.label} {displayValue} {item.unit}</span>
           </span>
         );
       })}
@@ -103,10 +103,10 @@ export default function ResultPreviewModal({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white dark:bg-[#1c1f26] lg:max-h-[95vh]"
+          className={`flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white lg:max-h-[95vh] ${isMobileView ? 'dark:bg-[#1c1f26]' : ''}`}
         >
           {/* 헤더 버튼 */}
-          <div className="sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 dark:border-[#363b47] dark:bg-[#1c1f26]">
+          <div className={`sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 ${isMobileView ? 'dark:border-[#363b47] dark:bg-[#1c1f26]' : ''}`}>
             <button
               onClick={() => onDownload(displayType)}
               className="rounded-xl bg-blue-600 px-6 py-2.5 text-base font-semibold text-white transition-all hover:bg-blue-700"
@@ -115,14 +115,14 @@ export default function ResultPreviewModal({
             </button>
             <button
               onClick={onClose}
-              className="rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              className={`rounded-xl border border-gray-300 bg-white px-6 py-2.5 text-base font-semibold text-gray-600 transition-all hover:bg-gray-50 ${isMobileView ? 'dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700' : ''}`}
             >
               닫기
             </button>
           </div>
 
           {/* 콘텐츠 */}
-          <div className="overflow-auto bg-gray-100 p-5 dark:bg-[#121418]">
+          <div className={`overflow-auto bg-gray-100 p-5 ${isMobileView ? 'dark:bg-[#121418]' : ''}`}>
             {/* 다운로드용 기존 표 (모바일에서는 숨김) */}
             <div className={isMobileView ? 'absolute -left-[9999px]' : ''}>
               {displayType === 'camper' ? (

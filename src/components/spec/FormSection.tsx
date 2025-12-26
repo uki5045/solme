@@ -98,69 +98,74 @@ export default function FormSection({
       {/* 폼 콘텐츠 */}
       <div className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1c1f26]">
         <div ref={formContainerRef} className="p-5">
-            {/* 캠핑카/카라반 세그먼트 컨트롤 */}
-            <div className="mb-3">
-              <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">종류</label>
-              <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
-              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
-                <input
-                  type="radio"
-                  name="vehicleTypeSelect"
-                  value="camper"
-                  checked={mainTab === 'camper'}
-                  onChange={() => onMainTabChange('camper')}
-                  className="sr-only"
-                />
-                <span className="relative z-10">캠핑카</span>
-              </label>
-              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
-                <input
-                  type="radio"
-                  name="vehicleTypeSelect"
-                  value="caravan"
-                  checked={mainTab === 'caravan'}
-                  onChange={() => onMainTabChange('caravan')}
-                  className="sr-only"
-                />
-                <span className="relative z-10">카라반</span>
-              </label>
-              </div>
-            </div>
+            {/* 캠핑카/카라반, 매입/위탁 세그먼트 컨트롤 - step 1에서만 표시 */}
+            {step === 1 && (
+              <>
+                {/* 캠핑카/카라반 세그먼트 컨트롤 */}
+                <div className="mb-3">
+                  <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">종류</label>
+                  <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
+                  <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                    <input
+                      type="radio"
+                      name="vehicleTypeSelect"
+                      value="camper"
+                      checked={mainTab === 'camper'}
+                      onChange={() => onMainTabChange('camper')}
+                      className="sr-only"
+                    />
+                    <span className="relative z-10">캠핑카</span>
+                  </label>
+                  <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                    <input
+                      type="radio"
+                      name="vehicleTypeSelect"
+                      value="caravan"
+                      checked={mainTab === 'caravan'}
+                      onChange={() => onMainTabChange('caravan')}
+                      className="sr-only"
+                    />
+                    <span className="relative z-10">카라반</span>
+                  </label>
+                  </div>
+                </div>
 
-            {/* 매입/위탁 세그먼트 컨트롤 */}
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">구분</label>
-              <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
-              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
-                <input
-                  type="radio"
-                  name="saleTypeSelect"
-                  value="매입"
-                  checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '매입'}
-                  onChange={() => {
-                    setCamperData(prev => ({ ...prev, saleType: '매입' }));
-                    setCaravanData(prev => ({ ...prev, saleType: '매입' }));
-                  }}
-                  className="sr-only"
-                />
-                <span className="relative z-10">매입</span>
-              </label>
-              <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
-                <input
-                  type="radio"
-                  name="saleTypeSelect"
-                  value="위탁"
-                  checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '위탁'}
-                  onChange={() => {
-                    setCamperData(prev => ({ ...prev, saleType: '위탁' }));
-                    setCaravanData(prev => ({ ...prev, saleType: '위탁' }));
-                  }}
-                  className="sr-only"
-                />
-                <span className="relative z-10">위탁</span>
-              </label>
-              </div>
-            </div>
+                {/* 매입/위탁 세그먼트 컨트롤 */}
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-400">구분</label>
+                  <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
+                  <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                    <input
+                      type="radio"
+                      name="saleTypeSelect"
+                      value="매입"
+                      checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '매입'}
+                      onChange={() => {
+                        setCamperData(prev => ({ ...prev, saleType: '매입' }));
+                        setCaravanData(prev => ({ ...prev, saleType: '매입' }));
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="relative z-10">매입</span>
+                  </label>
+                  <label className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-500 transition-all duration-200 has-[:checked]:bg-white has-[:checked]:text-gray-900 has-[:checked]:shadow-sm dark:text-gray-400 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-white dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                    <input
+                      type="radio"
+                      name="saleTypeSelect"
+                      value="위탁"
+                      checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '위탁'}
+                      onChange={() => {
+                        setCamperData(prev => ({ ...prev, saleType: '위탁' }));
+                        setCaravanData(prev => ({ ...prev, saleType: '위탁' }));
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="relative z-10">위탁</span>
+                  </label>
+                  </div>
+                </div>
+              </>
+            )}
             {mainTab === 'camper' ? (
               <CamperForm
                 step={step}
