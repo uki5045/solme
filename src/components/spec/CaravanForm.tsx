@@ -1,7 +1,7 @@
 'use client';
 
 import type { CaravanData, FormStep } from './types';
-import { onlyNumbers, onlyDecimalPlus, formatNumber } from './utils';
+import { onlyNumbers, onlyDecimalPlus, formatNumber, calculateGarageProof } from './utils';
 import { ErrorIcon, FormRow, FormSelect, InputWithUnit } from './FormComponents';
 import YearMonthInput from './YearMonthInput';
 
@@ -45,7 +45,11 @@ export default function CaravanForm({
             </div>
           </FormRow>
           <FormRow label="차종">
-            <FormSelect value={data.vehicleType} onChange={(e) => setData({ ...data, vehicleType: e.target.value })}>
+            <FormSelect value={data.vehicleType} onChange={(e) => {
+              const newVehicleType = e.target.value;
+              const garageProof = calculateGarageProof('caravan', newVehicleType);
+              setData({ ...data, vehicleType: newVehicleType, garageProof });
+            }}>
               <option value="소형 특수">소형 특수</option>
               <option value="중형 특수">중형 특수</option>
               <option value="중형 승합">중형 승합</option>
@@ -88,25 +92,9 @@ export default function CaravanForm({
             />
           )}
         </div>
-        <div className="mt-4 flex flex-col gap-3">
-          <FormRow label="취침인원">
-            <InputWithUnit unit="명" type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" />
-          </FormRow>
-          <div className="grid grid-cols-2 gap-3">
-            <FormRow label="차고지 증명">
-              <FormSelect value={data.garageProof} onChange={(e) => setData({ ...data, garageProof: e.target.value })}>
-                <option value="불필요">불필요</option>
-                <option value="필요(도와드릴게요)">필요(도와드릴게요)</option>
-              </FormSelect>
-            </FormRow>
-            <FormRow label="현금 영수증">
-              <FormSelect value={data.cashReceipt} onChange={(e) => setData({ ...data, cashReceipt: e.target.value })}>
-                <option value="가능">가능</option>
-                <option value="불가능">불가능</option>
-              </FormSelect>
-            </FormRow>
-          </div>
-        </div>
+        <FormRow label="취침인원">
+          <InputWithUnit unit="명" type="text" inputMode="numeric" value={data.sleepCapacity} onChange={(e) => setData({ ...data, sleepCapacity: onlyNumbers(e.target.value) })} placeholder="4" />
+        </FormRow>
       </>
     );
   }

@@ -94,6 +94,36 @@ export const isValidVehicleNumber = (num: string): boolean => {
   return pattern.test(num.trim());
 };
 
+// 차고지 증명 자동 계산
+// 이미지 표 기준:
+// - 캠핑카: 중형특수만 필요, 단 모델명에 "이동업무차" 포함 시 모든 차종 필요
+// - 카라반(캠핑트레일러): 소형특수, 중형특수만 필요
+export const calculateGarageProof = (
+  vehicleCategory: 'camper' | 'caravan',
+  vehicleType: string,
+  modelName: string = ''
+): '필요(도와드릴게요)' | '불필요' => {
+  // 이동업무차는 종류에 상관없이 차고지 증명 필요
+  if (modelName.includes('이동업무차')) {
+    return '필요(도와드릴게요)';
+  }
+
+  if (vehicleCategory === 'camper') {
+    // 캠핑카: 중형특수만 필요
+    return vehicleType === '중형 특수' ? '필요(도와드릴게요)' : '불필요';
+  } else {
+    // 카라반: 소형특수, 중형특수만 필요
+    return vehicleType === '소형 특수' || vehicleType === '중형 특수'
+      ? '필요(도와드릴게요)'
+      : '불필요';
+  }
+};
+
+// 현금 영수증 자동 계산 (매입/위탁에 따라)
+export const calculateCashReceipt = (saleType: string): '가능' | '불가능' => {
+  return saleType === '매입' ? '가능' : '불가능';
+};
+
 // 가격 포맷 (만원 단위 입력 → 4,100만원, 1억2천만원 형식)
 export const formatPrice = (value: string): string => {
   if (!value) return '';

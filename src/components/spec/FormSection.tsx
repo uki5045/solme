@@ -5,6 +5,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid';
 import CamperForm from './CamperForm';
 import CaravanForm from './CaravanForm';
 import type { CamperData, CaravanData, MainTab, FormStep } from './types';
+import { calculateCashReceipt } from './utils';
 
 interface FormSectionProps {
   // refs
@@ -141,8 +142,9 @@ export default function FormSection({
                       value="매입"
                       checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '매입'}
                       onChange={() => {
-                        setCamperData(prev => ({ ...prev, saleType: '매입' }));
-                        setCaravanData(prev => ({ ...prev, saleType: '매입' }));
+                        const cashReceipt = calculateCashReceipt('매입');
+                        setCamperData(prev => ({ ...prev, saleType: '매입', cashReceipt }));
+                        setCaravanData(prev => ({ ...prev, saleType: '매입', cashReceipt }));
                       }}
                       className="sr-only"
                     />
@@ -155,8 +157,9 @@ export default function FormSection({
                       value="위탁"
                       checked={(mainTab === 'camper' ? camperData.saleType : caravanData.saleType) === '위탁'}
                       onChange={() => {
-                        setCamperData(prev => ({ ...prev, saleType: '위탁' }));
-                        setCaravanData(prev => ({ ...prev, saleType: '위탁' }));
+                        const cashReceipt = calculateCashReceipt('위탁');
+                        setCamperData(prev => ({ ...prev, saleType: '위탁', cashReceipt }));
+                        setCaravanData(prev => ({ ...prev, saleType: '위탁', cashReceipt }));
                       }}
                       className="sr-only"
                     />

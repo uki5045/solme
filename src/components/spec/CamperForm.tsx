@@ -1,7 +1,7 @@
 'use client';
 
 import type { CamperData, FormStep } from './types';
-import { onlyNumbers, onlyDecimal, onlyDecimalPlus, formatNumber } from './utils';
+import { onlyNumbers, onlyDecimal, onlyDecimalPlus, formatNumber, calculateGarageProof } from './utils';
 import { ErrorIcon, FormRow, FormSelect, InputWithUnit } from './FormComponents';
 import YearMonthInput from './YearMonthInput';
 
@@ -46,7 +46,12 @@ export default function CamperForm({
           </FormRow>
           <FormRow label="모델명" required>
             <div className="relative">
-              <input type="text" value={data.modelName} onChange={(e) => { setData({ ...data, modelName: e.target.value }); clearError?.('modelName'); }} placeholder="드림스페이스" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
+              <input type="text" value={data.modelName} onChange={(e) => {
+                const newModelName = e.target.value;
+                const garageProof = calculateGarageProof('camper', data.vehicleType, newModelName);
+                setData({ ...data, modelName: newModelName, garageProof });
+                clearError?.('modelName');
+              }} placeholder="드림스페이스" className={`form-input ${errors.modelName ? 'form-input-error pr-10' : ''}`} />
               {errors.modelName && <ErrorIcon />}
             </div>
           </FormRow>
@@ -94,10 +99,14 @@ export default function CamperForm({
             />
           )}
         </div>
-        {/* 드롭다운 2x2 그리드 */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        {/* 드롭다운 2x1 그리드 */}
+        <div className="grid grid-cols-2 gap-3">
           <FormRow label="차종">
-            <FormSelect value={data.vehicleType} onChange={(e) => setData({ ...data, vehicleType: e.target.value })}>
+            <FormSelect value={data.vehicleType} onChange={(e) => {
+              const newVehicleType = e.target.value;
+              const garageProof = calculateGarageProof('camper', newVehicleType, data.modelName);
+              setData({ ...data, vehicleType: newVehicleType, garageProof });
+            }}>
               <option value="소형 특수">소형 특수</option>
               <option value="중형 특수">중형 특수</option>
               <option value="중형 승합">중형 승합</option>
@@ -105,23 +114,11 @@ export default function CamperForm({
               <option value="소형 화물">소형 화물</option>
             </FormSelect>
           </FormRow>
-          <FormRow label="차고지 증명">
-            <FormSelect value={data.garageProof} onChange={(e) => setData({ ...data, garageProof: e.target.value })}>
-              <option value="불필요">불필요</option>
-              <option value="필요(도와드릴게요)">필요(도와드릴게요)</option>
-            </FormSelect>
-          </FormRow>
           <FormRow label="필요 면허">
             <FormSelect value={data.license} onChange={(e) => setData({ ...data, license: e.target.value })}>
               <option value="1종 보통면허">1종 보통면허</option>
               <option value="1종 대형면허">1종 대형면허</option>
               <option value="2종 보통면허">2종 보통면허</option>
-            </FormSelect>
-          </FormRow>
-          <FormRow label="현금 영수증">
-            <FormSelect value={data.cashReceipt} onChange={(e) => setData({ ...data, cashReceipt: e.target.value })}>
-              <option value="가능">가능</option>
-              <option value="불가능">불가능</option>
             </FormSelect>
           </FormRow>
         </div>
