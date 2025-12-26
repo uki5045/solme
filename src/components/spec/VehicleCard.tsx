@@ -69,21 +69,21 @@ const VehicleCard = memo(function VehicleCard({
         highlightedVehicle === item.vehicleNumber ? 'spec-card--highlighted' : ''
       } ${item.isIncomplete ? 'ring-2 ring-amber-400 dark:ring-amber-500' : ''}`}
     >
-      {/* Row 1: [구분][차량번호] [타입] */}
-      <div className="mb-1.5 flex items-center justify-between">
-        <div className="flex shrink-0 items-center gap-2">
-          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${item.saleType === '위탁' ? 'bg-rose-500 shadow-rose-500/40 dark:shadow-rose-500/50' : 'bg-emerald-500 shadow-emerald-500/40 dark:shadow-emerald-500/50'}`}>
-            {item.saleType === '위탁' ? '위' : '매'}
+      {/* Row 1: [차량번호] [매/위][타입] */}
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+        <div className="flex items-center gap-1">
+          <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-accent-400 dark:bg-transparent dark:text-accent-400' : 'bg-accent-500 text-white dark:bg-accent-400'}`}>
+            {item.saleType === '위탁' ? '위탁' : '매입'}
           </span>
-          <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+            {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+          </span>
         </div>
-        <span className={`rounded-md px-2 py-0.5 text-xs font-medium shadow-sm ${item.vehicleType === 'camper' ? 'border border-blue-300 bg-blue-50 text-blue-700 shadow-blue-200/50 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-400 dark:shadow-blue-500/20' : 'border border-violet-300 bg-violet-50 text-violet-700 shadow-violet-200/50 dark:border-violet-600 dark:bg-violet-900/30 dark:text-violet-400 dark:shadow-violet-500/20'}`}>
-          {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-        </span>
       </div>
 
       {/* Row 2: [제조사][모델명] [연식] */}
-      <div className="mb-1 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <div className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-400">
           {item.manufacturer && <span>{item.manufacturer} </span>}
           <span>{item.modelName || '모델명 없음'}</span>
@@ -93,14 +93,19 @@ const VehicleCard = memo(function VehicleCard({
         )}
       </div>
 
-      {/* Row 3: [가격] */}
-      {item.price ? (
-        <div className="text-sm font-semibold text-accent-600 dark:text-emerald-400">
-          {formatPrice(item.price)}
-        </div>
-      ) : (
-        <div className="h-5" />
-      )}
+      {/* Row 3: [가격] [!] */}
+      <div className="flex items-center justify-between">
+        {item.price ? (
+          <div className="text-base font-bold text-accent-600 dark:text-emerald-400">
+            {formatPrice(item.price)}
+          </div>
+        ) : (
+          <div className="h-5" />
+        )}
+        {item.isIncomplete && (
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow-sm shadow-amber-500/40">!</span>
+        )}
+      </div>
     </div>
   );
 });
