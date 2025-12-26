@@ -122,9 +122,9 @@ export const formatPrice = (value: string): string => {
     }
   }
 
-  // 억만 있고 나머지가 0일 때
+  // 억만 있고 나머지가 0일 때 (1억 → 1억원)
   if (eok > 0 && rest === 0) {
-    return result;
+    return result + '원';
   }
 
   return result;
