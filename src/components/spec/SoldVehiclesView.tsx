@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
   ArrowPathIcon,
 } from '@heroicons/react/16/solid';
+import { formatPrice } from './utils';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import type { VehicleListItem, VehicleStatus } from './types';
 
@@ -119,46 +120,43 @@ export default function SoldVehiclesView({
                 }}
                 className="spec-card--sold"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex shrink-0 items-center gap-2.5">
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${
-                        item.saleType === '위탁'
-                          ? 'bg-rose-500 shadow-rose-500/40'
-                          : 'bg-emerald-500 shadow-emerald-500/40'
-                      }`}
-                    >
-                      {item.saleType === '위탁' ? '위' : '매'}
+                {/* Row 1: [차량번호] [매/위][타입] */}
+                <div className="mb-2.5 flex items-center justify-between">
+                  <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-accent-400 dark:bg-transparent dark:text-accent-400' : 'bg-accent-500 text-white dark:bg-accent-400'}`}>
+                      {item.saleType === '위탁' ? '위탁' : '매입'}
                     </span>
-                    <div>
-                      <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">
-                        {item.vehicleNumber}
-                      </span>
-                      <span
-                        className={`ml-2 rounded-md px-1.5 py-0.5 text-xs font-medium ${
-                          item.vehicleType === 'camper'
-                            ? 'border border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'border border-violet-200 bg-violet-50 text-violet-600 dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                        }`}
-                      >
-                        {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
-                      </span>
-                    </div>
+                    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                      {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {item.modelName || '모델명 없음'}
-                  </p>
-                  {item.manufacturer && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {item.manufacturer}
-                    </p>
+                {/* Row 2: [제조사][모델명] [연식] */}
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-400">
+                    {item.manufacturer && <span>{item.manufacturer} </span>}
+                    <span>{item.modelName || '모델명 없음'}</span>
+                  </div>
+                  {item.year && (
+                    <span className="ml-2 shrink-0 text-xs text-gray-500 dark:text-gray-500">{item.year.split('.')[0]}년식</span>
                   )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
+                {/* Row 3: [가격] */}
+                <div className="mb-3 flex items-center justify-between">
+                  {item.price ? (
+                    <div className="text-base font-bold text-accent-600 dark:text-emerald-400">
+                      {formatPrice(item.price)}
+                    </div>
+                  ) : (
+                    <div className="h-5" />
+                  )}
+                </div>
+
+                {/* Row 4: [판매일] [재등록] */}
+                <div className="flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
                   <span className="text-xs text-gray-400 dark:text-gray-500">
                     {new Date(item.updatedAt).toLocaleDateString('ko-KR')} 판매완료
                   </span>
