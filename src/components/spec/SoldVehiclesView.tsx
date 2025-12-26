@@ -119,11 +119,6 @@ export default function SoldVehiclesView({
                 }}
                 className="spec-card--sold"
               >
-                {/* 판매완료 배지 */}
-                <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/25">
-                  SOLD
-                </div>
-
                 <div className="flex items-start justify-between">
                   <div className="flex shrink-0 items-center gap-2.5">
                     <span
