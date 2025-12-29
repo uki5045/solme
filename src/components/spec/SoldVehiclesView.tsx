@@ -7,7 +7,6 @@ import {
   CheckCircleIcon,
   ArrowPathIcon,
 } from '@heroicons/react/16/solid';
-import { formatPrice } from './utils';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import type { VehicleListItem, VehicleStatus } from './types';
 
@@ -91,7 +90,7 @@ export default function SoldVehiclesView({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="차량번호, 모델명으로 검색"
-            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-[#363b47] dark:bg-[#1c1f26] dark:text-white dark:placeholder-gray-500 dark:focus:border-accent-400"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20 dark:border-[#363b47] dark:bg-[#1c1f26] dark:text-white dark:placeholder-gray-500 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/20"
           />
         </div>
       </div>
@@ -124,7 +123,7 @@ export default function SoldVehiclesView({
                 <div className="mb-2.5 flex items-center justify-between">
                   <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
                   <div className="flex items-center gap-1">
-                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-accent-400 dark:bg-transparent dark:text-accent-400' : 'bg-accent-500 text-white dark:bg-accent-400'}`}>
+                    <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-emerald-400 dark:bg-transparent dark:text-emerald-400' : 'bg-accent-500 text-white dark:bg-emerald-400 dark:text-[#1a1d21]'}`}>
                       {item.saleType === '위탁' ? '위탁' : '매입'}
                     </span>
                     <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
@@ -144,25 +143,14 @@ export default function SoldVehiclesView({
                   )}
                 </div>
 
-                {/* Row 3: [가격] */}
-                <div className="mb-3 flex items-center justify-between">
-                  {item.price ? (
-                    <div className="text-base font-bold text-accent-600 dark:text-emerald-400">
-                      {formatPrice(item.price)}
-                    </div>
-                  ) : (
-                    <div className="h-5" />
-                  )}
-                </div>
-
-                {/* Row 4: [판매일] [재등록] */}
+                {/* Row 3: [판매일] [재등록] */}
                 <div className="flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
                   <span className="text-xs text-gray-400 dark:text-gray-500">
                     {new Date(item.updatedAt).toLocaleDateString('ko-KR')} 판매완료
                   </span>
                   <button
                     onClick={() => handleReregister(item.vehicleNumber)}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:shadow-accent-500/30"
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-emerald-400/30 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-emerald-400/40"
                   >
                     <ArrowPathIcon className="size-3.5" />
                     재등록
@@ -189,7 +177,7 @@ export default function SoldVehiclesView({
                 handleReregister(vehicleNumber);
               }
             }}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-accent-400 dark:hover:bg-accent-950/50"
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
           >
             <ArrowPathIcon className="size-4" />
             재등록 (입고)

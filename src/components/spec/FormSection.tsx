@@ -200,7 +200,7 @@ export default function FormSection({
           )}
           <button
             onClick={onNext}
-            className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
+            className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-md dark:shadow-emerald-400/35 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-lg dark:hover:shadow-emerald-400/45"
           >
             {step === 3 ? '저장' : '다음'}
           </button>

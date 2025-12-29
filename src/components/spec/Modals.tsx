@@ -202,12 +202,12 @@ export function SaveConfirmModal({ show, vehicleNumber, onClose, onConfirm }: Sa
         <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-emerald-900/30">
+                <CheckIcon className="size-6 text-blue-600 dark:text-emerald-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">저장 확인</h3>
               <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{vehicleNumber}</span>
+                차량번호 <span className="font-semibold text-blue-600 dark:text-emerald-400">{vehicleNumber}</span>
                 <br />데이터를 저장하시겠습니까?
               </p>
             </div>
@@ -220,7 +220,7 @@ export function SaveConfirmModal({ show, vehicleNumber, onClose, onConfirm }: Sa
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-sm shadow-accent-500/15 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow hover:shadow-accent-500/20 active:scale-[0.98] dark:shadow-md dark:shadow-accent-500/30 dark:hover:shadow-lg dark:hover:shadow-accent-500/40"
+                className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-sm shadow-accent-500/15 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow hover:shadow-accent-500/20 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-md dark:shadow-emerald-400/30 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-lg dark:hover:shadow-emerald-400/40"
               >
                 저장
               </button>
@@ -248,14 +248,14 @@ export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onC
         <ModalBackdrop show={show} onClose={onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                <CheckIcon className="size-6 text-blue-600 dark:text-blue-400" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-emerald-900/30">
+                <CheckIcon className="size-6 text-blue-600 dark:text-emerald-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">상태 변경</h3>
               <p className="mt-2 text-base text-gray-500 dark:text-gray-400">
-                차량번호 <span className="font-semibold text-blue-600 dark:text-blue-400">{vehicleNumber}</span>
+                차량번호 <span className="font-semibold text-blue-600 dark:text-emerald-400">{vehicleNumber}</span>
                 <br />
-                <span className="font-semibold text-blue-600 dark:text-blue-400">
+                <span className="font-semibold text-blue-600 dark:text-emerald-400">
                   {STATUS_CHANGE_LABELS[newStatus]}
                 </span> 상태로 변경하시겠습니까?
               </p>
@@ -269,7 +269,7 @@ export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onC
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-accent-400 dark:to-accent-500 dark:shadow-md dark:shadow-accent-400/35 dark:hover:shadow-lg dark:hover:shadow-accent-400/45"
+                className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-md dark:shadow-emerald-400/35 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-lg dark:hover:shadow-emerald-400/45"
               >
                 변경
               </button>

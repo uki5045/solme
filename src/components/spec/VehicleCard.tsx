@@ -73,7 +73,7 @@ const VehicleCard = memo(function VehicleCard({
       <div className="mb-2.5 flex items-center justify-between">
         <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
         <div className="flex items-center gap-1">
-          <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-accent-400 dark:bg-transparent dark:text-accent-400' : 'bg-accent-500 text-white dark:bg-accent-400'}`}>
+          <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-emerald-400 dark:bg-transparent dark:text-emerald-400' : 'bg-accent-500 text-white dark:bg-emerald-400 dark:text-[#1a1d21]'}`}>
             {item.saleType === '위탁' ? '위탁' : '매입'}
           </span>
           <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
