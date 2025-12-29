@@ -38,3 +38,14 @@ export interface Notification {
   user_name?: string;
   user_image?: string;
 }
+
+// 사용자별 알림 상태
+export interface NotificationUserStatus {
+  id?: number;
+  notification_id: number;
+  user_email: string;
+  is_read: boolean;
+  is_hidden: boolean;
+  created_at?: string;
+  updated_at?: string;
+}

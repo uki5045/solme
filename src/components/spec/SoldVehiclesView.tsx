@@ -126,7 +126,7 @@ export default function SoldVehiclesView({
                     <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-emerald-400 dark:bg-transparent dark:text-emerald-400' : 'bg-accent-500 text-white dark:bg-emerald-400 dark:text-[#1a1d21]'}`}>
                       {item.saleType === '위탁' ? '위탁' : '매입'}
                     </span>
-                    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-500 dark:bg-gray-700 dark:text-gray-200' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-400 dark:bg-transparent dark:text-gray-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
                       {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
                     </span>
                   </div>
