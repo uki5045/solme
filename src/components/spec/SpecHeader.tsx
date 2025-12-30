@@ -432,7 +432,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
           alt={notification.user_name || '사용자'}
           width={36}
           height={36}
-          className="shrink-0 rounded-full object-cover"
+          className="h-9 w-9 shrink-0 rounded-full object-cover"
         />
       ) : (
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
