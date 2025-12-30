@@ -130,7 +130,9 @@ export default function ResultPreviewModal({
                   <div className="mb-5 grid grid-cols-2 gap-5">
                     <ResultCard title="차량 정보" icon={InformationCircleIcon}>
                       <ResultRow label="베이스 차량" value={displayCamperData.baseVehicle || '-'} />
-                      <ResultRow label="제조사" value={displayCamperData.manufacturer || '-'} />
+                      {!displayCamperData.hasStructureMod && (
+                        <ResultRow label="제조사" value={displayCamperData.manufacturer || '-'} />
+                      )}
                       <ResultRow label="모델명" value={displayCamperData.modelName || '-'} />
                       <ResultRow label="차종" value={displayCamperData.vehicleType || '-'} />
                       <ResultRow label={displayYearData.label} value={displayYearData.value} />
@@ -139,9 +141,7 @@ export default function ResultPreviewModal({
                         <ResultRow label="구조변경일" value={parseFirstReg(displayCamperData.structureModDate)} />
                       )}
                       <ResultRow label="주행거리" value={displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'} />
-                      {!displayCamperData.hasStructureMod && (
-                        <ResultRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
-                      )}
+                      <ResultRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
                       <ResultRow label="필요 면허" value={displayCamperData.license || '-'} />
                     </ResultCard>
                     <ResultCard title="제원" icon={ChatBubbleBottomCenterTextIcon}>
@@ -154,9 +154,6 @@ export default function ResultPreviewModal({
                       <ResultRow label="연비" value={displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'} />
                       <ResultRow label="승차정원" value={displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'} />
                       <ResultRow label="현금 영수증" value={displayCamperData.cashReceipt || '-'} />
-                      {displayCamperData.hasStructureMod && (
-                        <ResultRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
-                      )}
                     </ResultCard>
                   </div>
                   <OptionCard>
@@ -227,7 +224,9 @@ export default function ResultPreviewModal({
                   <>
                     <MobileInfoCard title="차량 정보">
                       <MobileRow label="베이스 차량" value={displayCamperData.baseVehicle || '-'} />
-                      <MobileRow label="제조사" value={displayCamperData.manufacturer || '-'} />
+                      {!displayCamperData.hasStructureMod && (
+                        <MobileRow label="제조사" value={displayCamperData.manufacturer || '-'} />
+                      )}
                       <MobileRow label="모델명" value={displayCamperData.modelName || '-'} />
                       <MobileRow label="차종" value={displayCamperData.vehicleType || '-'} />
                       <MobileRow label={displayYearData.label} value={displayYearData.value} />
@@ -236,9 +235,7 @@ export default function ResultPreviewModal({
                         <MobileRow label="구조변경일" value={parseFirstReg(displayCamperData.structureModDate)} />
                       )}
                       <MobileRow label="주행거리" value={displayCamperData.mileage ? `${formatNumber(displayCamperData.mileage)} km` : '-'} />
-                      {!displayCamperData.hasStructureMod && (
-                        <MobileRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
-                      )}
+                      <MobileRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
                       <MobileRow label="필요 면허" value={displayCamperData.license || '-'} />
                     </MobileInfoCard>
                     <MobileInfoCard title="제원">
@@ -251,9 +248,6 @@ export default function ResultPreviewModal({
                       <MobileRow label="연비" value={displayCamperData.fuelEconomy ? `등록증상 ${displayCamperData.fuelEconomy} km/L` : '-'} />
                       <MobileRow label="승차정원" value={displayCamperData.seatCapacity ? `${displayCamperData.seatCapacity} 인` : '-'} />
                       <MobileRow label="현금 영수증" value={displayCamperData.cashReceipt || '-'} />
-                      {displayCamperData.hasStructureMod && (
-                        <MobileRow label="차고지 증명" value={displayCamperData.garageProof || '-'} />
-                      )}
                     </MobileInfoCard>
                     <MobileOptionCard
                       electric={formatElectric([
