@@ -66,12 +66,18 @@ export function useNotifications(pollingInterval = 30000): UseNotificationsRetur
     }
   }, []);
 
-  // 초기 로드 & 폴링
+  // 초기 로드 & 폴링 (알림창 열려있으면 폴링 비활성화)
   useEffect(() => {
     fetchNotifications(true);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    // 알림창이 열려있으면 폴링 중지
+    if (showNotifications) return;
+
     const interval = setInterval(() => fetchNotifications(false), pollingInterval);
     return () => clearInterval(interval);
-  }, [fetchNotifications, pollingInterval]);
+  }, [fetchNotifications, pollingInterval, showNotifications]);
 
   // 드롭다운 외부 클릭 감지
   useClickOutside(notificationRef, () => setShowNotifications(false), showNotifications);
