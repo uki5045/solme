@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
         *,
         notification_user_status!left (
           is_read,
-          is_hidden
+          is_hidden,
+          user_email
         )
       `)
       .order('created_at', { ascending: false })
