@@ -8,8 +8,8 @@ import { notifyStatusChanged } from '@/lib/notifications';
 // 상태 변경 스키마
 const statusUpdateSchema = z.object({
   vehicleNumber: z.string().min(1, '차량번호는 필수입니다'),
-  status: z.enum(['intake', 'productization', 'advertising', 'sold'], {
-    message: '상태는 intake, productization, advertising, sold 중 하나여야 합니다',
+  status: z.enum(['intake', 'productization', 'advertising', 'contracted', 'sold'], {
+    message: '상태는 intake, productization, advertising, contracted, sold 중 하나여야 합니다',
   }),
 });
 

@@ -103,7 +103,7 @@ export default function ResultPreviewModal({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className={`flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white lg:max-h-[95vh] ${isMobileView ? 'dark:bg-[#1c1f26]' : ''}`}
+          className={`flex max-h-[calc(100dvh-6rem)] max-w-[95vw] flex-col overflow-hidden rounded-2xl bg-white lg:max-h-[95vh] ${isMobileView ? 'w-[95vw] dark:bg-[#1c1f26]' : ''}`}
         >
           {/* 헤더 버튼 */}
           <div className={`sticky top-0 z-10 flex gap-2.5 border-b border-gray-200 bg-white px-5 py-4 ${isMobileView ? 'dark:border-[#363b47] dark:bg-[#1c1f26]' : ''}`}>
@@ -219,7 +219,7 @@ export default function ResultPreviewModal({
 
             {/* 모바일용 리스트 뷰 */}
             {isMobileView && (
-              <div className="space-y-4">
+              <div className="w-full space-y-4">
                 {displayType === 'camper' ? (
                   <>
                     <MobileInfoCard title="차량 정보">

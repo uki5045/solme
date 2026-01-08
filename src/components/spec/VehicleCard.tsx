@@ -2,20 +2,9 @@
 
 import { memo } from 'react';
 import { formatPrice } from './utils';
+import type { VehicleListItem } from './types';
 
-interface VehicleItem {
-  id: number;
-  vehicleNumber: string;
-  vehicleType: 'camper' | 'caravan';
-  modelName: string;
-  manufacturer: string;
-  price: string;
-  year: string;
-  updatedAt: string;
-  status: 'intake' | 'productization' | 'advertising' | 'sold';
-  isIncomplete: boolean;
-  saleType: string;
-}
+type VehicleItem = VehicleListItem;
 
 interface VehicleCardProps {
   item: VehicleItem;

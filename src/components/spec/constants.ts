@@ -102,8 +102,17 @@ export const STATUS_CHANGE_LABELS: Record<VehicleStatus, string> = {
   intake: '입고',
   productization: '상품화',
   advertising: '광고',
+  contracted: '계약',
   sold: '판매완료',
 };
+
+// 판매완료 뷰 탭 라벨
+import type { SoldTabType } from './types';
+export const SOLD_TAB_LABELS: Record<SoldTabType, string> = {
+  contracted: '계약',
+  sold: '판매완료',
+};
+export const SOLD_TABS: SoldTabType[] = ['contracted', 'sold'];
 
 // 상태 탭 순서
 export const STATUS_TABS: StatusTabType[] = ['all', 'intake', 'productization', 'advertising'];

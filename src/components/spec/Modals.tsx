@@ -32,7 +32,7 @@ const ModalBackdrop = ({ children, onClose, show }: { children: React.ReactNode;
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed -inset-20 z-50 flex items-center justify-center bg-black/60 p-5"
+      className="fixed -inset-20 z-[60] flex items-center justify-center bg-black/60 p-5"
       onClick={onClose}
     >
       {children}

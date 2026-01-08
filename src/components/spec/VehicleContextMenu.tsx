@@ -29,6 +29,7 @@ const STATUS_LABELS: Record<VehicleStatus, string> = {
   intake: '입고',
   productization: '상품화',
   advertising: '광고',
+  contracted: '계약',
   sold: '판매완료',
 };
 
@@ -150,16 +151,16 @@ export default function VehicleContextMenu({
         수정
       </button>
 
-      {/* 판매완료 */}
+      {/* 계약 */}
       <button
         onClick={() => {
-          onStatusChange(item.vehicleNumber, 'sold');
+          onStatusChange(item.vehicleNumber, 'contracted');
           onClose();
         }}
         className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-[#363b47]"
       >
         <TagIcon className="size-4" />
-        판매완료
+        계약
       </button>
 
       {/* 삭제 */}

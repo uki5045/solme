@@ -1,20 +1,9 @@
 'use client';
 
 import { useRef, useCallback } from 'react';
+import type { VehicleListItem } from '@/components/spec/types';
 
-interface LongPressItem {
-  id: number;
-  vehicleNumber: string;
-  vehicleType: 'camper' | 'caravan';
-  modelName: string;
-  manufacturer: string;
-  price: string;
-  year: string;
-  updatedAt: string;
-  status: 'intake' | 'productization' | 'advertising' | 'sold';
-  isIncomplete: boolean;
-  saleType: string;
-}
+type LongPressItem = VehicleListItem;
 
 interface ContextMenuState {
   show: boolean;

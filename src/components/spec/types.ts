@@ -3,9 +3,10 @@
 export type MainTab = 'camper' | 'caravan';
 export type FormStep = 1 | 2 | 3;
 
-export type VehicleStatus = 'intake' | 'productization' | 'advertising' | 'sold';
-export type ActiveStatus = Exclude<VehicleStatus, 'sold'>;
+export type VehicleStatus = 'intake' | 'productization' | 'advertising' | 'contracted' | 'sold';
+export type ActiveStatus = Exclude<VehicleStatus, 'contracted' | 'sold'>;
 export type StatusTabType = ActiveStatus | 'all';
+export type SoldTabType = 'contracted' | 'sold';
 
 export interface VehicleListItem {
   id: number;

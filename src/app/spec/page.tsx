@@ -99,8 +99,8 @@ export default function SpecPage() {
   // 차량 리스트 필터링 (메모이제이션)
   const filteredVehicleList = useMemo(() => {
     return vehicleList
-      // sold 상태는 판매완료 뷰에서만 표시
-      .filter((item) => item.status !== 'sold')
+      // contracted, sold 상태는 판매완료 뷰에서만 표시
+      .filter((item) => item.status !== 'sold' && item.status !== 'contracted')
       // 전체 탭이면 상태 필터 무시
       .filter((item) => statusTab === 'all' ? true : item.status === statusTab)
       .filter((item) => {

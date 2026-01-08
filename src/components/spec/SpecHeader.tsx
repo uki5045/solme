@@ -68,7 +68,7 @@ export default function SpecHeader({
   toggleDarkMode,
   vehicleList,
 }: SpecHeaderProps) {
-  const soldCount = vehicleList.filter(v => v.status === 'sold').length;
+  const contractedAndSoldCount = vehicleList.filter(v => v.status === 'contracted' || v.status === 'sold').length;
 
   return (
     <header className="relative z-40 pt-[env(safe-area-inset-top)]">
@@ -165,7 +165,7 @@ export default function SpecHeader({
                     : 'text-gray-500 dark:text-gray-500'
                 }`}
               >
-                완료
+                출고
               </button>
             </div>
 
@@ -319,15 +319,15 @@ export default function SpecHeader({
             {/* 구분선 - 데스크톱만 */}
             <div className="mx-1 hidden h-5 w-px bg-gray-200 lg:block dark:bg-gray-700" />
 
-            {/* 판매완료 - 데스크톱만 */}
+            {/* 출고 - 데스크톱만 */}
             <button
               onClick={() => setShowSoldView(true)}
               className="hidden h-9 items-center gap-1.5 rounded-xl bg-gray-100 px-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 lg:flex dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
             >
-              <span>판매완료</span>
-              {soldCount > 0 && (
+              <span>출고</span>
+              {contractedAndSoldCount > 0 && (
                 <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gray-500 px-1.5 text-xs font-bold text-white dark:bg-gray-600">
-                  {soldCount}
+                  {contractedAndSoldCount}
                 </span>
               )}
             </button>

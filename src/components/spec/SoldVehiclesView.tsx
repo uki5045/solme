@@ -6,9 +6,11 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   ArrowPathIcon,
+  DocumentCheckIcon,
 } from '@heroicons/react/16/solid';
 import { useClickOutside } from '@/hooks/useClickOutside';
-import type { VehicleListItem, VehicleStatus } from './types';
+import { SOLD_TAB_LABELS, SOLD_TABS } from './constants';
+import type { VehicleListItem, VehicleStatus, SoldTabType } from './types';
 
 interface SoldVehiclesViewProps {
   show: boolean;
@@ -24,6 +26,7 @@ export default function SoldVehiclesView({
   onRequestStatusChange,
 }: SoldVehiclesViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<SoldTabType>('contracted');
   const [contextMenu, setContextMenu] = useState<{
     show: boolean;
     x: number;
@@ -46,8 +49,9 @@ export default function SoldVehiclesView({
 
   if (!show) return null;
 
-  const soldList = vehicleList
-    .filter(v => v.status === 'sold')
+  // 탭에 따라 필터링
+  const filteredList = vehicleList
+    .filter(v => v.status === activeTab)
     .filter(v => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
@@ -58,12 +62,23 @@ export default function SoldVehiclesView({
       );
     });
 
+  // 재등록 (입고로 변경)
   const handleReregister = (vehicleNumber: string) => {
     onClose();
     setTimeout(() => {
       onRequestStatusChange(vehicleNumber, 'intake');
     }, 100);
   };
+
+  // 판매완료로 변경
+  const handleMarkAsSold = (vehicleNumber: string) => {
+    onRequestStatusChange(vehicleNumber, 'sold');
+  };
+
+  // 탭별 카운트
+  const contractedCount = vehicleList.filter(v => v.status === 'contracted').length;
+  const soldCount = vehicleList.filter(v => v.status === 'sold').length;
+  const getTabCount = (tab: SoldTabType) => tab === 'contracted' ? contractedCount : soldCount;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-100 dark:bg-[#0f1115]">
@@ -76,8 +91,35 @@ export default function SoldVehiclesView({
           >
             <ChevronLeftIcon className="size-5" />
           </button>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">판매완료</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">출고 관리</h2>
           <div className="w-9" />
+        </div>
+
+        {/* 탭 세그먼트 컨트롤 */}
+        <div className="px-4 pb-3">
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 dark:bg-[#262a33]">
+            {SOLD_TABS.map((tab) => (
+              <label
+                key={tab}
+                className="group relative flex cursor-pointer items-center justify-center rounded-lg py-2.5 text-sm font-semibold text-gray-400 has-[:checked]:bg-white has-[:checked]:text-gray-700 has-[:checked]:shadow-sm dark:text-gray-500 dark:has-[:checked]:bg-[#363b47] dark:has-[:checked]:text-gray-200 dark:has-[:checked]:shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+              >
+                <input
+                  type="radio"
+                  name="soldTab"
+                  value={tab}
+                  checked={activeTab === tab}
+                  onChange={() => setActiveTab(tab)}
+                  className="sr-only"
+                />
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {SOLD_TAB_LABELS[tab]}
+                  <span className="flex h-5 min-w-[20px] items-center justify-center rounded-md bg-gray-200/60 px-1.5 text-xs font-medium text-gray-400 group-has-[:checked]:bg-gray-300/80 group-has-[:checked]:text-gray-600 dark:bg-gray-700/50 dark:text-gray-500 dark:group-has-[:checked]:bg-gray-600/80 dark:group-has-[:checked]:text-gray-300">
+                    {getTabCount(tab)}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -97,20 +139,26 @@ export default function SoldVehiclesView({
 
       {/* 카드 목록 */}
       <div className="flex-1 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
-        {soldList.length === 0 ? (
+        {filteredList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-              <CheckCircleIcon className="size-8 text-gray-400 dark:text-gray-500" />
+              {activeTab === 'contracted' ? (
+                <DocumentCheckIcon className="size-8 text-gray-400 dark:text-gray-500" />
+              ) : (
+                <CheckCircleIcon className="size-8 text-gray-400 dark:text-gray-500" />
+              )}
             </div>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               {searchQuery.trim()
                 ? `"${searchQuery}" 검색 결과가 없습니다`
-                : '판매완료된 차량이 없습니다'}
+                : activeTab === 'contracted'
+                  ? '계약된 차량이 없습니다'
+                  : '판매완료된 차량이 없습니다'}
             </p>
           </div>
         ) : (
           <div className="space-y-3 pt-2">
-            {soldList.map((item) => (
+            {filteredList.map((item) => (
               <div
                 key={item.id}
                 onContextMenu={(e) => {
@@ -124,7 +172,7 @@ export default function SoldVehiclesView({
                   <span className="whitespace-nowrap text-base font-bold tracking-tight text-gray-800 dark:text-gray-100">{item.vehicleNumber}</span>
                   <div className="flex items-center gap-1">
                     <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${item.saleType === '위탁' ? 'border border-accent-500 bg-white text-accent-600 dark:border-emerald-400 dark:bg-transparent dark:text-emerald-400' : 'bg-accent-500 text-white dark:bg-emerald-400 dark:text-[#1a1d21]'}`}>
-                      {item.saleType === '위탁' ? '위탁' : '매입'}
+                        {item.saleType === '위탁' ? '위탁' : '매입'}
                     </span>
                     <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${item.vehicleType === 'camper' ? 'border border-gray-400 bg-white text-gray-600 dark:border-gray-400 dark:bg-transparent dark:text-gray-400' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
                       {item.vehicleType === 'camper' ? '캠핑카' : '카라반'}
@@ -143,18 +191,41 @@ export default function SoldVehiclesView({
                   )}
                 </div>
 
-                {/* Row 3: [판매일] [재등록] */}
+                {/* Row 3: [날짜] [액션 버튼] */}
                 <div className="flex items-center justify-between border-t border-gray-100/80 pt-3 dark:border-white/5">
                   <span className="text-xs text-gray-400 dark:text-gray-500">
-                    {new Date(item.updatedAt).toLocaleDateString('ko-KR')} 판매완료
+                    {new Date(item.updatedAt).toLocaleDateString('ko-KR')} {activeTab === 'contracted' ? '계약' : '판매완료'}
                   </span>
-                  <button
-                    onClick={() => handleReregister(item.vehicleNumber)}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-accent-500/20 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/25 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-emerald-400/30 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-emerald-400/40"
-                  >
-                    <ArrowPathIcon className="size-3.5" />
-                    재등록
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {activeTab === 'contracted' ? (
+                      // 계약 탭: 재등록 + 판매완료 버튼
+                      <>
+                        <button
+                          onClick={() => handleReregister(item.vehicleNumber)}
+                          className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 active:scale-[0.98] dark:border-gray-600 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          <ArrowPathIcon className="size-3.5" />
+                          재등록
+                        </button>
+                        <button
+                          onClick={() => handleMarkAsSold(item.vehicleNumber)}
+                          className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 active:scale-[0.98] dark:border-gray-600 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          <CheckCircleIcon className="size-3.5" />
+                          판매완료
+                        </button>
+                      </>
+                    ) : (
+                      // 판매완료 탭: 재등록 버튼
+                      <button
+                        onClick={() => handleReregister(item.vehicleNumber)}
+                        className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 active:scale-[0.98] dark:border-gray-600 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800"
+                      >
+                        <ArrowPathIcon className="size-3.5" />
+                        재등록
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -169,19 +240,50 @@ export default function SoldVehiclesView({
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={() => {
-              const vehicleNumber = contextMenu.item?.vehicleNumber;
-              setContextMenu({ show: false, x: 0, y: 0, item: null });
-              if (vehicleNumber) {
-                handleReregister(vehicleNumber);
-              }
-            }}
-            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
-          >
-            <ArrowPathIcon className="size-4" />
-            재등록 (입고)
-          </button>
+          {activeTab === 'contracted' ? (
+            <>
+              <button
+                onClick={() => {
+                  const vehicleNumber = contextMenu.item?.vehicleNumber;
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                  if (vehicleNumber) {
+                    handleMarkAsSold(vehicleNumber);
+                  }
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/50"
+              >
+                <CheckCircleIcon className="size-4" />
+                판매완료
+              </button>
+              <button
+                onClick={() => {
+                  const vehicleNumber = contextMenu.item?.vehicleNumber;
+                  setContextMenu({ show: false, x: 0, y: 0, item: null });
+                  if (vehicleNumber) {
+                    handleReregister(vehicleNumber);
+                  }
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+              >
+                <ArrowPathIcon className="size-4" />
+                재등록 (입고)
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                const vehicleNumber = contextMenu.item?.vehicleNumber;
+                setContextMenu({ show: false, x: 0, y: 0, item: null });
+                if (vehicleNumber) {
+                  handleReregister(vehicleNumber);
+                }
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-accent-600 transition-colors hover:bg-accent-50 dark:text-emerald-400 dark:hover:bg-emerald-950/50"
+            >
+              <ArrowPathIcon className="size-4" />
+              재등록 (입고)
+            </button>
+          )}
         </div>
       )}
     </div>
