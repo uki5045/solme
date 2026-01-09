@@ -24,6 +24,7 @@ function useModalScrollLock(show: boolean) {
 }
 
 // 공통 모달 백드롭 (iOS Safari 상태바/주소창 영역까지 확장)
+// z-[70]: 폼 모달(z-[60])보다 위에 표시되도록 설정
 const ModalBackdrop = ({ children, onClose, show }: { children: React.ReactNode; onClose: () => void; show: boolean }) => {
   useModalScrollLock(show);
 
@@ -32,7 +33,7 @@ const ModalBackdrop = ({ children, onClose, show }: { children: React.ReactNode;
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed -inset-20 z-[60] flex items-center justify-center bg-black/60 p-5"
+      className="fixed -inset-20 z-[70] flex items-center justify-center bg-black/60 p-5"
       onClick={onClose}
     >
       {children}

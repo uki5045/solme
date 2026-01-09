@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
+import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/20/solid';
 import VehicleCard from './VehicleCard';
 import VehicleContextMenu from './VehicleContextMenu';
 import type { StatusTabType, VehicleStatus, VehicleListItem } from './types';
@@ -16,7 +17,6 @@ interface ContextMenuState {
 interface VehicleListSectionProps {
   // 레이아웃
   mobileView: 'form' | 'list';
-  leftSectionHeight: number;
 
   // 로딩 상태
   previewLoading: boolean;
@@ -51,11 +51,13 @@ interface VehicleListSectionProps {
   onStatusChange: (vehicleNumber: string, newStatus: VehicleStatus) => void;
   onEdit: (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => void;
   onDelete: (vehicleNumber: string) => void;
+
+  // 차량 등록 (PC 전용)
+  onAddClick?: () => void;
 }
 
 export default function VehicleListSection({
   mobileView,
-  leftSectionHeight,
   previewLoading,
   listLoading,
   statusTabListRef,
@@ -78,11 +80,11 @@ export default function VehicleListSection({
   onStatusChange,
   onEdit,
   onDelete,
+  onAddClick,
 }: VehicleListSectionProps) {
   return (
     <div
-      className={`relative flex-1 flex-col ${mobileView === 'form' ? 'hidden lg:flex' : 'flex'}`}
-      style={{ height: leftSectionHeight > 0 ? `${leftSectionHeight}px` : 'auto' }}
+      className={`relative w-full flex-col lg:flex ${mobileView === 'form' ? 'hidden' : 'flex'}`}
     >
       {/* 미리보기 로딩 오버레이 */}
       {previewLoading && (
@@ -94,8 +96,75 @@ export default function VehicleListSection({
         </div>
       )}
 
-      {/* 상태 탭 헤더 */}
-      <div ref={statusTabListRef} className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26]">
+      {/* PC 헤더: 탭 + 검색 + 등록 버튼 */}
+      <div className="mb-3 hidden shrink-0 items-center gap-3 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26] lg:flex">
+        {/* 상태 탭 (왼쪽) */}
+        <div ref={statusTabListRef} className="relative grid flex-1 grid-cols-4 rounded-xl bg-gray-100/80 p-1 dark:bg-[#262a33]">
+          {/* 인디케이터 */}
+          <div
+            className="absolute top-1 bottom-1 rounded-lg transition-all duration-200"
+            style={{
+              width: 'calc(25% - 2px)',
+              left: 4,
+              transform: `translateX(calc(${statusIndex} * 100%))`,
+              ...getStatusTabStyle(statusTab, isDarkMode),
+            }}
+          />
+          {STATUS_TABS.map((status) => {
+            const count = status === 'all'
+              ? vehicleList.filter(v => v.status !== 'sold' && v.status !== 'contracted').length
+              : vehicleList.filter(v => v.status === status).length;
+            const isActive = statusTab === status;
+            return (
+              <button
+                key={status}
+                data-status={status}
+                onClick={() => { setSearchQuery(''); setStatusTab(status); }}
+                className={`relative z-10 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-semibold transition-colors ${
+                  isActive
+                    ? 'text-white'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <span className="whitespace-nowrap">{STATUS_TAB_LABELS[status]}</span>
+                <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-md px-1.5 text-xs font-medium ${
+                  isActive
+                    ? 'bg-white/25 text-white'
+                    : 'bg-gray-200/60 text-gray-500 dark:bg-gray-700/50 dark:text-gray-500'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 검색창 (중앙) */}
+        <div className="relative w-64 shrink-0">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="검색"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-accent-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent-400/20 dark:border-gray-700 dark:bg-[#262a33] dark:text-white dark:placeholder:text-gray-500 dark:focus:border-emerald-500 dark:focus:bg-[#1c1f26] dark:focus:ring-emerald-500/20"
+          />
+        </div>
+
+        {/* 등록 버튼 (오른쪽) */}
+        {onAddClick && (
+          <button
+            onClick={onAddClick}
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-accent-500/20 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-md hover:shadow-accent-500/30 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-emerald-400/25 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-emerald-400/35"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span>등록</span>
+          </button>
+        )}
+      </div>
+
+      {/* 모바일 헤더: 상태 탭만 */}
+      <div className="relative mb-3 grid shrink-0 grid-cols-4 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26] lg:hidden">
         {/* 인디케이터 */}
         <div
           className="absolute top-2 bottom-2 rounded-xl"
@@ -107,7 +176,9 @@ export default function VehicleListSection({
           }}
         />
         {STATUS_TABS.map((status) => {
-          const count = status === 'all' ? vehicleList.length : vehicleList.filter(v => v.status === status).length;
+          const count = status === 'all'
+            ? vehicleList.filter(v => v.status !== 'sold' && v.status !== 'contracted').length
+            : vehicleList.filter(v => v.status === status).length;
           const isActive = statusTab === status;
           return (
             <button
@@ -174,7 +245,7 @@ export default function VehicleListSection({
               }
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
               {filteredVehicleList.map((item) => (
                 <VehicleCard
                   key={item.id}

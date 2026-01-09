@@ -20,6 +20,7 @@ import { isValidVehicleNumber } from '@/components/spec/utils';
 import { DeleteModal, ResetModal, OverwriteModal, SaveConfirmModal, StatusChangeModal } from '@/components/spec/Modals';
 import SoldVehiclesView from '@/components/spec/SoldVehiclesView';
 import ResultPreviewModal from '@/components/spec/ResultPreviewModal';
+import VehicleFormModal from '@/components/spec/VehicleFormModal';
 import Toast from '@/components/spec/Toast';
 
 export default function SpecPage() {
@@ -38,7 +39,12 @@ export default function SpecPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{ type: MainTab; data: CamperData | CaravanData } | null>(null);
-  const [leftSectionHeight, setLeftSectionHeight] = useState<number>(0);
+  // 폼 모달 상태 (PC 전용)
+  const [formModal, setFormModal] = useState<{ show: boolean; isEditMode: boolean; editingVehicleNumber: string }>({
+    show: false,
+    isEditMode: false,
+    editingVehicleNumber: '',
+  });
 
   // UI 상태 훅 (상태탭, 검색, 모바일뷰, 컨텍스트메뉴, 드롭다운, 판매완료뷰)
   const {
@@ -115,18 +121,6 @@ export default function SpecPage() {
       });
   }, [vehicleList, statusTab, searchQuery]);
 
-  // 좌측 섹션 높이 추적 (우측 섹션 높이 동기화용)
-  useEffect(() => {
-    if (!leftSectionRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setLeftSectionHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(leftSectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // ESC 키로 모달 닫기
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -192,7 +186,24 @@ export default function SpecPage() {
     setContextMenu({ show: true, x: e.clientX, y: e.clientY, item });
   }, [setContextMenu]);
 
-  // 컨텍스트 메뉴에서 수정 클릭 시 바로 폼에 데이터 로드 (모달 없이)
+  // PC에서 폼 모달 열기
+  const openFormModal = useCallback((isEditMode = false, vehicleNumber = '') => {
+    // 등록 모드일 때 폼 데이터 초기화
+    if (!isEditMode) {
+      setCamperData(initialCamperData);
+      setCaravanData(initialCaravanData);
+      setStep(1);
+      setFieldErrors({});
+    }
+    setFormModal({ show: true, isEditMode, editingVehicleNumber: vehicleNumber });
+  }, []);
+
+  // PC에서 폼 모달 닫기
+  const closeFormModal = useCallback(() => {
+    setFormModal({ show: false, isEditMode: false, editingVehicleNumber: '' });
+  }, []);
+
+  // 컨텍스트 메뉴에서 수정 클릭 시 폼에 데이터 로드 후 모달 열기 (PC) 또는 폼 전환 (모바일)
   const loadVehicleToForm = async (vehicleNumber: string, vehicleType: 'camper' | 'caravan') => {
     try {
       const response = await fetch(`/api/specs?vehicleNumber=${encodeURIComponent(vehicleNumber)}`);
@@ -217,7 +228,13 @@ export default function SpecPage() {
 
       setStep(1);
       setFieldErrors({});
-      setMobileView('form'); // 모바일에서 등록 화면으로 전환
+
+      // PC에서는 모달 열기, 모바일에서는 폼 뷰로 전환
+      if (!isMobileView) {
+        openFormModal(true, vehicleNumber);
+      } else {
+        setMobileView('form');
+      }
       showToast('데이터를 불러왔습니다.', 'success');
     } catch (e) {
       console.error('데이터 로드 오류:', e);
@@ -340,6 +357,8 @@ export default function SpecPage() {
     setStep(1);
     setFieldErrors({});
     setShowResult(false);
+    // PC에서 폼 모달 닫기
+    setFormModal({ show: false, isEditMode: false, editingVehicleNumber: '' });
   }, [showToast]);
 
   const goPrev = () => {
@@ -424,10 +443,9 @@ export default function SpecPage() {
           onNext={goNext}
         />
 
-        {/* 우측: 차량 카드 리스트 (상태별 탭) */}
+        {/* 차량 카드 리스트 (상태별 탭) */}
         <VehicleListSection
           mobileView={mobileView}
-          leftSectionHeight={leftSectionHeight}
           previewLoading={previewLoading}
           listLoading={listLoading}
           statusTabListRef={statusTabListRef}
@@ -450,6 +468,7 @@ export default function SpecPage() {
           onStatusChange={requestStatusChange}
           onEdit={loadVehicleToForm}
           onDelete={openDeleteModal}
+          onAddClick={() => openFormModal(false)}
         />
       </div>
 
@@ -516,6 +535,27 @@ export default function SpecPage() {
             await updateVehicleStatus(vehicleNumber, newStatus);
           }
         }}
+      />
+
+      {/* PC 전용 폼 모달 */}
+      <VehicleFormModal
+        show={formModal.show}
+        onClose={closeFormModal}
+        mainTab={mainTab}
+        onMainTabChange={handleMainTabChange}
+        tabLoading={tabLoading}
+        step={step}
+        camperData={camperData}
+        setCamperData={setCamperData}
+        caravanData={caravanData}
+        setCaravanData={setCaravanData}
+        fieldErrors={fieldErrors}
+        setFieldErrors={setFieldErrors}
+        onPrev={goPrev}
+        onNext={goNext}
+        onReset={openResetModal}
+        isEditMode={formModal.isEditMode}
+        editingVehicleNumber={formModal.editingVehicleNumber}
       />
 
       {/* 판매완료 뷰 */}

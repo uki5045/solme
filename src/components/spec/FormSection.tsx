@@ -81,7 +81,7 @@ export default function FormSection({
   }, [formContainerRef, handleKeyDown]);
 
   return (
-    <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:max-w-[440px] ${mobileView === 'list' ? 'hidden lg:block' : ''}`}>
+    <div ref={leftSectionRef} className={`relative w-full shrink-0 lg:hidden ${mobileView === 'list' ? 'hidden' : ''}`}>
       {/* 검색창 */}
       <div className="mb-3 rounded-2xl bg-white p-2 shadow-sm dark:bg-[#1c1f26]">
         <div className="relative">
