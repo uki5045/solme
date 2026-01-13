@@ -111,6 +111,7 @@ export default function CamperForm({
               <option value="중형 특수">중형 특수</option>
               <option value="중형 승합">중형 승합</option>
               <option value="대형 승합">대형 승합</option>
+              <option value="대형 승용">대형 승용</option>
               <option value="소형 화물">소형 화물</option>
             </FormSelect>
           </FormRow>
