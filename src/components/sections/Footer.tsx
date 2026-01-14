@@ -55,6 +55,8 @@ export default function Footer() {
             <span>충청북도 옥천군 옥천읍 남곡길 8</span>
             <span className="text-white/70">사업자등록번호</span>
             <span>208‑87‑02831</span>
+            <span className="text-white/70">대표번호</span>
+            <span>043-732-1025</span>
           </div>
         </div>
 
