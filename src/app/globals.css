@@ -256,9 +256,9 @@ html:not(.dark) ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
 }
 
-html,
-body {
-  overflow-x: hidden;
+html, body {
+  overflow-x: clip;
+  overflow-y: visible;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -946,5 +946,15 @@ textarea.form-input {
 
 .animate-spec-fade-in {
   animation: spec-fade-in 0.3s ease-out;
+}
+
+/* Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 

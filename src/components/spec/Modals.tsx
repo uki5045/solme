@@ -240,13 +240,14 @@ interface StatusChangeModalProps {
   newStatus: VehicleStatus | null;
   onClose: () => void;
   onConfirm: () => void;
+  isPending?: boolean;
 }
 
-export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onConfirm }: StatusChangeModalProps) {
+export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onConfirm, isPending = false }: StatusChangeModalProps) {
   return (
     <AnimatePresence>
       {show && newStatus && (
-        <ModalBackdrop show={show} onClose={onClose}>
+        <ModalBackdrop show={show} onClose={isPending ? () => {} : onClose}>
           <ModalContainer>
             <div className="mb-4 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-emerald-900/30">
@@ -264,15 +265,24 @@ export function StatusChangeModal({ show, vehicleNumber, newStatus, onClose, onC
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98]"
+                disabled={isPending}
+                className="form-btn-secondary flex-1 rounded-xl py-3 text-base font-semibold active:scale-[0.98] disabled:opacity-50"
               >
                 취소
               </button>
               <button
                 onClick={onConfirm}
-                className="flex-1 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] dark:from-emerald-400 dark:to-emerald-500 dark:shadow-md dark:shadow-emerald-400/35 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-lg dark:hover:shadow-emerald-400/45"
+                disabled={isPending}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-accent-500 to-accent-600 py-3 text-base font-semibold text-white shadow-md shadow-accent-500/30 transition-all duration-200 hover:from-accent-400 hover:to-accent-500 hover:shadow-lg hover:shadow-accent-500/40 active:scale-[0.98] disabled:opacity-70 dark:from-emerald-400 dark:to-emerald-500 dark:shadow-md dark:shadow-emerald-400/35 dark:hover:from-emerald-300 dark:hover:to-emerald-400 dark:hover:shadow-lg dark:hover:shadow-emerald-400/45"
               >
-                변경
+                {isPending ? (
+                  <>
+                    <ArrowPathIcon className="size-5 animate-spin" />
+                    처리 중...
+                  </>
+                ) : (
+                  '변경'
+                )}
               </button>
             </div>
           </ModalContainer>

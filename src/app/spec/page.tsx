@@ -97,7 +97,7 @@ export default function SpecPage() {
   } = useVehicleList({ showToast, refetchNotifications });
   // 알림 클릭 시 해당 차량 카드 하이라이트 (현재 미사용, 추후 활성화)
   const highlightedVehicle: string | null = null;
-  const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null }>({ show: false, vehicleNumber: '', newStatus: null });
+  const [statusChangeModal, setStatusChangeModal] = useState<{ show: boolean; vehicleNumber: string; newStatus: VehicleStatus | null; isPending: boolean }>({ show: false, vehicleNumber: '', newStatus: null, isPending: false });
   const leftSectionRef = useRef<HTMLDivElement>(null);
   const statusTabListRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
@@ -137,7 +137,7 @@ export default function SpecPage() {
 
   // 상태 변경 요청 (모달 표시)
   const requestStatusChange = (vehicleNumber: string, newStatus: VehicleStatus) => {
-    setStatusChangeModal({ show: true, vehicleNumber, newStatus });
+    setStatusChangeModal({ show: true, vehicleNumber, newStatus, isPending: false });
   };
 
   // 컨텍스트 메뉴 닫기 (외부 클릭 시)
@@ -527,13 +527,15 @@ export default function SpecPage() {
         show={statusChangeModal.show}
         vehicleNumber={statusChangeModal.vehicleNumber}
         newStatus={statusChangeModal.newStatus}
-        onClose={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null })}
+        isPending={statusChangeModal.isPending}
+        onClose={() => setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null, isPending: false })}
         onConfirm={async () => {
           const { vehicleNumber, newStatus } = statusChangeModal;
-          setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null });
+          setStatusChangeModal(prev => ({ ...prev, isPending: true }));
           if (newStatus) {
             await updateVehicleStatus(vehicleNumber, newStatus);
           }
+          setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null, isPending: false });
         }}
       />
 
