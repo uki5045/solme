@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCar365Security } from '@/lib/car365/security';
 import type { Car365Response, VehicleLookupResult } from '@/lib/car365/types';
 
-const CAR365_API_URL = process.env.CAR365_API_URL || 'https://linkstg.car365.go.kr/hub/kotsa';
-const CAR365_API_KEY = process.env.CAR365_API_KEY || '';
 const PROXY_URL = process.env.PROXY_URL || 'http://168.107.3.116:3000';
 const PROXY_SECRET = process.env.PROXY_SECRET || '';
 
@@ -82,28 +79,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '차량번호를 입력해주세요.' }, { status: 400 });
     }
 
-    // Vercel에서 암호화
-    const security = getCar365Security();
-    const requestData = JSON.stringify({ data: [{ vhclNo: vehicleNumber }] });
-
-    let encryptedRequest: string;
-    try {
-      encryptedRequest = await security.encrypt(requestData);
-    } catch (encError) {
-      console.error('암호화 오류:', encError);
-      return NextResponse.json({ error: '요청 암호화 실패' }, { status: 500 });
-    }
-
-    // 프록시를 통해 API 호출 (프록시에서 복호화)
-    const proxyResponse = await fetch(`${PROXY_URL}/api/car365`, {
+    // 프록시에서 암호화/복호화 모두 처리
+    const proxyResponse = await fetch(`${PROXY_URL}/api/car365/lookup`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'application/json',
         'x-proxy-key': PROXY_SECRET,
-        'x-api-key': CAR365_API_KEY,
-        'x-api-url': CAR365_API_URL,
       },
-      body: encryptedRequest,
+      body: JSON.stringify({ vehicleNumber }),
     });
 
     if (!proxyResponse.ok) {
