@@ -21,6 +21,8 @@ import { DeleteModal, ResetModal, OverwriteModal, SaveConfirmModal, StatusChange
 import SoldVehiclesView from '@/components/spec/SoldVehiclesView';
 import ResultPreviewModal from '@/components/spec/ResultPreviewModal';
 import VehicleFormModal from '@/components/spec/VehicleFormModal';
+import RegistrationTypeModal from '@/components/spec/RegistrationTypeModal';
+import AutoRegisterModal from '@/components/spec/AutoRegisterModal';
 import Toast from '@/components/spec/Toast';
 
 export default function SpecPage() {
@@ -45,6 +47,10 @@ export default function SpecPage() {
     isEditMode: false,
     editingVehicleNumber: '',
   });
+  // 등록 방식 선택 모달
+  const [showRegTypeModal, setShowRegTypeModal] = useState(false);
+  // 자동 등록 모달
+  const [showAutoRegModal, setShowAutoRegModal] = useState(false);
 
   // UI 상태 훅 (상태탭, 검색, 모바일뷰, 컨텍스트메뉴, 드롭다운, 판매완료뷰)
   const {
@@ -201,6 +207,28 @@ export default function SpecPage() {
   // PC에서 폼 모달 닫기
   const closeFormModal = useCallback(() => {
     setFormModal({ show: false, isEditMode: false, editingVehicleNumber: '' });
+  }, []);
+
+  // 자동 등록 결과 적용
+  const handleAutoRegConfirm = useCallback((data: Partial<CamperData> | Partial<CaravanData>, vehicleType: MainTab) => {
+    if (vehicleType === 'camper') {
+      setCamperData({ ...initialCamperData, ...data } as CamperData);
+      setMainTab('camper');
+    } else {
+      setCaravanData({ ...initialCaravanData, ...data } as CaravanData);
+      setMainTab('caravan');
+    }
+    setStep(1);
+    setFieldErrors({});
+    setShowAutoRegModal(false);
+    // 폼 모달 열기
+    openFormModal(false);
+    showToast('차량 정보가 적용되었습니다. 추가 정보를 입력해주세요.', 'success');
+  }, [openFormModal, showToast]);
+
+  // 등록 버튼 클릭 핸들러
+  const handleAddClick = useCallback(() => {
+    setShowRegTypeModal(true);
   }, []);
 
   // 컨텍스트 메뉴에서 수정 클릭 시 폼에 데이터 로드 후 모달 열기 (PC) 또는 폼 전환 (모바일)
@@ -468,7 +496,7 @@ export default function SpecPage() {
           onStatusChange={requestStatusChange}
           onEdit={loadVehicleToForm}
           onDelete={openDeleteModal}
-          onAddClick={() => openFormModal(false)}
+          onAddClick={handleAddClick}
         />
       </div>
 
@@ -537,6 +565,21 @@ export default function SpecPage() {
           }
           setStatusChangeModal({ show: false, vehicleNumber: '', newStatus: null, isPending: false });
         }}
+      />
+
+      {/* 등록 방식 선택 모달 */}
+      <RegistrationTypeModal
+        show={showRegTypeModal}
+        onClose={() => setShowRegTypeModal(false)}
+        onManual={() => openFormModal(false)}
+        onAuto={() => setShowAutoRegModal(true)}
+      />
+
+      {/* 자동 등록 모달 */}
+      <AutoRegisterModal
+        show={showAutoRegModal}
+        onClose={() => setShowAutoRegModal(false)}
+        onConfirm={handleAutoRegConfirm}
       />
 
       {/* PC 전용 폼 모달 */}

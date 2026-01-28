@@ -24,6 +24,11 @@ yarn-error.log*
 .env*.local
 .env
 
+# Certificates (보안 민감 파일)
+certs/
+*.der
+*.key
+
 # Vercel
 .vercel
 
